@@ -62,7 +62,7 @@ clang --target=i386-pc-os2 -Os hello.c -o hello.exe
     ---
 
     Headers, C libraries and examples for each system:
-    [all clang-retro projects](https://clang-retro.github.io/dos-sdk/projects/).
+    [all clang-retro projects](https://clang-retro.github.io/).
 
 </div>
 
