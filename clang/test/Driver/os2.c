@@ -41,6 +41,7 @@
 // LX:      "{{.*}}wlink" "format" "os2" "lx" "pmcompatible" "option" "quiet" "option" "eliminate" "name" "a.exe"
 // LX-SAME: "option" "stack=65536"
 // LX-SAME: "file" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}crt0.o" "option" "start=_start"
+// LX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libos2.a"
 // LX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libc.a"
 // LX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libclang_rt.builtins.a"
 // LX-SAME: "@{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}os2.lnk"
