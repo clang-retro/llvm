@@ -1,0 +1,23 @@
+# The API reference of the documentation site (api/), run by .docs/hooks.py
+# from the repository's root after `mkdocs build`.
+@INCLUDE               = clang-retro-docs/.docs/Doxyfile.base
+PROJECT_NAME           = "clang-retro LLVM"
+PROJECT_BRIEF          = "The fork's driver toolchains, tools and OMF writer"
+INPUT                  = clang/lib/Driver/ToolChains/MSDOS.h \
+                         clang/lib/Driver/ToolChains/MSDOS.cpp \
+                         clang/lib/Driver/ToolChains/OS2.h \
+                         clang/lib/Driver/ToolChains/OS2.cpp \
+                         clang/lib/Driver/ToolChains/AmigaOS.h \
+                         clang/lib/Driver/ToolChains/AmigaOS.cpp \
+                         clang/lib/Driver/ToolChains/AtariTOS.h \
+                         clang/lib/Driver/ToolChains/AtariTOS.cpp \
+                         clang/lib/Driver/ToolChains/MacOSClassic.h \
+                         clang/lib/Driver/ToolChains/MacOSClassic.cpp \
+                         llvm/tools/llvm-elf2hunk \
+                         llvm/tools/llvm-elf2tos \
+                         llvm/lib/MC/OMFObjectWriter.cpp \
+                         llvm/lib/MC/MCOMFStreamer.cpp \
+                         llvm/include/llvm/MC/MCOMFObjectWriter.h \
+                         llvm/include/llvm/MC/MCOMFStreamer.h
+FILE_PATTERNS          = *.h *.cpp
+OPTIMIZE_OUTPUT_FOR_C  = NO

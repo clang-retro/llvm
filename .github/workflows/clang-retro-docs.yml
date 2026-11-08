@@ -9,9 +9,9 @@ name: Docs
 on:
   push:
     branches: [main]
-    paths: ['clang-retro-docs/**', '.github/workflows/clang-retro-docs.yml']
+    paths: ['clang-retro-docs/**', 'llvm/include/llvm/MC/*OMF*', 'llvm/lib/MC/*OMF*', 'llvm/tools/llvm-elf2tos/**', 'llvm/tools/llvm-elf2hunk/**', 'clang/lib/Driver/ToolChains/**', '.github/workflows/clang-retro-docs.yml']
   pull_request:
-    paths: ['clang-retro-docs/**', '.github/workflows/clang-retro-docs.yml']
+    paths: ['clang-retro-docs/**', 'llvm/include/llvm/MC/*OMF*', 'llvm/lib/MC/*OMF*', 'llvm/tools/llvm-elf2tos/**', 'llvm/tools/llvm-elf2hunk/**', 'clang/lib/Driver/ToolChains/**', '.github/workflows/clang-retro-docs.yml']
   workflow_dispatch:
 
 permissions:
@@ -32,13 +32,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: clang-retro-docs
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            clang-retro-docs
+            clang/lib/Driver/ToolChains/MSDOS.h
+            clang/lib/Driver/ToolChains/MSDOS.cpp
+            clang/lib/Driver/ToolChains/OS2.h
+            clang/lib/Driver/ToolChains/OS2.cpp
+            clang/lib/Driver/ToolChains/AmigaOS.h
+            clang/lib/Driver/ToolChains/AmigaOS.cpp
+            clang/lib/Driver/ToolChains/AtariTOS.h
+            clang/lib/Driver/ToolChains/AtariTOS.cpp
+            clang/lib/Driver/ToolChains/MacOSClassic.h
+            clang/lib/Driver/ToolChains/MacOSClassic.cpp
+            llvm/tools/llvm-elf2hunk
+            llvm/tools/llvm-elf2tos
+            llvm/lib/MC/OMFObjectWriter.cpp
+            llvm/lib/MC/MCOMFStreamer.cpp
+            llvm/include/llvm/MC/MCOMFObjectWriter.h
+            llvm/include/llvm/MC/MCOMFStreamer.h
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: clang-retro-docs/.docs/requirements.txt
+      - run: sudo apt-get install -y --no-install-recommends doxygen
       - run: pip install -r clang-retro-docs/.docs/requirements.txt
       - run: mkdocs build --strict -f clang-retro-docs/mkdocs.yml
       - name: Is GitHub Pages on?
