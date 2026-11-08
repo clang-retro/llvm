@@ -143,7 +143,9 @@ void os2::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     SmallVector<StringRef, 5> Names;
     if (TC.ShouldLinkCXXStdlib(Args))
       Names.append({"c++", "c++abi", "unwind"});
-    Names.append({"c", "clang_rt.builtins"});
+    // libos2.a (the OS/2 SDK's): the thunk into the 16-bit Vio, Kbd and Mou
+    // calls, and their stubs.
+    Names.append({"os2", "c", "clang_rt.builtins"});
     for (StringRef Name : Names)
       if (std::optional<std::string> Path = findLibrary(TC, Args, Name)) {
         CmdArgs.push_back("library");
