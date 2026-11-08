@@ -175,8 +175,14 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   bool IsCOM = !Win16 && !OS2 && TC.getMemoryModel() == "tiny";
   if (IsCOM)
     CmdArgs.push_back("com");
-  if (IsDLL)
+  if (IsDLL) {
     CmdArgs.push_back("dll");
+    // An OS/2 DLL is initialized for each process that loads it, and each
+    // process gets its own DGROUP (below), so that the C library in the DLL
+    // keeps a state for each.
+    if (OS2)
+      CmdArgs.push_back("initinstance");
+  }
   // An OS/2 program runs in a window of the Presentation Manager, as
   // text-mode programs that keep to the VIO subset do (-mwindows for a PM
   // program).
@@ -253,6 +259,8 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     if (!IsDLL) {
       CmdArgs.push_back("option");
       CmdArgs.push_back("stack=8192");
+    } else {
+      CmdArgs.append({"option", "manyautodata"});
     }
     CmdArgs.append({"option", "protmode"});
   }

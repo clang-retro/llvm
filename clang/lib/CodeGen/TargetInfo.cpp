@@ -403,7 +403,12 @@ public:
     auto *Fn = dyn_cast<llvm::Function>(GV);
     if (!FD || !Fn)
       return;
-    if (FD->hasAttr<I8086LoadDSAttr>())
+    // OS/2 1.x does not load a DLL's data segment for the functions it
+    // exports, as Windows does through the entry sequence: they load it
+    // themselves, as with __loadds.
+    if (FD->hasAttr<I8086LoadDSAttr>() ||
+        (CGM.getCodeGenOpts().WindowsDLL && FD->hasAttr<DLLExportAttr>() &&
+         CGM.getTriple().isOSOS2()))
       Fn->addFnAttr("i8086-loadds");
     StringRef Prologue = CGM.getCodeGenOpts().WindowsPrologue;
     if (Prologue == "all" ||

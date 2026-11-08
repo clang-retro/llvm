@@ -21,6 +21,19 @@
 // NEPM: "format" "os2" "pm"
 // NEPM-SAME: "file" "{{.*}}os2{{/|\\\\}}large{{/|\\\\}}crt0.obj"
 
+// A DLL: initialized for each process, with a DGROUP for each, and the
+// libraries for code that runs with SS != DS.
+// RUN: %clang --target=i8086-pc-os2 --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -shared -### %s -o MYLIB.DLL 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=NEDLL
+// NEDLL:      "-cc1" "-triple" "i8086-pc-os2"
+// NEDLL-SAME: "-mwindows-dll"
+// NEDLL:      "format" "os2" "dll" "initinstance" "option"
+// NEDLL-NOT:  "stack=
+// NEDLL-SAME: "option" "manyautodata" "option" "protmode"
+// NEDLL-SAME: "file" "{{.*}}os2{{/|\\\\}}small{{/|\\\\}}libentry.obj"
+// NEDLL-SAME: "library" "{{.*}}os2{{/|\\\\}}small{{/|\\\\}}dll{{/|\\\\}}libc.lib"
+
 // Protected mode has no segment arithmetic, so no tiny or huge model.
 // RUN: not %clang --target=i8086-pc-os2 -mcmodel=huge -### -c %s 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=HUGE
