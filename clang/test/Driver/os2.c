@@ -81,3 +81,12 @@
 // RUN: %clang --target=i686-pc-os2 -### -c %s 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=I686
 // I686: "-target-cpu" "pentiumpro"
+
+// 32-bit C++ has exceptions, unwound through SjLj function contexts, and
+// __thread variables use emulated TLS.
+// RUN: %clangxx --target=i386-pc-os2 -### -c -x c++ %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CXX32
+// CXX32: "-cc1"
+// CXX32-SAME: "-femulated-tls"
+// CXX32-SAME: "-fcxx-exceptions"
+// CXX32-SAME: "-exception-model=sjlj"

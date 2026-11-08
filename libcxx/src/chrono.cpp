@@ -34,10 +34,11 @@
 #  define _LIBCPP_HAS_TIMESPEC_GET
 #endif
 
-// OpenBSD and GPU do not have a fully conformant suite of POSIX timers, but
-// it does have clock_gettime and CLOCK_MONOTONIC which is all we need.
+// OpenBSD, 32-bit OS/2 and GPU do not have a fully conformant suite of POSIX
+// timers, but they do have clock_gettime and CLOCK_MONOTONIC which is all we
+// need.
 #if defined(__APPLE__) || defined(__gnu_hurd__) || defined(__OpenBSD__) || defined(__AMDGPU__) ||                      \
-    defined(__NVPTX__) || (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
+    defined(__NVPTX__) || (defined(__OS2__) && defined(__i386__)) || (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
 #  define _LIBCPP_HAS_CLOCK_GETTIME
 #endif
 
