@@ -1,0 +1,30 @@
+# The documentation site of the clang-retro additions to LLVM:
+# https://clang-retro.github.io/llvm/
+# Build it with `pip install -r .docs/requirements.txt` and `mkdocs serve`
+# in this directory.
+INHERIT: .docs/base.yml
+site_name: clang-retro LLVM
+site_description: What the clang-retro fork adds to LLVM and clang
+site_url: https://clang-retro.github.io/llvm/
+repo_url: https://github.com/clang-retro/llvm
+repo_name: clang-retro/llvm
+edit_uri: ""
+copyright: Copyright &copy; clang-retro contributors &middot; Apache-2.0 WITH LLVM-exception
+hooks:
+  - .docs/hooks.py
+
+extra:
+  retro:
+    root: ..
+    github: clang-retro/llvm
+    branch: main
+
+nav:
+  - Home: index.md
+  - Targets: targets.md
+  - The 8086 backend: i8086.md
+  - 68k: m68k.md
+  - PowerPC: powerpc.md
+  - Tools: tools.md
+  - Building: building.md
+  - All clang-retro projects: https://clang-retro.github.io/dos-sdk/projects/
