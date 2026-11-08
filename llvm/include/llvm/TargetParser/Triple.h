@@ -1387,9 +1387,9 @@ public:
 
   /// Tests if the environment supports dllimport/export annotations.
   /// i8086 has them for 16-bit Windows (__export), whose linkers take OMF
-  /// export records.
+  /// export records, and OS/2 for the -export: directives JWlink reads.
   bool hasDLLImportExport() const {
-    return isOSWindows() || isPS() || getArch() == Triple::i8086;
+    return isOSWindows() || isPS() || getArch() == Triple::i8086 || isOSOS2();
   }
 
   /// @}

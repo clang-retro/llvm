@@ -920,6 +920,10 @@ protected:
     Builder.defineMacro("__OS2__");
     Builder.defineMacro("__32BIT__");
     Builder.defineMacro("__FLAT__");
+    // Functions and variables exported from a DLL: __export as in Open
+    // Watcom, _Export as in VisualAge C++.
+    Builder.defineMacro("__export", "__attribute__((dllexport))");
+    Builder.defineMacro("_Export", "__attribute__((dllexport))");
     if (Opts.C11)
       Builder.defineMacro("__STDC_NO_THREADS__");
   }
