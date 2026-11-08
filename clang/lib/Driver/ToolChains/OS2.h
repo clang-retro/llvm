@@ -39,6 +39,12 @@ public:
   }
   const char *getDefaultLinker() const override { return "wlink"; }
   bool IsIntegratedAssemblerDefault() const override { return true; }
+  // C++ exceptions unwind through setjmp/longjmp-style function contexts,
+  // as in 16-bit code: an LX file keeps no .eh_frame for an unwinder.
+  llvm::ExceptionHandling
+  GetExceptionModel(const llvm::opt::ArgList &Args) const override {
+    return llvm::ExceptionHandling::SjLj;
+  }
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,

@@ -43,7 +43,13 @@ describes the models, the keywords and the C library in detail.
 
 `i386-pc-os2` compiles to ELF objects and links them with JWlink's
 `format os2 lx`. `-mwindows` marks a Presentation Manager program, and
-`-shared` makes a DLL.
+`-shared` makes a DLL. `__thread` and `thread_local` variables use
+emulated TLS (`__emutls_get_address`, in the C library), and C++
+exceptions use SjLj function contexts, since an LX program keeps no
+`.eh_frame` for a table-driven unwinder. On an 80386, which has no
+`CMPXCHG` or `XADD`, atomics go through the `__sync_*` functions of the
+builtins library, which yield to the other threads with `DosSleep` while
+they wait.
 
 ## Windows
 

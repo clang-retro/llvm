@@ -1366,8 +1366,10 @@ public:
   /// an older Windows version (such as windows5.1, Windows XP) use emulated
   /// TLS, as GCC does.
   bool hasDefaultEmulatedTLS() const {
+    // OS/2 has no TLS of its own for ELF objects: the C library keeps
+    // __thread variables in per-thread memory (__emutls_get_address).
     return (isAndroid() && isAndroidVersionLT(29)) || isOSOpenBSD() ||
-           isWindowsCygwinEnvironment() || isOHOSFamily() ||
+           isWindowsCygwinEnvironment() || isOHOSFamily() || isOSOS2() ||
            (isWindowsGNUEnvironment() && getOSMajorVersion() != 0 &&
             getOSMajorVersion() < 6);
   }

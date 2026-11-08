@@ -24,6 +24,8 @@
 
 #ifdef _WIN32
 __declspec(dllimport) void __stdcall Sleep(unsigned long);
+#elif defined(__OS2__)
+unsigned long DosSleep(unsigned long);
 #endif
 
 // 0 until checked, then 1 on an 80386 and 2 on an 80486 or later.
@@ -71,6 +73,9 @@ static void lock(void) {
 #ifdef _WIN32
       // A uniprocessor 80386 only gets the lock back once its owner runs.
       Sleep(waits < 16 ? 0 : 1);
+      ++waits;
+#elif defined(__OS2__)
+      DosSleep(waits < 16 ? 0 : 1);
       ++waits;
 #else
       __asm__ volatile("rep; nop" ::: "memory");
