@@ -480,9 +480,12 @@ M68kTargetLowering::LowerMemArgument(SDValue Chain, CallingConv::ID CallConv,
     ValVT = VA.getValVT();
 
   // Because we are dealing with BE architecture we need to offset loading of
-  // partial types
+  // partial types. Pascal gives a byte or a short a word of its own, with a
+  // byte in the high byte, so it starts the slot.
   int Offset = VA.getLocMemOffset();
-  if (VA.getValVT() == MVT::i8) {
+  if (CallConv == CallingConv::M68k_Pascal) {
+    // No adjustment.
+  } else if (VA.getValVT() == MVT::i8) {
     Offset += 3;
   } else if (VA.getValVT() == MVT::i16) {
     Offset += 2;
@@ -1219,6 +1222,14 @@ M68kTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CCID,
     if (OutVals.size() != 1)
       report_fatal_error("Pascal function results must fit in 4 bytes");
     SDValue Val = OutVals[0];
+    // A byte or short result comes here extended to 32 bits when it is
+    // signext or zeroext; store only its own size, as its slot is a word.
+    Type *RetTy = MF.getFunction().getReturnType();
+    if (RetTy->isIntegerTy() && RetTy->getIntegerBitWidth() < 32) {
+      MVT VT = RetTy->getIntegerBitWidth() <= 8 ? MVT::i8 : MVT::i16;
+      if (VT.bitsLT(Val.getSimpleValueType()))
+        Val = DAG.getNode(ISD::TRUNCATE, DL, VT, Val);
+    }
     if (Val.getValueType() == MVT::i1)
       Val = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i8, Val);
     unsigned Slot = Val.getValueType().getStoreSize() <= 2 ? 2 : 4;
