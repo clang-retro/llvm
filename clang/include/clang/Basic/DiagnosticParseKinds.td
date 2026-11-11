@@ -514,6 +514,9 @@ def err_unexpected_token_in_nested_name_spec : Error<
   "'%0' cannot be a part of nested name specifier; did you mean ':'?">;
 def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
+def warn_wchar_t_typedef_in_system_header : Warning<
+  "redeclaration of C++ built-in type 'wchar_t' in a system header ignored">,
+  InGroup<DiagGroup<"wchar-t-typedef">>;
 def warn_cxx98_compat_static_assert : Warning<
   "'static_assert' declarations are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
