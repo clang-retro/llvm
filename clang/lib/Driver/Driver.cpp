@@ -31,6 +31,7 @@
 #include "ToolChains/Haiku.h"
 #include "ToolChains/Hexagon.h"
 #include "ToolChains/Hurd.h"
+#include "ToolChains/IRIX.h"
 #include "ToolChains/LFILinux.h"
 #include "ToolChains/Lanai.h"
 #include "ToolChains/Linux.h"
@@ -6229,6 +6230,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       break;
     case llvm::Triple::TOS:
       TC = std::make_unique<toolchains::AtariTOS>(*this, Target, Args);
+      break;
+    case llvm::Triple::IRIX:
+      TC = std::make_unique<toolchains::IRIX>(*this, Target, Args);
       break;
     case llvm::Triple::Darwin:
     case llvm::Triple::MacOSX:

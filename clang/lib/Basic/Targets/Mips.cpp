@@ -93,14 +93,30 @@ void MipsTargetInfo::getTargetDefines(const LangOptions &Opts,
   if (Opts.GNUMode)
     Builder.defineMacro("mips");
 
+  // IRIX's <sgidefs.h> only knows _MIPS_ISA_MIPS1 to _MIPS_ISA_MIPS4, so
+  // there, as with gcc, the MIPS I to V CPUs give their own ISA level.
+  StringRef LegacyISA;
+  if (getTriple().isOSIRIX())
+    LegacyISA = llvm::StringSwitch<StringRef>(CPU)
+                    .Case("mips1", "1")
+                    .Case("mips2", "2")
+                    .Case("mips3", "3")
+                    .Case("mips4", "4")
+                    .Case("mips5", "5")
+                    .Default("");
+
   if (ABI == "o32") {
-    Builder.defineMacro("__mips", "32");
-    Builder.defineMacro("_MIPS_ISA", "_MIPS_ISA_MIPS32");
+    Builder.defineMacro("__mips", LegacyISA.empty() ? "32" : LegacyISA);
+    Builder.defineMacro("_MIPS_ISA", LegacyISA.empty()
+                                         ? Twine("_MIPS_ISA_MIPS32")
+                                         : "_MIPS_ISA_MIPS" + LegacyISA);
   } else {
-    Builder.defineMacro("__mips", "64");
+    Builder.defineMacro("__mips", LegacyISA.empty() ? "64" : LegacyISA);
     Builder.defineMacro("__mips64");
     Builder.defineMacro("__mips64__");
-    Builder.defineMacro("_MIPS_ISA", "_MIPS_ISA_MIPS64");
+    Builder.defineMacro("_MIPS_ISA", LegacyISA.empty()
+                                         ? Twine("_MIPS_ISA_MIPS64")
+                                         : "_MIPS_ISA_MIPS" + LegacyISA);
   }
 
   const std::string ISARev = std::to_string(getISARev());

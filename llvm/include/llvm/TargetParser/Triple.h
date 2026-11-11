@@ -358,7 +358,8 @@ public:
     AmigaOS,      // Classic AmigaOS (1.x to 3.x) on 68k, Hunk executables
     TOS,          // Atari TOS (GEMDOS) on 68k, PRG executables
     OS2,          // OS/2: 1.x on i8086 (NE), 2.0 and later on i386 (LX)
-    LastOSType = OS2
+    IRIX,         // SGI IRIX 5.x and 6.x on MIPS (o32, n32 and n64)
+    LastOSType = IRIX
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -779,6 +780,9 @@ public:
 
   /// Atari TOS (TOS 1.x to 4.x, EmuTOS) on 68k.
   bool isOSTOS() const { return getOS() == Triple::TOS; }
+
+  /// SGI IRIX (5.x o32, 6.x o32/n32/n64) on MIPS.
+  bool isOSIRIX() const { return getOS() == Triple::IRIX; }
 
   /// OS/2: 16-bit OS/2 1.x (i8086, NE executables) or 32-bit OS/2 2.0 and
   /// later (i386, LX executables).

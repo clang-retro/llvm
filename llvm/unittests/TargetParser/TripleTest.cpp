@@ -147,6 +147,18 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_FALSE(T.isOSAmigaOS());
   EXPECT_EQ("m68k-unknown-tos", Triple::normalize("m68k-tos"));
 
+  T = Triple("mips-sgi-irix6.5");
+  EXPECT_EQ(Triple::mips, T.getArch());
+  EXPECT_EQ(Triple::IRIX, T.getOS());
+  EXPECT_EQ(Triple::ELF, T.getObjectFormat());
+  EXPECT_TRUE(T.isOSIRIX());
+  EXPECT_EQ(VersionTuple(6, 5), T.getOSVersion());
+
+  T = Triple("mips64-sgi-irix6.5");
+  EXPECT_EQ(Triple::mips64, T.getArch());
+  EXPECT_TRUE(T.isOSIRIX());
+  EXPECT_EQ("mips-unknown-irix5.3", Triple::normalize("mips-irix5.3"));
+
   T = Triple("powerpc-apple-macosclassic");
   EXPECT_EQ(Triple::ppc, T.getArch());
   EXPECT_EQ(Triple::Apple, T.getVendor());
@@ -4159,6 +4171,7 @@ TEST(TripleTest, X86_16) {
   EXPECT_EQ("msdos", Triple::getOSTypeName(Triple::MSDOS));
   EXPECT_EQ("win16", Triple::getOSTypeName(Triple::Win16));
   EXPECT_EQ("os2", Triple::getOSTypeName(Triple::OS2));
+  EXPECT_EQ("irix", Triple::getOSTypeName(Triple::IRIX));
   EXPECT_EQ("macosclassic", Triple::getOSTypeName(Triple::MacOSClassic));
   EXPECT_EQ("omf", Triple::getObjectFormatTypeName(Triple::OMF));
   EXPECT_EQ(Triple::i8086, Triple::getArchTypeForLLVMName("i8086"));

@@ -19,6 +19,7 @@ puts it.
 | Classic Mac OS, 68k | `m68k-apple-macos` | ELF | `<triple>-ld` (Retro68) | application | [mac-sdk](https://clang-retro.github.io/mac-sdk/) |
 | Classic Mac OS, PowerPC | `powerpc-apple-macos9` | ELF | `<triple>-ld` (Retro68) | PEF application | [mac-sdk](https://clang-retro.github.io/mac-sdk/) |
 | Mac OS X 10.0 to 10.5, PowerPC | `powerpc-apple-darwin`, `powerpc-apple-macosx10.X` | Mach-O | `ld64` | Mach-O | [dos-sdk: Mac OS X](https://clang-retro.github.io/dos-sdk/mac/macosx/) |
+| SGI IRIX 5.3 and 6.x, MIPS | `mips-sgi-irix6.5` (o32), `mips64-sgi-irix6.5` with `-mabi=n32` or `-mabi=64` | ELF | lld | ELF program | [picolibc: IRIX](https://clang-retro.github.io/picolibc/irix/) |
 
 ## MS-DOS, 16-bit Windows and OS/2 1.x
 
@@ -90,3 +91,28 @@ their trap words with `__attribute__((raw_inline(...)))`.
 
 The fork restores 32-bit PowerPC Darwin code generation, which upstream
 LLVM dropped, and links programs the way Mac OS X 10.0 needs.
+
+## SGI IRIX
+
+`mips-sgi-irix` compiles for the o32 ABI and `mips64-sgi-irix` for the
+64-bit ABI, or for n32 with `-mabi=n32`. The default CPU is MIPS II for
+o32 (`-march=mips1` for an R3000 under IRIX 5) and MIPS III for n32 and 64.
+Code is PIC by default, as with SGI's compilers, and objects have no
+`.MIPS.abiflags` section, which IRIX's tools predate. clang defines what
+the IRIX headers expect: `__sgi`, `_SGI_SOURCE` (outside strict ANSI
+modes), `_SYSTYPE_SVR4`, `_LANGUAGE_C`, `_MIPS_SIM`, and `_MIPS_ISA` as
+`_MIPS_ISA_MIPS1` to `_MIPS_ISA_MIPS4`.
+
+The sysroot (by default `mips-sgi-irix/` next to `bin/`) is laid out like
+an IRIX system: `usr/include`, and `usr/lib`, `usr/lib32` or `usr/lib64`
+for o32, n32 and 64. Programs are linked with lld at SGI's addresses
+(0x400000 for o32, 0x10000000 for n32 and 64), with `crt1.o`, `-lc`,
+the builtins and `crtn.o` if the sysroot has one. They link dynamically
+against `/usr/lib/rld` (or `lib32`, `lib64`) unless `-static` is given.
+
+- With picolibc's IRIX layer, `-static` programs need no SGI files.
+- Linking against IRIX's own `libc.so.1` needs a sysroot made from IRIX
+  media, and is not tested yet.
+- `long double` is IEEE quad on n32 and 64, where SGI's compilers use a
+  pair of doubles, so `long double` data and calls don't match MIPSpro
+  code yet.
