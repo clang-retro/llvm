@@ -373,6 +373,8 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_include_next = RegisterBuiltinMacro("__has_include_next");
   Ident__has_warning = RegisterBuiltinMacro("__has_warning");
   Ident__is_identifier = RegisterBuiltinMacro("__is_identifier");
+  Ident__starts_with_ampersand =
+      RegisterBuiltinMacro("__starts_with_ampersand");
   Ident__is_target_arch = RegisterBuiltinMacro("__is_target_arch");
   Ident__is_target_vendor = RegisterBuiltinMacro("__is_target_vendor");
   Ident__is_target_os = RegisterBuiltinMacro("__is_target_os");
@@ -1854,6 +1856,43 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       [](Token &Tok, bool &HasLexedNextToken) -> int {
         return Tok.is(tok::identifier);
       });
+  } else if (II == Ident__starts_with_ampersand) {
+    // clang-retro: whether the (macro-expanded) tokens in the parentheses
+    // begin with '&'. Any balanced tokens may follow. MFC's message map
+    // macros use it to take both a plain handler name (OnAbout) and a
+    // pointer to member (&CMyApp::OnAbout).
+    LexUnexpandedToken(Tok);
+    if (Tok.isNot(tok::l_paren)) {
+      Diag(Tok.getLocation(), diag::err_pp_expected_after)
+          << II << tok::l_paren;
+      if (!Tok.isOneOf(tok::eof, tok::eod)) {
+        OS << 0;
+        Tok.setKind(tok::numeric_constant);
+      }
+    } else {
+      SourceLocation LParenLoc = Tok.getLocation();
+      bool Result = false;
+      bool First = true;
+      unsigned ParenDepth = 1;
+      while (true) {
+        Lex(Tok);
+        if (Tok.isOneOf(tok::eof, tok::eod)) {
+          Diag(Tok.getLocation(), diag::err_unterm_macro_invoc);
+          Diag(LParenLoc, diag::note_matching) << tok::l_paren;
+          break;
+        }
+        if (First)
+          Result = Tok.is(tok::amp);
+        First = false;
+        if (Tok.is(tok::l_paren)) {
+          ++ParenDepth;
+        } else if (Tok.is(tok::r_paren) && --ParenDepth == 0) {
+          OS << (int)Result;
+          Tok.setKind(tok::numeric_constant);
+          break;
+        }
+      }
+    }
   } else if (II == Ident__has_attribute) {
     EvaluateFeatureLikeBuiltinMacro(OS, Tok, II, *this, true,
       [this](Token &Tok, bool &HasLexedNextToken) -> int {
