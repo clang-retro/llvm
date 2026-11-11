@@ -156,6 +156,22 @@ private:
 #ifdef __APPLE__
   static void dyldUnloadHook(const struct mach_header *mh, intptr_t slide);
   static bool _registeredForDyldUnloads;
+#if defined(__ppc__)
+  // Mac OS X before 10.4 declares the hook as taking a non-const header and
+  // an unsigned long slide. Overloading on the type of
+  // _dyld_register_func_for_remove_image picks the form the SDK declares.
+  static void dyldUnloadHookOld(struct mach_header *mh, unsigned long) {
+    removeAllIn((pint_t)mh);
+  }
+  static void registerUnloadHook(
+      void (*reg)(void (*)(const struct mach_header *, intptr_t))) {
+    reg(&dyldUnloadHook);
+  }
+  static void
+  registerUnloadHook(void (*reg)(void (*)(struct mach_header *, unsigned long))) {
+    reg(&dyldUnloadHookOld);
+  }
+#endif
 #endif
   static entry *_buffer;
   static entry *_bufferUsed;
@@ -228,7 +244,11 @@ void DwarfFDECache<A>::add(pint_t mh, pint_t ip_start, pint_t ip_end,
   ++_bufferUsed;
 #ifdef __APPLE__
   if (!_registeredForDyldUnloads) {
+#if defined(__ppc__)
+    registerUnloadHook(&_dyld_register_func_for_remove_image);
+#else
     _dyld_register_func_for_remove_image(&dyldUnloadHook);
+#endif
     _registeredForDyldUnloads = true;
   }
 #endif

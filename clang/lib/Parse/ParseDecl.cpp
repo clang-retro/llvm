@@ -4447,6 +4447,20 @@ void Parser::ParseDeclarationSpecifiers(
                                      DiagID, Policy);
       break;
     case tok::kw_wchar_t:
+      // Old C headers declare 'typedef int wchar_t;' with no C++ guard, as
+      // Mac OS X 10.0's <stdlib.h> does. In a system header, warn and
+      // declare an ordinary typedef that the keyword never finds, as GCC
+      // did, rather than reject the header.
+      if (getLangOpts().CPlusPlus &&
+          DS.getTypeSpecType() != DeclSpec::TST_unspecified &&
+          DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
+          PP.getSourceManager().isInSystemHeader(Loc)) {
+        PrevSpec = ""; // Not used by the diagnostic.
+        DiagID = diag::warn_wchar_t_typedef_in_system_header;
+        Tok.setKind(tok::identifier);
+        isInvalid = true;
+        break;
+      }
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
@@ -4769,7 +4783,9 @@ void Parser::ParseDeclarationSpecifiers(
         Diag(Loc, DiagID) << PrevSpec;
     }
 
-    if (DiagID != diag::err_bool_redeclaration && ConsumedEnd.isInvalid())
+    if (DiagID != diag::err_bool_redeclaration &&
+        DiagID != diag::warn_wchar_t_typedef_in_system_header &&
+        ConsumedEnd.isInvalid())
       // After an error the next token can be an annotation token.
       ConsumeAnyToken();
 

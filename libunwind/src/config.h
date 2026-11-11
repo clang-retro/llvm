@@ -161,11 +161,14 @@
     abort();                                                                   \
   } while (0)
 #else
+// Mac OS X 10.0 to 10.3 don't declare abort() noreturn, hence the
+// __builtin_unreachable().
 #define _LIBUNWIND_ABORT(msg)                                                  \
   do {                                                                         \
     fprintf(stderr, "libunwind: %s - %s\n", __func__, msg);                    \
     fflush(stderr);                                                            \
     abort();                                                                   \
+    __builtin_unreachable();                                                   \
   } while (0)
 #endif
 
