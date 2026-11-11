@@ -338,15 +338,15 @@ namespace {
 /// an extern variable of unknown size (extern char buf[]), which may be one.
 ///
 /// The pointer to a returned aggregate is far in the far-data models, and in
-/// every model on 16-bit Windows. The result may be on the stack, and in a
-/// Windows DLL the stack segment is not DGROUP.
+/// every model on 16-bit Windows and OS/2 1.x. The result may be on the
+/// stack, and in a DLL the stack segment is not DGROUP.
 static bool isI8086FarDataModel(const TargetInfo &Target) {
   StringRef Model = Target.getABI();
   return Model == "compact" || Model == "large" || Model.starts_with("huge");
 }
 
 static bool hasI8086FarSRet(const TargetInfo &Target) {
-  return isI8086FarDataModel(Target) || Target.getTriple().isOSWin16();
+  return isI8086FarDataModel(Target) || Target.getTriple().isOSNE16();
 }
 
 class I8086ABIInfo : public DefaultABIInfo {
@@ -403,7 +403,12 @@ public:
     auto *Fn = dyn_cast<llvm::Function>(GV);
     if (!FD || !Fn)
       return;
-    if (FD->hasAttr<I8086LoadDSAttr>())
+    // OS/2 1.x does not load a DLL's data segment for the functions it
+    // exports, as Windows does through the entry sequence: they load it
+    // themselves, as with __loadds.
+    if (FD->hasAttr<I8086LoadDSAttr>() ||
+        (CGM.getCodeGenOpts().WindowsDLL && FD->hasAttr<DLLExportAttr>() &&
+         CGM.getTriple().isOSOS2()))
       Fn->addFnAttr("i8086-loadds");
     StringRef Prologue = CGM.getCodeGenOpts().WindowsPrologue;
     if (Prologue == "all" ||

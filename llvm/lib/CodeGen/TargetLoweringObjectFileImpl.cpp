@@ -396,6 +396,24 @@ void TargetLoweringObjectFileELF::emitLinkerDirectives(MCStreamer &Streamer,
       }
     }
   }
+
+  // OS/2 (LX) DLLs: an -export: directive for each exported global, in a
+  // .drectve note section that JWlink reads from ELF objects, as COFF
+  // linkers read /EXPORT: from theirs.
+  if (C.getTargetTriple().isOSOS2()) {
+    std::string Flags;
+    raw_string_ostream OS(Flags);
+    for (const GlobalValue &GV : M.global_values()) {
+      if (!GV.hasDLLExportStorageClass() || GV.isDeclaration())
+        continue;
+      OS << " -export:";
+      getMangler().getNameWithPrefix(OS, &GV, false);
+    }
+    if (!Flags.empty()) {
+      Streamer.switchSection(C.getELFSection(".drectve", ELF::SHT_NOTE, 0));
+      Streamer.emitBytes(Flags);
+    }
+  }
 }
 
 MCSymbol *TargetLoweringObjectFileELF::getCFIPersonalitySymbol(

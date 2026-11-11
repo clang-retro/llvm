@@ -90,3 +90,38 @@ define void @pressure(ptr %p) {
   store volatile i32 %ve, ptr %p
   ret void
 }
+
+; Toolbox callbacks are Pascal functions too. A byte or short argument
+; takes a word of its own (a byte in its high byte), not the low end of a
+; long as in C, and a byte or short result is stored in its own size in
+; its word: a Boolean goes in the high byte, where the caller reads it.
+; CHECK-LABEL: breakAt:
+; CHECK-DAG:     cmpi.w #3, (4,%sp)
+; CHECK-DAG:     cmpi.l #0, (6,%sp)
+; CHECK:         move.b %d1, (10,%sp)
+; CHECK-NEXT:    move.l (%sp), %a1
+; CHECK-NEXT:    adda.l #6, %sp
+define m68k_pascalcc zeroext i1 @breakAt(ptr %text, i16 signext %pos) {
+  %big = icmp sgt i16 %pos, 3
+  %set = icmp ne ptr %text, null
+  %r = and i1 %big, %set
+  ret i1 %r
+}
+
+; CHECK-LABEL: next:
+; CHECK:         add.w (4,%sp), %d0
+; CHECK-NEXT:    move.w %d0, (6,%sp)
+; CHECK-NEXT:    move.l (%sp), %a1
+; CHECK-NEXT:    adda.l #2, %sp
+define m68k_pascalcc signext i16 @next(i16 signext %c) {
+  %r = add i16 %c, 1
+  ret i16 %r
+}
+
+; CHECK-LABEL: nextChar:
+; CHECK:         add.b (4,%sp), %d0
+; CHECK-NEXT:    move.b %d0, (6,%sp)
+define m68k_pascalcc signext i8 @nextChar(i8 signext %c) {
+  %r = add i8 %c, 1
+  ret i8 %r
+}

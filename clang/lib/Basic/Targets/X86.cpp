@@ -1079,7 +1079,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__MMX__");
   }
 
-  if (CPU >= CK_i486 || CPU == CK_None) {
+  // An 80386 has no CMPXCHG, but on Windows compiler-rt's builtins have the
+  // __sync_* functions it calls instead. This keeps the MinGW headers from
+  // importing InterlockedCompareExchange, which only NT 4.0 and later have.
+  if (CPU >= CK_i486 || CPU == CK_None || getTriple().isOSWindows()) {
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4");
@@ -2025,5 +2028,9 @@ void X86_16TargetInfo::getTargetDefines(const LangOptions &Opts,
         V.getMajor() ? (V.getMajor() << 8) | V.getMinor().value_or(0) : 0x030A;
     Builder.defineMacro("__WIN16_VERSION__",
                         "0x" + llvm::utohexstr(Ver, false, 4));
+  }
+  // 16-bit OS/2 1.x, as Open Watcom (__OS2__) and Microsoft C define it.
+  if (getTriple().isOSOS2()) {
+    Builder.defineMacro("__OS2__");
   }
 }
