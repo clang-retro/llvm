@@ -1029,7 +1029,10 @@ void MipsTargetELFStreamer::finish() {
   MipsELFStreamer &MEF = static_cast<MipsELFStreamer &>(Streamer);
   MEF.EmitMipsOptionRecords();
 
-  emitMipsAbiFlags();
+  // IRIX predates .MIPS.abiflags. Its linkers and kernel only know the
+  // ELF header flags and .reginfo/.MIPS.options, so leave the section out.
+  if (!STI.getTargetTriple().isOSIRIX())
+    emitMipsAbiFlags();
 }
 
 void MipsTargetELFStreamer::emitAssignment(MCSymbol *S, const MCExpr *Value) {

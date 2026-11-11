@@ -49,6 +49,13 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
     DefMips64CPU = "mips3";
   }
 
+  // IRIX: MIPS II for o32 (any R4000 or later; IRIX 5 also ran on the
+  // R3000, which needs -march=mips1), MIPS III for n32 and 64 (R4000 on).
+  if (Triple.isOSIRIX()) {
+    DefMips32CPU = "mips2";
+    DefMips64CPU = "mips3";
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ, options::OPT_mcpu_EQ))
     CPUName = A->getValue();
 

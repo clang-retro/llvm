@@ -909,6 +909,57 @@ public:
       : OSTargetInfo<Target>(Triple, Opts) {}
 };
 
+// SGI IRIX 5.x and 6.x on MIPS.
+template <typename Target>
+class LLVM_LIBRARY_VISIBILITY IRIXTargetInfo : public OSTargetInfo<Target> {
+protected:
+  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                    MacroBuilder &Builder) const override {
+    // What gcc for mips-sgi-irix6 defined, which is in turn what SGI's own
+    // compilers defined and what the IRIX headers test for.
+    DefineStd(Builder, "unix", Opts);
+    DefineStd(Builder, "sgi", Opts);
+    DefineStd(Builder, "host_mips", Opts);
+    DefineStd(Builder, "SYSTYPE_SVR4", Opts);
+    Builder.defineMacro("_SYSTYPE_SVR4");
+    Builder.defineMacro("_SVR4_SOURCE");
+    Builder.defineMacro("_MODERN_C");
+    Builder.defineMacro("__DSO__");
+    Builder.defineMacro("_LONGLONG");
+    Builder.defineMacro("__ELF__");
+    if (Opts.CPlusPlus) {
+      Builder.defineMacro("_LANGUAGE_C_PLUS_PLUS");
+      Builder.defineMacro("__LANGUAGE_C_PLUS_PLUS");
+    } else {
+      DefineStd(Builder, "LANGUAGE_C", Opts);
+      Builder.defineMacro("_LANGUAGE_C");
+    }
+    // Strict ANSI mode hides the SGI extensions in the headers.
+    if (Opts.GNUMode)
+      Builder.defineMacro("_SGI_SOURCE");
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_REENTRANT");
+  }
+
+public:
+  IRIXTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
+      : OSTargetInfo<Target>(Triple, Opts) {
+    // <stddef.h> on IRIX: wchar_t is long where long is 32 bits (o32, n32)
+    // and int in the 64-bit ABI.
+    this->WCharType = Triple.isMIPS64() && !Triple.isABIN32()
+                          ? TargetInfo::SignedInt
+                          : TargetInfo::SignedLong;
+  }
+
+  bool setABI(const std::string &Name) override {
+    if (!Target::setABI(Name))
+      return false;
+    this->WCharType =
+        Name == "n64" ? TargetInfo::SignedInt : TargetInfo::SignedLong;
+    return true;
+  }
+};
+
 // 32-bit OS/2 (2.0 and later, LX executables)
 template <typename Target>
 class LLVM_LIBRARY_VISIBILITY OS2TargetInfo : public OSTargetInfo<Target> {
