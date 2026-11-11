@@ -230,6 +230,7 @@ class Preprocessor {
   IdentifierInfo *Ident__has_include_next;         // __has_include_next
   IdentifierInfo *Ident__has_warning;              // __has_warning
   IdentifierInfo *Ident__is_identifier;            // __is_identifier
+  IdentifierInfo *Ident__starts_with_ampersand;    // __starts_with_ampersand
   IdentifierInfo *Ident__building_module;          // __building_module
   IdentifierInfo *Ident__MODULE__;                 // __MODULE__
   IdentifierInfo *Ident__has_cpp_attribute;        // __has_cpp_attribute
