@@ -6,7 +6,9 @@
 # A push to main builds both hosts and publishes the LLVM tools in the
 # llvm-prebuilt release (llvm-HOST-COMMIT-SCRIPTHASH.tar.zst), where the
 # toolchain workflows of dos-sdk, picolibc and JWlink find them instead of
-# building this commit again.
+# building this commit again. Running the workflow by hand on main does the
+# same, for when dos-sdk's build script changed (a new SCRIPTHASH) or a
+# push's run failed before publishing.
 name: clang-dos toolchain
 
 on:
@@ -36,7 +38,7 @@ jobs:
     name: Publish the LLVM tools for the other repositories
     needs: toolchain
     # The LLVM builds are worth keeping even when a later job failed.
-    if: ${{ !cancelled() && github.event_name == 'push' && needs.toolchain.outputs.llvm_key != '' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.toolchain.outputs.llvm_key != '' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
