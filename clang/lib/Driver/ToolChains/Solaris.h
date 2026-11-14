@@ -70,7 +70,17 @@ public:
 
   const char *getDefaultLinker() const override;
 
+  /// Cross-compiling from another system (for clang-retro's Solaris SDK):
+  /// the sysroot defaults to <bin>/../sparc-sun-solaris (or
+  /// i386-pc-solaris), and programs are linked with ld.lld and the
+  /// compiler-rt builtins, with only the start files the sysroot has.
+  bool isCross() const { return IsCross; }
+  std::string computeSysRoot() const override;
+  RuntimeLibType GetDefaultRuntimeLibType() const override;
+
 protected:
+  bool IsCross;
+
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
 };
