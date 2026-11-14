@@ -1304,6 +1304,7 @@ DynamicSection<ELFT>::computeContents() {
     case EM_S390:
       addInSec(DT_PLTGOT, *ctx.in.got);
       break;
+    case EM_SPARC:
     case EM_SPARCV9:
       addInSec(DT_PLTGOT, *ctx.in.plt);
       break;
@@ -2449,7 +2450,7 @@ PltSection::PltSection(Ctx &ctx)
 
   // The PLT needs to be writable on SPARC as the dynamic linker will
   // modify the instructions in the PLT entries.
-  if (ctx.arg.emachine == EM_SPARCV9)
+  if (ctx.arg.emachine == EM_SPARC || ctx.arg.emachine == EM_SPARCV9)
     this->flags |= SHF_WRITE;
 }
 
@@ -4268,6 +4269,8 @@ template <typename ELFT> void elf::writeEhdr(Ctx &ctx, uint8_t *buf) {
   eHdr->e_ident[EI_OSABI] = ctx.arg.osabi;
   eHdr->e_ident[EI_ABIVERSION] = getAbiVersion(ctx);
   eHdr->e_machine = ctx.arg.emachine;
+  if (ctx.arg.emachine == EM_SPARC && (ctx.arg.eflags & EF_SPARC_32PLUS))
+    eHdr->e_machine = EM_SPARC32PLUS;
   eHdr->e_version = EV_CURRENT;
   eHdr->e_flags = ctx.arg.eflags;
   eHdr->e_ehsize = sizeof(typename ELFT::Ehdr);

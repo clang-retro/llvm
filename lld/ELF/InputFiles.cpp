@@ -500,6 +500,10 @@ template <class ELFT> void ELFFileBase::init(InputFile::Kind k) {
   // Initialize trivial attributes.
   const ELFFile<ELFT> &obj = getObj<ELFT>();
   emachine = obj.getHeader().e_machine;
+  // V8+ objects (EM_SPARC32PLUS) link with V8 ones; SPARC::calcEFlags makes
+  // the output EM_SPARC32PLUS when one of them is.
+  if (emachine == EM_SPARC32PLUS)
+    emachine = EM_SPARC;
   osabi = obj.getHeader().e_ident[llvm::ELF::EI_OSABI];
   abiVersion = obj.getHeader().e_ident[llvm::ELF::EI_ABIVERSION];
 
@@ -1791,6 +1795,8 @@ static uint16_t getBitcodeMachineKind(Ctx &ctx, StringRef path,
   case Triple::riscv32:
   case Triple::riscv64:
     return EM_RISCV;
+  case Triple::sparc:
+    return EM_SPARC;
   case Triple::sparcv9:
     return EM_SPARCV9;
   case Triple::systemz:

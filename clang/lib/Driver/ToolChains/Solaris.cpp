@@ -20,6 +20,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/TargetParser/Host.h"
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
@@ -40,7 +41,10 @@ bool solaris::isLinkerGnuLd(const ToolChain &TC, const ArgList &Args) {
   // Only used if targetting Solaris.
   const Arg *A = Args.getLastArg(options::OPT_fuse_ld_EQ);
   StringRef UseLinker = A ? A->getValue() : TC.getDriver().getPreferredLinker();
-  return UseLinker == "bfd" || UseLinker == "gld";
+  if (UseLinker.empty() &&
+      static_cast<const toolchains::Solaris &>(TC).isCross())
+    return true; // ld.lld, which takes GNU ld's options
+  return UseLinker == "bfd" || UseLinker == "gld" || UseLinker == "lld";
 }
 
 static bool getPIE(const ArgList &Args, const ToolChain &TC) {
@@ -62,6 +66,8 @@ std::string solaris::Linker::getLinkerPath(const ArgList &Args) const {
           llvm::sys::fs::can_execute(UseLinker))
         return std::string(UseLinker);
 
+      if (UseLinker == "lld")
+        return ToolChain.GetProgramPath("ld.lld");
       // Accept 'bfd' and 'gld' as aliases for the GNU linker.
       if (UseLinker == "bfd" || UseLinker == "gld")
         // FIXME: Could also use /usr/bin/gld here.
@@ -73,6 +79,10 @@ std::string solaris::Linker::getLinkerPath(const ArgList &Args) const {
             << A->getAsString(Args);
     }
   }
+
+  // Cross compiling, the default is ld.lld, found next to clang.
+  if (static_cast<const toolchains::Solaris &>(ToolChain).isCross())
+    return ToolChain.GetProgramPath(ToolChain.getDefaultLinker());
 
   // getDefaultLinker() always returns an absolute path.
   return ToolChain.getDefaultLinker();
@@ -88,7 +98,15 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const llvm::Triple::ArchType Arch = ToolChain.getArch();
   const bool IsPIE = getPIE(Args, ToolChain);
   const bool LinkerIsGnuLd = isLinkerGnuLd(ToolChain, Args);
+  const bool IsCross = ToolChain.isCross();
   ArgStringList CmdArgs;
+  // A cross sysroot has only the start files it needs (picolibc's crt1.o),
+  // where a Solaris system has crti.o, values-X*.o and GCC's crtbegin.o.
+  auto AddStartFile = [&](const char *Name) {
+    std::string P = ToolChain.GetFilePath(Name);
+    if (!IsCross || llvm::sys::fs::exists(P))
+      CmdArgs.push_back(Args.MakeArgString(P));
+  };
 
   // Demangle C++ names in errors.  GNU ld already defaults to --demangle.
   if (!LinkerIsGnuLd)
@@ -109,7 +127,9 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (Args.hasArg(options::OPT_static)) {
+  if (Args.hasArg(options::OPT_static) && IsCross) {
+    CmdArgs.push_back("-static");
+  } else if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
     CmdArgs.push_back("-dn");
   } else {
@@ -122,7 +142,25 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     Args.ClaimAllArgs(options::OPT_pthreads);
   }
 
-  if (LinkerIsGnuLd) {
+  if (LinkerIsGnuLd && IsCross) {
+    // ld.lld takes the format from the objects. Solaris's run-time linker
+    // and kernel know neither GNU hash tables nor PT_GNU_RELRO.
+    CmdArgs.push_back("--hash-style=sysv");
+    CmdArgs.push_back("--build-id=none");
+    CmdArgs.push_back("-z");
+    CmdArgs.push_back("norelro");
+    if (!Args.hasArg(options::OPT_static) &&
+        !Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_r)) {
+      CmdArgs.push_back("-dynamic-linker");
+      CmdArgs.push_back(
+          Arch == llvm::Triple::sparcv9  ? "/usr/lib/sparcv9/ld.so.1"
+          : Arch == llvm::Triple::x86_64 ? "/usr/lib/amd64/ld.so.1"
+                                         : "/usr/lib/ld.so.1");
+    }
+    if (Args.hasArg(options::OPT_rdynamic))
+      CmdArgs.push_back("-export-dynamic");
+    CmdArgs.push_back("--eh-frame-hdr");
+  } else if (LinkerIsGnuLd) {
     // Set the correct linker emulation for 32- and 64-bit Solaris.
     switch (Arch) {
     case llvm::Triple::x86:
@@ -163,9 +201,9 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles,
                    options::OPT_r)) {
     if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
+      AddStartFile("crt1.o");
 
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
+    AddStartFile("crti.o");
 
     const Arg *Std = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi);
     bool HaveAnsi = false;
@@ -180,20 +218,20 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     // Use values-Xc.o for -ansi, -std=c*, -std=iso9899:199409.
     if (HaveAnsi || (LangStd && !LangStd->isGNUMode()))
       values_X = "values-Xc.o";
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(values_X)));
+    AddStartFile(values_X);
 
     const char *values_xpg = "values-xpg6.o";
     // Use values-xpg4.o for -std=c90, -std=gnu90, -std=iso9899:199409.
     if (LangStd && LangStd->getLanguage() == Language::C && !LangStd->isC99())
       values_xpg = "values-xpg4.o";
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(values_xpg)));
+    AddStartFile(values_xpg);
 
     const char *crtbegin = nullptr;
     if (Args.hasArg(options::OPT_shared) || IsPIE)
       crtbegin = "crtbeginS.o";
     else
       crtbegin = "crtbegin.o";
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtbegin)));
+    AddStartFile(crtbegin);
     // Add crtfastmath.o if available and fast math is enabled.
     ToolChain.addFastMathRuntimeIfAvailable(Args, CmdArgs);
   }
@@ -237,14 +275,31 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
     // LLVM support for atomics on 32-bit SPARC V8+ is incomplete, so
     // forcibly link with libatomic as a workaround.
-    if (Arch == llvm::Triple::sparc) {
+    if (Arch == llvm::Triple::sparc && !IsCross) {
       addAsNeededOption(ToolChain, Args, CmdArgs, true);
       CmdArgs.push_back("-latomic");
       addAsNeededOption(ToolChain, Args, CmdArgs, false);
     }
 
-    AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
-    CmdArgs.push_back("-lc");
+    if (IsCross &&
+        ToolChain.GetRuntimeLibType(Args) == ToolChain::RLT_CompilerRT) {
+      // The builtins from the resource directory, or else from the sysroot,
+      // where clang-retro's Solaris SDK puts them. A static C library and
+      // the builtins need each other.
+      std::string RT = ToolChain.getCompilerRT(Args, "builtins");
+      if (!llvm::sys::fs::exists(RT))
+        RT = ToolChain.GetFilePath("libclang_rt.builtins.a");
+      bool Static = Args.hasArg(options::OPT_static);
+      if (Static)
+        CmdArgs.push_back("--start-group");
+      CmdArgs.push_back("-lc");
+      CmdArgs.push_back(Args.MakeArgString(RT));
+      if (Static)
+        CmdArgs.push_back("--end-group");
+    } else {
+      AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
+      CmdArgs.push_back("-lc");
+    }
 
     const SanitizerArgs &SA = ToolChain.getSanitizerArgs(Args);
     if (NeedsSanitizerDeps) {
@@ -275,8 +330,8 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       crtend = "crtendS.o";
     else
       crtend = "crtend.o";
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
+    AddStartFile(crtend);
+    AddStartFile("crtn.o");
   }
 
   ToolChain.addProfileRTLibs(Args, CmdArgs);
@@ -304,9 +359,14 @@ static StringRef getSolarisLibSuffix(const llvm::Triple &Triple) {
 
 Solaris::Solaris(const Driver &D, const llvm::Triple &Triple,
                  const ArgList &Args)
-    : Generic_ELF(D, Triple, Args) {
+    : Generic_ELF(D, Triple, Args), IsCross(false) {
 
   GCCInstallation.init(Triple, Args);
+  // Building on another system with no GCC for Solaris: clang-retro's
+  // cross setup.
+  IsCross = !llvm::Triple(llvm::sys::getProcessTriple()).isOSSolaris() &&
+            !GCCInstallation.isValid();
+  std::string SysRoot = computeSysRoot();
 
   StringRef LibSuffix = getSolarisLibSuffix(Triple);
   path_list &Paths = getFilePaths();
@@ -322,10 +382,31 @@ Solaris::Solaris(const Driver &D, const llvm::Triple &Triple,
 
   // If we are currently running Clang inside of the requested system root,
   // add its parent library path to those searched.
-  if (StringRef(D.Dir).starts_with(D.SysRoot))
+  if (!IsCross && StringRef(D.Dir).starts_with(SysRoot))
     addPathIfExists(D, D.Dir + "/../lib", Paths);
 
-  addPathIfExists(D, D.SysRoot + "/usr/lib" + LibSuffix, Paths);
+  addPathIfExists(D, SysRoot + "/usr/lib" + LibSuffix, Paths);
+}
+
+std::string Solaris::computeSysRoot() const {
+  const Driver &D = getDriver();
+  if (!D.SysRoot.empty() || !IsCross)
+    return D.SysRoot;
+  // clang-retro's toolchain package has the sysroot next to bin/.
+  SmallString<128> Dir(D.Dir);
+  llvm::sys::path::append(Dir, "..",
+                          getTriple().isSPARC() ? "sparc-sun-solaris"
+                                                : "i386-pc-solaris");
+  if (llvm::sys::fs::exists(Dir))
+    return std::string(Dir);
+  return D.SysRoot;
+}
+
+ToolChain::RuntimeLibType Solaris::GetDefaultRuntimeLibType() const {
+  // Without GCC, cross builds use the compiler-rt builtins.
+  if (IsCross && !GCCInstallation.isValid())
+    return ToolChain::RLT_CompilerRT;
+  return Generic_ELF::GetDefaultRuntimeLibType();
 }
 
 SanitizerMask
@@ -346,6 +427,8 @@ Solaris::getSupportedSanitizers(BoundArch BA,
 }
 
 const char *Solaris::getDefaultLinker() const {
+  if (IsCross && getDriver().getPreferredLinker().empty())
+    return "ld.lld";
   // FIXME: Only handle Solaris ld and GNU ld here.
   return llvm::StringSwitch<const char *>(getDriver().getPreferredLinker())
       .Cases({"bfd", "gld"}, "/usr/gnu/bin/ld")
@@ -365,8 +448,12 @@ void Solaris::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_nostdinc))
     return;
 
-  if (!DriverArgs.hasArg(options::OPT_nostdlibinc))
-    addSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/usr/local/include");
+  // Cross compiling with no sysroot, the build machine's headers are no use.
+  bool NoSysRoot = IsCross && computeSysRoot().empty();
+
+  if (!DriverArgs.hasArg(options::OPT_nostdlibinc) && !NoSysRoot)
+    addSystemInclude(DriverArgs, CC1Args,
+                     computeSysRoot() + "/usr/local/include");
 
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
     SmallString<128> P(D.ResourceDir);
@@ -374,7 +461,7 @@ void Solaris::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     addSystemInclude(DriverArgs, CC1Args, P);
   }
 
-  if (DriverArgs.hasArg(options::OPT_nostdlibinc))
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) || NoSysRoot)
     return;
 
   // Check for configure-time C include directories.
@@ -382,9 +469,10 @@ void Solaris::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (CIncludeDirs != "") {
     SmallVector<StringRef, 5> dirs;
     CIncludeDirs.split(dirs, ":");
+    std::string SysRoot = computeSysRoot();
     for (StringRef dir : dirs) {
       StringRef Prefix =
-          llvm::sys::path::is_absolute(dir) ? "" : StringRef(D.SysRoot);
+          llvm::sys::path::is_absolute(dir) ? "" : StringRef(SysRoot);
       addExternCSystemInclude(DriverArgs, CC1Args, Prefix + dir);
     }
     return;
@@ -401,7 +489,8 @@ void Solaris::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     }
   }
 
-  addExternCSystemInclude(DriverArgs, CC1Args, D.SysRoot + "/usr/include");
+  addExternCSystemInclude(DriverArgs, CC1Args,
+                          computeSysRoot() + "/usr/include");
 }
 
 void Solaris::addLibStdCxxIncludePaths(

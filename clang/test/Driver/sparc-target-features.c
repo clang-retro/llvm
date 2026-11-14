@@ -44,3 +44,10 @@
 // RUN: %clang --target=sparc-sun-solaris2.11 -mno-v8plus %s -### 2>&1 | FileCheck -check-prefix=NO-V8PLUS %s
 // V8PLUS: "-target-feature" "+v8plus"
 // NO-V8PLUS-NOT: "-target-feature" "+v8plus"
+/// With a V8 CPU, 32-bit Solaris/SPARC code is plain V8: no V8+ and no VIS.
+// RUN: %clang --target=sparc-sun-solaris2.11 -mcpu=v8 %s -### 2>&1 | FileCheck -check-prefix=SOLARIS-V8 %s
+// RUN: %clang --target=sparc-sun-solaris2.11 -mcpu=supersparc %s -### 2>&1 | FileCheck -check-prefix=SOLARIS-V8 %s
+// RUN: %clang --target=sparc-sun-solaris2.11 -mcpu=ultrasparc %s -### 2>&1 | FileCheck -check-prefixes=V8PLUS,VIS2 %s
+// RUN: %clang --target=sparc-sun-solaris2.11 -mcpu=v8 -mv8plus %s -### 2>&1 | FileCheck -check-prefix=V8PLUS %s
+// SOLARIS-V8-NOT: "-target-feature" "+v8plus"
+// SOLARIS-V8-NOT: "-target-feature" "+vis2"

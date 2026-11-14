@@ -167,9 +167,16 @@ void sparc::getSparcTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   bool IsSparcV9ATarget =
       (Triple.getArch() == llvm::Triple::sparcv9) &&
       (Triple.isOSLinux() || Triple.isOSFreeBSD() || Triple.isOSOpenBSD());
-  bool IsSparcV9BTarget = Triple.isOSSolaris();
-  bool IsSparcV8PlusTarget =
-      Triple.getArch() == llvm::Triple::sparc && Triple.isOSSolaris();
+  // On 32-bit Solaris, the V8+ defaults are for V9 CPUs: with -mcpu=v8 (or
+  // another V8 CPU) the code is plain SPARC V8, for SPARCstations.
+  bool IsV9CPU =
+      Triple.getArch() != llvm::Triple::sparc ||
+      StringRef(sparc::getSparcAsmModeForCPU(
+                    sparc::getSparcTargetCPU(D, Args, Triple), Triple))
+          .starts_with("-Av8plus");
+  bool IsSparcV9BTarget = Triple.isOSSolaris() && IsV9CPU;
+  bool IsSparcV8PlusTarget = Triple.getArch() == llvm::Triple::sparc &&
+                             Triple.isOSSolaris() && IsV9CPU;
   if (Arg *A = Args.getLastArg(options::OPT_mvis, options::OPT_mno_vis)) {
     if (A->getOption().matches(options::OPT_mvis))
       Features.push_back("+vis");
@@ -206,6 +213,8 @@ void sparc::getSparcTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (Arg *A = Args.getLastArg(options::OPT_mv8plus, options::OPT_mno_v8plus)) {
     if (A->getOption().matches(options::OPT_mv8plus))
       Features.push_back("+v8plus");
+    else
+      Features.push_back("-v8plus");
   } else if (IsSparcV8PlusTarget) {
     Features.push_back("+v8plus");
   }
