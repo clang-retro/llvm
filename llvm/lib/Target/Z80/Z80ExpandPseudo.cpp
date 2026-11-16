@@ -60,12 +60,21 @@ public:
   const LiveRegUnits &Live; // The registers live after the pseudo.
   int &Delta;               // How far SP is below its value after the prologue.
   bool HasZ80;
+  bool IXFrame; // Stack objects are at IX + their offset.
 
   Builder(MachineInstr &MI, const TargetInstrInfo &TII,
           const TargetRegisterInfo &TRI, const LiveRegUnits &Live, int &Delta,
-          bool HasZ80)
+          bool HasZ80, bool IXFrame)
       : MBB(*MI.getParent()), I(MI), DL(MI.getDebugLoc()), TII(TII), TRI(TRI),
-        Live(Live), Delta(Delta), HasZ80(HasZ80) {}
+        Live(Live), Delta(Delta), HasZ80(HasZ80), IXFrame(IXFrame) {}
+
+  // R = (IX + D) and (IX + D) = R.
+  void ldFromIX(MCRegister R, int64_t D) {
+    build(Z80::IXLDrd, R).addReg(Z80::IX).addImm(D);
+  }
+  void stToIX(int64_t D, MCRegister R) {
+    build(Z80::IXSTdr).addReg(Z80::IX).addImm(D).addReg(R);
+  }
 
   bool isLive(MCRegister R) const { return !Live.available(R); }
   MCRegister lo(MCRegister R) const { return TRI.getSubReg(R, Z80::sub_lo); }
@@ -178,6 +187,8 @@ static void patchSavedA(Builder &B, int SavedAFOff) {
 
 // Dst = (SP + Off), 8 bits.
 static void expandLD8(Builder &B, MCRegister Dst, int64_t Off) {
+  if (B.IXFrame)
+    return B.ldFromIX(Dst, Off);
   bool SaveF = B.isLive(Z80::F);
   if (SaveF)
     B.push(Z80::AF);
@@ -219,6 +230,11 @@ static void expandLD8(Builder &B, MCRegister Dst, int64_t Off) {
 
 // Dst = (SP + Off), 16 bits.
 static void expandLD16(Builder &B, MCRegister Dst, int64_t Off) {
+  if (B.IXFrame) {
+    B.ldFromIX(B.lo(Dst), Off);
+    B.ldFromIX(B.hi(Dst), Off + 1);
+    return;
+  }
   bool SaveF = B.isLive(Z80::F);
   if (SaveF)
     B.push(Z80::AF);
@@ -266,6 +282,8 @@ static void expandLD16(Builder &B, MCRegister Dst, int64_t Off) {
 
 // (SP + Off) = Src, 8 bits.
 static void expandST8(Builder &B, int64_t Off, MCRegister Src) {
+  if (B.IXFrame)
+    return B.stToIX(Off, Src);
   bool SaveF = B.isLive(Z80::F);
   if (SaveF)
     B.push(Z80::AF);
@@ -300,6 +318,11 @@ static void expandST8(Builder &B, int64_t Off, MCRegister Src) {
 
 // (SP + Off) = Src, 16 bits.
 static void expandST16(Builder &B, int64_t Off, MCRegister Src) {
+  if (B.IXFrame) {
+    B.stToIX(Off, B.lo(Src));
+    B.stToIX(Off + 1, B.hi(Src));
+    return;
+  }
   bool SaveF = B.isLive(Z80::F);
   if (SaveF)
     B.push(Z80::AF);
@@ -405,6 +428,34 @@ static void expandALU16(Builder &B, unsigned LoOpc, unsigned HiOpc,
     B.ld(B.hi(Dst), Z80::A);
 }
 
+// Dst op= Imm, a byte at a time through A. Logic ops skip bytes they leave
+// unchanged, since nothing reads their flags.
+static void expandALU16ri(Builder &B, unsigned LoOpc, unsigned HiOpc,
+                          MCRegister Dst, uint64_t Imm, bool Store,
+                          bool Logic) {
+  for (int I = 0; I < 2; ++I) {
+    MCRegister R = I ? B.hi(Dst) : B.lo(Dst);
+    unsigned Opc = I ? HiOpc : LoOpc;
+    unsigned N = (Imm >> (8 * I)) & 0xff;
+    if (Logic && Store) {
+      if ((Opc == Z80::ANDn && N == 0xff) ||
+          ((Opc == Z80::ORn || Opc == Z80::XORn) && N == 0))
+        continue;
+      if ((Opc == Z80::ANDn && N == 0) || (Opc == Z80::ORn && N == 0xff)) {
+        B.ldi(R, N);
+        continue;
+      }
+    }
+    B.ld(Z80::A, R);
+    if (Logic && Store && Opc == Z80::XORn && N == 0xff)
+      B.accOp(Z80::CPL);
+    else
+      B.build(Opc, Z80::A).addReg(Z80::A).addImm(N);
+    if (Store)
+      B.ld(R, Z80::A);
+  }
+}
+
 static bool expandMI(Builder &B, MachineInstr &MI) {
   switch (MI.getOpcode()) {
   case Z80::LD8fi:
@@ -428,33 +479,82 @@ static bool expandMI(Builder &B, MachineInstr &MI) {
 
   case Z80::LD16HL: {
     MCRegister Dst = MI.getOperand(0).getReg();
-    if (Dst == Z80::HL) {
-      // HL = (HL), the low byte through A.
-      bool SaveA = B.isLive(Z80::A);
-      if (SaveA)
-        B.push(Z80::AF);
+    MCRegister Ptr = MI.getOperand(1).getReg();
+    bool Kill = MI.getOperand(1).isKill() || Dst == Ptr;
+    if (Ptr == Z80::HL && Dst != Z80::HL) {
+      B.ldFromHL(B.lo(Dst));
+      B.incHL();
+      B.ldFromHL(B.hi(Dst));
+      if (!Kill)
+        B.decHL();
+      return true;
+    }
+    // The rest go through A.
+    bool SaveA = B.isLive(Z80::A);
+    if (SaveA)
+      B.push(Z80::AF);
+    if (Ptr == Z80::HL) {
+      // HL = (HL)
       B.ldFromHL(Z80::A);
       B.incHL();
       B.ldFromHL(Z80::H);
       B.ld(Z80::L, Z80::A);
-      if (SaveA)
-        B.pop(Z80::AF);
-      return true;
+    } else if (Dst != Ptr) {
+      B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+      B.ld(B.lo(Dst), Z80::A);
+      B.build(Z80::INC16, Ptr).addReg(Ptr);
+      B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+      B.ld(B.hi(Dst), Z80::A);
+      if (!Kill)
+        B.build(Z80::DEC16, Ptr).addReg(Ptr);
+    } else {
+      // rp = (rp): the low byte waits on the stack.
+      B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+      B.build(Z80::INC16, Ptr).addReg(Ptr);
+      B.push(Z80::AF);
+      B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+      B.ld(B.hi(Dst), Z80::A);
+      B.pop(Z80::AF);
+      B.ld(B.lo(Dst), Z80::A);
     }
-    B.ldFromHL(B.lo(Dst));
-    B.incHL();
-    B.ldFromHL(B.hi(Dst));
-    if (!MI.getOperand(1).isKill())
-      B.decHL();
+    if (SaveA)
+      B.pop(Z80::AF);
     return true;
   }
   case Z80::ST16HL: {
+    MCRegister Ptr = MI.getOperand(0).getReg();
     MCRegister Src = MI.getOperand(1).getReg();
-    B.stToHL(B.lo(Src));
-    B.incHL();
-    B.stToHL(B.hi(Src));
-    if (!MI.getOperand(0).isKill())
-      B.decHL();
+    bool Kill = MI.getOperand(0).isKill();
+    if (Ptr == Z80::HL && Src != Z80::HL) {
+      B.stToHL(B.lo(Src));
+      B.incHL();
+      B.stToHL(B.hi(Src));
+      if (!Kill)
+        B.decHL();
+      return true;
+    }
+    // The high byte is read before the pointer moves.
+    bool SaveA = B.isLive(Z80::A);
+    if (SaveA)
+      B.push(Z80::AF);
+    if (Ptr == Z80::HL) {
+      B.ld(Z80::A, Z80::H);
+      B.stToHL(Z80::L);
+      B.incHL();
+      B.stToHL(Z80::A);
+      if (!Kill)
+        B.decHL();
+    } else {
+      B.ld(Z80::A, B.lo(Src));
+      B.build(Z80::LDrpA).addReg(Ptr).addReg(Z80::A);
+      B.ld(Z80::A, B.hi(Src));
+      B.build(Z80::INC16, Ptr).addReg(Ptr);
+      B.build(Z80::LDrpA).addReg(Ptr).addReg(Z80::A);
+      if (!Kill)
+        B.build(Z80::DEC16, Ptr).addReg(Ptr);
+    }
+    if (SaveA)
+      B.pop(Z80::AF);
     return true;
   }
 
@@ -498,6 +598,36 @@ static bool expandMI(Builder &B, MachineInstr &MI) {
   case Z80::CMP16:
     expandALU16(B, Z80::SUBr, Z80::SBCr, MI.getOperand(0).getReg(),
                 MI.getOperand(1).getReg(), false);
+    return true;
+  case Z80::AND16ri:
+  case Z80::OR16ri:
+  case Z80::XOR16ri: {
+    unsigned Opc = MI.getOpcode() == Z80::AND16ri  ? Z80::ANDn
+                   : MI.getOpcode() == Z80::OR16ri ? Z80::ORn
+                                                   : Z80::XORn;
+    expandALU16ri(B, Opc, Opc, MI.getOperand(0).getReg(),
+                  MI.getOperand(2).getImm(), true, true);
+    return true;
+  }
+  case Z80::ADD16ri:
+    expandALU16ri(B, Z80::ADDn, Z80::ADCn, MI.getOperand(0).getReg(),
+                  MI.getOperand(2).getImm(), true, false);
+    return true;
+  case Z80::ADC16ri:
+    expandALU16ri(B, Z80::ADCn, Z80::ADCn, MI.getOperand(0).getReg(),
+                  MI.getOperand(2).getImm(), true, false);
+    return true;
+  case Z80::SUB16ri:
+    expandALU16ri(B, Z80::SUBn, Z80::SBCn, MI.getOperand(0).getReg(),
+                  MI.getOperand(2).getImm(), true, false);
+    return true;
+  case Z80::SBC16ri:
+    expandALU16ri(B, Z80::SBCn, Z80::SBCn, MI.getOperand(0).getReg(),
+                  MI.getOperand(2).getImm(), true, false);
+    return true;
+  case Z80::CMP16ri:
+    expandALU16ri(B, Z80::SUBn, Z80::SBCn, MI.getOperand(0).getReg(),
+                  MI.getOperand(1).getImm(), false, false);
     return true;
   case Z80::TST16: {
     MCRegister R = MI.getOperand(0).getReg();
@@ -593,6 +723,10 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   // SP at the start of each block, below its value after the prologue. A
   // call sequence can span blocks when an argument needs a select.
   DenseMap<const MachineBasicBlock *, int> DeltaIn;
+  // With an IX frame, the prologue pushes IX below the frame.
+  bool IXFrame = STI.getFrameLowering()->usesIXFrame(MF);
+  if (IXFrame)
+    DeltaIn[&MF.front()] = 2;
 
   ReversePostOrderTraversal<MachineFunction *> RPOT(&MF);
   for (MachineBasicBlock *MBB : RPOT) {
@@ -610,7 +744,7 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : llvm::make_early_inc_range(*MBB)) {
       auto It = LiveAfter.find(&MI);
       if (It != LiveAfter.end()) {
-        Builder B(MI, TII, TRI, It->second, Delta, STI.hasZ80());
+        Builder B(MI, TII, TRI, It->second, Delta, STI.hasZ80(), IXFrame);
         if (expandMI(B, MI)) {
           MI.eraseFromParent();
           Changed = true;

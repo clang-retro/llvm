@@ -23,6 +23,11 @@ protected:
 public:
   explicit Z80FrameLowering(const Z80Subtarget &STI);
 
+  // Whether the function reaches its stack objects through IX, which points
+  // at the bottom of its frame: on the Z80, when they are all within the
+  // reach of (IX+d).
+  bool usesIXFrame(const MachineFunction &MF) const;
+
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
