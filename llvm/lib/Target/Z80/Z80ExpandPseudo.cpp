@@ -428,6 +428,19 @@ static bool expandMI(Builder &B, MachineInstr &MI) {
 
   case Z80::LD16HL: {
     MCRegister Dst = MI.getOperand(0).getReg();
+    if (Dst == Z80::HL) {
+      // HL = (HL), the low byte through A.
+      bool SaveA = B.isLive(Z80::A);
+      if (SaveA)
+        B.push(Z80::AF);
+      B.ldFromHL(Z80::A);
+      B.incHL();
+      B.ldFromHL(Z80::H);
+      B.ld(Z80::L, Z80::A);
+      if (SaveA)
+        B.pop(Z80::AF);
+      return true;
+    }
     B.ldFromHL(B.lo(Dst));
     B.incHL();
     B.ldFromHL(B.hi(Dst));

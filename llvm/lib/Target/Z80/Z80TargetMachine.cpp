@@ -26,6 +26,7 @@ extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeZ80Target() {
   initializeZ80AsmPrinterPass(PR);
   initializeZ80DAGToDAGISelLegacyPass(PR);
   initializeZ80ExpandPseudoPass(PR);
+  initializeZ80SplitNarrowPass(PR);
 }
 
 Z80TargetMachine::Z80TargetMachine(const Target &T, const Triple &TT,
@@ -83,6 +84,7 @@ public:
   }
   // After frame index elimination: expand the stack accesses and the 16-bit
   // operations.
+  void addPreRegAlloc() override { addPass(createZ80SplitNarrowPass()); }
   void addPreSched2() override { addPass(createZ80ExpandPseudoPass()); }
 };
 } // namespace

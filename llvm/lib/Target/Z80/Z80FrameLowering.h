@@ -27,6 +27,12 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
   // Outgoing arguments are pushed.
+  // The call frame pseudos are replaced in frame index elimination, which
+  // must run even in a function without stack objects.
+  bool needsFrameIndexResolution(const MachineFunction &MF) const override {
+    return true;
+  }
+
   bool hasReservedCallFrame(const MachineFunction &MF) const override {
     return false;
   }

@@ -271,7 +271,8 @@ def POPAF : I<1, 0xF1, (outs AFR:$rp), (ins), "pop\t$rp">;
 multiclass ALU8<bits<3> Op, string Mn, string Dst, SDPatternOperator Node,
                 bit Comm> {
   let Constraints = "$a = $dst" in {
-    let isCommutable = Comm in
+    // Not marked commutable: commuting would put the value in A into the
+    // other operand, where it gets in the way of the one tied to A.
     def r : Z80Inst<1, (outs ACC:$dst), (ins ACC:$a, GR8:$b),
                     Mn # "\t" # Dst # "$b",
                     [(set i8:$dst, (Node i8:$a, i8:$b))]> {
@@ -839,7 +840,7 @@ def LEAfi : Pseudo<(outs GR16:$dst), (ins memfi:$addr), "#LEAfi $dst, $addr",
 // 16-bit loads and stores through HL, which they leave unchanged.
 let hasSideEffects = 0 in {
 let mayLoad = 1 in
-def LD16HL : Pseudo<(outs BCDE:$dst), (ins HL16:$ptr), "#LD16HL $dst, $ptr",
+def LD16HL : Pseudo<(outs GR16:$dst), (ins HL16:$ptr), "#LD16HL $dst, $ptr",
                     [(set i16:$dst, (load HL16:$ptr))]>;
 let mayStore = 1 in
 def ST16HL : Pseudo<(outs), (ins HL16:$ptr, BCDE:$src), "#ST16HL $ptr, $src",

@@ -19,10 +19,12 @@ class Z80TargetMachine;
 
 FunctionPass *createZ80ISelDag(Z80TargetMachine &TM, CodeGenOptLevel OptLevel);
 FunctionPass *createZ80ExpandPseudoPass();
+FunctionPass *createZ80SplitNarrowPass();
 
 void initializeZ80AsmPrinterPass(PassRegistry &);
 void initializeZ80DAGToDAGISelLegacyPass(PassRegistry &);
 void initializeZ80ExpandPseudoPass(PassRegistry &);
+void initializeZ80SplitNarrowPass(PassRegistry &);
 } // namespace llvm
 
 #endif
