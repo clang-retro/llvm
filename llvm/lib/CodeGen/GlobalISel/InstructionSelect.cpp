@@ -12,6 +12,8 @@
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/LazyBlockFrequencyInfo.h"
@@ -140,6 +142,7 @@ void InstructionSelectLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<GISelValueTrackingAnalysisLegacy>();
 
   if (OptLevel != CodeGenOptLevel::None) {
+    AU.addRequired<AAResultsWrapperPass>();
     AU.addRequired<ProfileSummaryInfoWrapperPass>();
     LazyBlockFrequencyInfoPass::getLazyBFIAnalysisUsage(AU);
   }
@@ -150,7 +153,8 @@ void InstructionSelectLegacy::getAnalysisUsage(AnalysisUsage &AU) const {
 bool InstructionSelectImpl::runOnMachineFunction(
     MachineFunction &MF, function_ref<GISelValueTracking *()> GetVT,
     function_ref<ProfileSummaryInfo *()> GetPSI,
-    function_ref<BlockFrequencyInfo *()> GetBFI) {
+    function_ref<BlockFrequencyInfo *()> GetBFI,
+    function_ref<AAResults *()> GetAA) {
   // If the ISel pipeline failed, do not bother running that pass.
   if (MF.getProperties().hasFailedISel())
     return false;
@@ -168,6 +172,12 @@ bool InstructionSelectImpl::runOnMachineFunction(
     PSI = GetPSI();
     if (PSI && PSI->hasProfileSummary())
       BFI = GetBFI();
+    AA = GetAA();
+  } else {
+    // When not optimizing, explicitly clear analysis pointers to avoid stale values
+    AA = nullptr;
+    PSI = nullptr;
+    BFI = nullptr;
   }
 
   return selectMachineFunction(MF);
@@ -178,7 +188,7 @@ bool InstructionSelectImpl::selectMachineFunction(MachineFunction &MF) {
   assert(ISel && "Cannot work without InstructionSelector");
 
   CodeGenCoverage CoverageInfo;
-  ISel->setupMF(MF, VT, &CoverageInfo, PSI, BFI);
+  ISel->setupMF(MF, VT, &CoverageInfo, PSI, BFI, AA);
 
   // An optimization remark emitter. Used to report failures.
   MachineOptimizationRemarkEmitter MORE(MF, /*MBFI=*/nullptr);
@@ -411,7 +421,8 @@ bool InstructionSelectLegacy::runOnMachineFunction(MachineFunction &MF) {
         return &getAnalysis<GISelValueTrackingAnalysisLegacy>().get(MF);
       },
       [&]() { return &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI(); },
-      [&]() { return &getAnalysis<LazyBlockFrequencyInfoPass>().getBFI(); });
+      [&]() { return &getAnalysis<LazyBlockFrequencyInfoPass>().getBFI(); },
+      [&]() { return &getAnalysis<AAResultsWrapperPass>().getAAResults(); });
 }
 
 PreservedAnalyses
@@ -434,6 +445,11 @@ InstructionSelectPass::run(MachineFunction &MF,
         return &MFAM.getResult<FunctionAnalysisManagerMachineFunctionProxy>(MF)
                     .getManager()
                     .getResult<BlockFrequencyAnalysis>(MF.getFunction());
+      },
+      [&]() {
+        return &MFAM.getResult<FunctionAnalysisManagerMachineFunctionProxy>(MF)
+                    .getManager()
+                    .getResult<AAManager>(MF.getFunction());
       });
   return Changed ? getMachineFunctionPassPreservedAnalyses()
                  : PreservedAnalyses::all();

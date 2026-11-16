@@ -685,9 +685,12 @@ def select_constant_cmp : GICombineGroup<[select_constant_cmp_false,
 def select_zero_true: GICombineRule<
   (defs root:$root),
   (match (G_SELECT $dst, $c, 0, $x):$root,
-    [{ return !isConstantOrConstantSplatVector(${c}.getReg(), MRI) &&
-              MRI.getType(${c}.getReg()) == MRI.getType(${dst}.getReg()) &&
-              VT->computeNumSignBits(${c}.getReg()) == MRI.getType(${dst}.getReg()).getScalarSizeInBits(); }]),
+    [{ LLT DstTy = MRI.getType(${dst}.getReg());
+       return !isConstantOrConstantSplatVector(${c}.getReg(), MRI) &&
+              MRI.getType(${c}.getReg()) == DstTy &&
+              VT->computeNumSignBits(${c}.getReg()) == DstTy.getScalarSizeInBits() &&
+              Helper.isLegalOrBeforeLegalizer({TargetOpcode::G_XOR, {DstTy}}) &&
+              Helper.isLegalOrBeforeLegalizer({TargetOpcode::G_AND, {DstTy}}); }]),
   (apply (G_XOR $xor, $c, -1),
          (G_FREEZE $f, $x),
          (G_AND $dst, $xor, $f))
@@ -698,9 +701,11 @@ def select_zero_true: GICombineRule<
 def select_zero_false: GICombineRule<
   (defs root:$root),
   (match (G_SELECT $dst, $c, $x, 0):$root,
-    [{ return !isConstantOrConstantSplatVector(${c}.getReg(), MRI) &&
-              MRI.getType(${c}.getReg()) == MRI.getType(${dst}.getReg()) &&
-              VT->computeNumSignBits(${c}.getReg()) == MRI.getType(${dst}.getReg()).getScalarSizeInBits(); }]),
+    [{ LLT DstTy = MRI.getType(${dst}.getReg());
+       return !isConstantOrConstantSplatVector(${c}.getReg(), MRI) &&
+              MRI.getType(${c}.getReg()) == DstTy &&
+              VT->computeNumSignBits(${c}.getReg()) == DstTy.getScalarSizeInBits() &&
+              Helper.isLegalOrBeforeLegalizer({TargetOpcode::G_AND, {DstTy}}); }]),
   (apply (G_FREEZE $f, $x),
          (G_AND $dst, $c, $f))
 >;
@@ -1071,8 +1076,11 @@ def add_p2i_to_ptradd_frags : GICombinePatFrag<
 def add_p2i_to_ptradd : GICombineRule<
   (defs root:$dst),
   (match (add_p2i_to_ptradd_frags $dst, $ptr, $other),
-    [{ return MRI.getType(${ptr}.getReg()).getScalarSizeInBits() ==
-              MRI.getType(${dst}.getReg()).getScalarSizeInBits(); }]),
+    [{ LLT PtrTy = MRI.getType(${ptr}.getReg());
+       LLT IntTy = MRI.getType(${dst}.getReg());
+       return PtrTy.getScalarSizeInBits() == IntTy.getScalarSizeInBits() &&
+              Helper.isLegalOrBeforeLegalizer({TargetOpcode::G_PTR_ADD,
+                                              {PtrTy, IntTy}}); }]),
   (apply (G_PTR_ADD $padd, $ptr, $other),
          (G_PTRTOINT $dst, $padd))
 >;
@@ -1925,7 +1933,11 @@ def mulo_by_0 : GICombineGroup<[mulo_by_0_umulo, mulo_by_0_smulo]>;
 class adde_to_addo_rule<Instruction inop, Instruction outop> : GICombineRule<
   (defs root:$root),
   (match (inop $dst, $carry_out, $x, $y, $carry_in):$root,
-         [{ return Helper.matchConstantOp(${carry_in}, 0); }]),
+         [{ return Helper.matchConstantOp(${carry_in}, 0) &&
+                   Helper.isLegalOrBeforeLegalizer(
+                       {TargetOpcode::}] # outop # [{,
+                        {MRI.getType(${dst}.getReg()),
+                         MRI.getType(${carry_out}.getReg())}}); }]),
   (apply (outop $dst, $carry_out, $x, $y, (MIFlags $root)))>;
 def adde_to_addo_uadde : adde_to_addo_rule<G_UADDE, G_UADDO>;
 def adde_to_addo_sadde : adde_to_addo_rule<G_SADDE, G_SADDO>;

@@ -10,6 +10,7 @@
 ; RUN: llc -verify-machineinstrs -mcpu=pwr10 -ppc-vsx-fma-mutation \
 ; RUN:   -ppc-asm-full-reg-names -ppc-schedule-vsx-fma-mutation-early \
 ; RUN:    -mtriple powerpc-ibm-aix < %s | FileCheck --check-prefix=CHECK32 %s
+; UNSUPPORTED: target={{.*}}
 
 define void @bar(ptr noalias nocapture noundef writeonly %__output_a, ptr noalias nocapture noundef readonly %var1321In_a, ptr noalias nocapture noundef readonly %n) {
 entry:

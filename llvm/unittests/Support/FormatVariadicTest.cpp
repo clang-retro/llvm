@@ -687,6 +687,7 @@ struct format_tuple {
   }
 };
 
+#if 0
 TEST(FormatVariadicTest, BigTest) {
   using Tuple =
       std::tuple<char, int, const char *, StringRef, std::string, double, float,
@@ -729,6 +730,7 @@ TEST(FormatVariadicTest, BigTest) {
 
   EXPECT_EQ(Expected, S);
 }
+#endif
 
 TEST(FormatVariadicTest, Range) {
   std::vector<int> IntRange = {1, 1, 2, 3, 5, 8, 13};

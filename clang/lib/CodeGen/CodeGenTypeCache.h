@@ -83,10 +83,8 @@ struct CodeGenTypeCache {
 
   /// The size and alignment of the builtin C type 'int'.  This comes
   /// up enough in various ABI lowering tasks to be worth pre-computing.
-  union {
-    unsigned char IntSizeInBytes;
-    unsigned char IntAlignInBytes;
-  };
+  unsigned char IntSizeInBytes;
+  unsigned char IntAlignInBytes;
   CharUnits getIntSize() const {
     return CharUnits::fromQuantity(IntSizeInBytes);
   }
@@ -98,16 +96,12 @@ struct CodeGenTypeCache {
   unsigned char PointerWidthInBits;
 
   /// The size and alignment of a pointer into the generic address space.
-  union {
-    unsigned char PointerAlignInBytes;
-    unsigned char PointerSizeInBytes;
-  };
+  unsigned char PointerAlignInBytes;
+  unsigned char PointerSizeInBytes;
 
   /// The size and alignment of size_t.
-  union {
-    unsigned char SizeSizeInBytes; // sizeof(size_t)
-    unsigned char SizeAlignInBytes;
-  };
+  unsigned char SizeSizeInBytes; // sizeof(size_t)
+  unsigned char SizeAlignInBytes;
 
   CharUnits getSizeSize() const {
     return CharUnits::fromQuantity(SizeSizeInBytes);

@@ -566,6 +566,8 @@ private:
     /// LTO backend.
     unsigned Partition = Unknown;
 
+    bool Contingent = false;
+
   private:
     GlobalValue::GUID GUID = 0;
 

@@ -369,9 +369,9 @@ define void @zext.no.nuw.pre.inc() {
 ; CHECK-NEXT:    %ext = zext i8 %i to i32
 ; CHECK-NEXT:    --> {255,+,-128}<nw><%loop> U: [127,256) S: [127,256) Exits: 127 LoopDispositions: { %loop: Computable }
 ; CHECK-NEXT:  Determining loop execution counts for: @zext.no.nuw.pre.inc
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 1
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 1
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 1
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i2 1
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i2 1
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i2 1
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 2
 ;
 entry:

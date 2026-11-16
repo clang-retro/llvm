@@ -10,6 +10,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+
 #ifndef LLVM_CODEGEN_TARGETPASSCONFIG_H
 #define LLVM_CODEGEN_TARGETPASSCONFIG_H
 
@@ -317,6 +318,10 @@ public:
   /// register classes.
   virtual bool addGlobalInstructionSelect() { return true; }
 
+  /// Whether the target needs Machine Scheduling to function properly, even in
+  /// optnone functions.
+  virtual bool alwaysRequiresMachineScheduler() const { return false; }
+
   /// Add the complete, standard set of LLVM CodeGen passes.
   /// Fully developed targets will not generally override this.
   virtual void addMachinePasses();
@@ -440,6 +445,8 @@ protected:
   /// This method may be implemented by targets that want to run passes after
   /// register allocation pass pipeline but before prolog-epilog insertion.
   virtual void addPostRegAlloc() { }
+
+  virtual void addPrePEI() { }
 
   /// Add passes that optimize machine instructions after register allocation.
   virtual void addMachineLateOptimization();

@@ -610,6 +610,11 @@ static bool isCSKYElf(const ObjectFile &Obj) {
   return Elf && Elf->getEMachine() == ELF::EM_CSKY;
 }
 
+static bool isMOSElf(const ObjectFile &Obj) {
+  const auto *Elf = dyn_cast<ELFObjectFileBase>(&Obj);
+  return Elf && Elf->getEMachine() == ELF::EM_MOS;
+}
+
 static bool isRISCVElf(const ObjectFile &Obj) {
   const auto *Elf = dyn_cast<ELFObjectFileBase>(&Obj);
   return Elf && Elf->getEMachine() == ELF::EM_RISCV;
@@ -617,7 +622,7 @@ static bool isRISCVElf(const ObjectFile &Obj) {
 
 static bool hasMappingSymbols(const ObjectFile &Obj) {
   return isArmElf(Obj) || isAArch64Elf(Obj) || isCSKYElf(Obj) ||
-         isRISCVElf(Obj);
+         isMOSElf(Obj) || isRISCVElf(Obj);
 }
 
 /// Get relocation type name, resolving RISCV vendor-specific relocations
@@ -1677,8 +1682,9 @@ static void collectLocalBranchTargets(
   const bool isX86 = STI->getTargetTriple().isX86();
   const bool isAArch64 = STI->getTargetTriple().isAArch64();
   const bool isBPF = STI->getTargetTriple().isBPF();
+  const bool isMOS = STI->getTargetTriple().isMOS();
   const bool isRISCV = STI->getTargetTriple().isRISCV();
-  if (!isPPC && !isX86 && !isAArch64 && !isBPF && !isRISCV)
+  if (!isPPC && !isX86 && !isAArch64 && !isBPF && !isMOS && !isRISCV)
     return;
 
   if (MIA)
@@ -1913,7 +1919,7 @@ disassembleObject(ObjectFile &Obj, const ObjectFile &DbgObj,
           uint64_t Address = cantFail(Symbol.getAddress());
           StringRef Name = *NameOrErr;
           if (Name.consume_front("$") && Name.size() &&
-              strchr("adtx", Name[0])) {
+              strchr("admtx", Name[0])) {
             AllMappingSymbols[*SecI].emplace_back(Address - SectionAddr,
                                                   Name[0]);
             // For RISC-V "$x<ISAString>" symbols, resolve the ISA string to a

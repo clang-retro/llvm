@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "CGDebugInfo.h"
 #include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
@@ -793,6 +794,7 @@ void CodeGenFunction::EmitAttributedStmt(const AttributedStmt &S) {
   StringRef amdgpuAVMode = AMDGPUAvailableVisibleMode;
   HLSLControlFlowHintAttr::Spelling flattenOrBranch = HLSLControlFlowAttr;
   const CallExpr *musttail = MustTailCall;
+  bool leaf = InLeafAttributedStmt;
   const AtomicAttr *AA = nullptr;
 
   for (const auto *A : S.getAttrs()) {
@@ -826,6 +828,9 @@ void CodeGenFunction::EmitAttributedStmt(const AttributedStmt &S) {
         Builder.CreateAssumption(AssumptionVal);
       }
     } break;
+    case attr::Leaf:
+      leaf = true;
+      break;
     case attr::Atomic:
       AA = cast<AtomicAttr>(A);
       break;
@@ -847,6 +852,7 @@ void CodeGenFunction::EmitAttributedStmt(const AttributedStmt &S) {
   SaveAndRestore save_noconvergent(InNoConvergentAttributedStmt, noconvergent);
   SaveAndRestore save_amdgpuav(AMDGPUAvailableVisibleMode, amdgpuAVMode);
   SaveAndRestore save_musttail(MustTailCall, musttail);
+  SaveAndRestore save_leaf(InLeafAttributedStmt, leaf);
   SaveAndRestore save_flattenOrBranch(HLSLControlFlowAttr, flattenOrBranch);
   CGAtomicOptionsRAII AORAII(CGM, AA);
   EmitStmt(S.getSubStmt(), S.getAttrs());
@@ -2703,7 +2709,7 @@ class AsmConstraintsInfo {
   bool HandleClobbers();
   void UpdateAsmCallInst(llvm::CallBase &Result, bool HasSideEffect,
                          bool HasUnwindClobber, bool NoMerge, bool NoConvergent,
-                         std::vector<llvm::Value *> &RegResults);
+                         bool Leaf, std::vector<llvm::Value *> &RegResults);
   void EmitAsmStores(const llvm::ArrayRef<llvm::Value *> RegResults);
 
   void EmitHipStdParUnsupportedAsm() {
@@ -2812,7 +2818,8 @@ void AsmConstraintsInfo::EmitAsmStmt() {
     CGF.EmitBlock(DefaultDest);
     UpdateAsmCallInst(*CBR, HasSideEffect,
                       /*HasUnwindClobber=*/false, CGF.InNoMergeAttributedStmt,
-                      CGF.InNoConvergentAttributedStmt, RegResults);
+                      CGF.InNoConvergentAttributedStmt,
+                      CGF.InLeafAttributedStmt, RegResults);
 
     // Because we are emitting code top to bottom, we don't have enough
     // information at this point to know precisely whether we have a critical
@@ -2843,13 +2850,15 @@ void AsmConstraintsInfo::EmitAsmStmt() {
     llvm::CallBase *Result = CGF.EmitCallOrInvoke(IA, Args, "");
     UpdateAsmCallInst(*Result, HasSideEffect,
                       /*HasUnwindClobber=*/true, CGF.InNoMergeAttributedStmt,
-                      CGF.InNoConvergentAttributedStmt, RegResults);
+                      CGF.InNoConvergentAttributedStmt,
+                      CGF.InLeafAttributedStmt, RegResults);
   } else {
     llvm::CallInst *Result =
         Builder.CreateCall(IA, Args, CGF.getBundlesForFunclet(IA));
     UpdateAsmCallInst(*Result, HasSideEffect,
                       /*HasUnwindClobber=*/false, CGF.InNoMergeAttributedStmt,
-                      CGF.InNoConvergentAttributedStmt, RegResults);
+                      CGF.InNoConvergentAttributedStmt,
+                      CGF.InLeafAttributedStmt, RegResults);
   }
 
   EmitAsmStores(RegResults);
@@ -3255,12 +3264,15 @@ bool AsmConstraintsInfo::HandleClobbers() {
 
 void AsmConstraintsInfo::UpdateAsmCallInst(
     llvm::CallBase &Result, bool HasSideEffect, bool HasUnwindClobber,
-    bool NoMerge, bool NoConvergent, std::vector<llvm::Value *> &RegResults) {
+    bool NoMerge, bool NoConvergent, bool Leaf,
+    std::vector<llvm::Value *> &RegResults) {
   if (!HasUnwindClobber)
     Result.addFnAttr(llvm::Attribute::NoUnwind);
 
   if (NoMerge)
     Result.addFnAttr(llvm::Attribute::NoMerge);
+  if (Leaf)
+    Result.addFnAttr(llvm::Attribute::NoCallback);
 
   // Attach readnone and readonly attributes.
   if (!HasSideEffect) {

@@ -74,7 +74,8 @@ public:
   runOnMachineFunction(MachineFunction &MF,
                        function_ref<GISelValueTracking *()> GetVT,
                        function_ref<ProfileSummaryInfo *()> GetPSI,
-                       function_ref<BlockFrequencyInfo *()> GetBFI);
+                       function_ref<BlockFrequencyInfo *()> GetBFI,
+                       function_ref<AAResults *()> GetAA);
   LLVM_ABI InstructionSelectImpl(CodeGenOptLevel OL);
 
 protected:
@@ -84,6 +85,7 @@ protected:
   GISelValueTracking *VT = nullptr;
   BlockFrequencyInfo *BFI = nullptr;
   ProfileSummaryInfo *PSI = nullptr;
+  AAResults *AA = nullptr;
 
   CodeGenOptLevel OptLevel = CodeGenOptLevel::None;
 

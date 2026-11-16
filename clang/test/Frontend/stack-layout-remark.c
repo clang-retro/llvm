@@ -1,3 +1,6 @@
+// UNSUPPORTED: true
+// llvm-mos: Handwritten stack-layout checks depend on upstream spilling and
+// register-allocation decisions that differ in this fork.
 // Check that backend stack layout diagnostics are working correctly with and
 // without debug information, and when optimizations are enabled
 //

@@ -90,6 +90,36 @@ private:
   SmallVector<FdeData, 0> getFdeData();
 };
 
+// Section for .debug_frame. Unlike .eh_frame, this is not loaded at runtime
+// and uses absolute CIE pointers. We discard FDEs for garbage-collected
+// functions to prevent debuggers from seeing stale frame information.
+class DebugFrameSection final : public SyntheticSection {
+public:
+  DebugFrameSection(Ctx &);
+  void writeTo(uint8_t *buf) override;
+  void finalizeContents() override;
+  bool isNeeded() const override { return !sections.empty(); }
+  size_t getSize() const override;
+
+  static bool classof(const SectionBase *d) {
+    return SyntheticSection::classof(d) && d->name == ".debug_frame";
+  }
+
+  SmallVector<DebugFrameInputSection *, 0> sections;
+
+private:
+  template <llvm::endianness E> void addRecords(DebugFrameInputSection *s);
+  template <llvm::endianness E> void writeToImpl(uint8_t *buf);
+  Defined *isFdeLive(DebugFramePiece &piece, ArrayRef<Relocation> rels);
+
+  // Live CIEs and FDEs to be written to output, kept separate so that
+  // downstream code never needs to re-derive CIE-vs-FDE classification by
+  // re-reading id bytes (which would require knowing endianness).
+  SmallVector<DebugFramePiece *, 0> liveCies;
+  SmallVector<DebugFramePiece *, 0> liveFdes;
+  size_t size = 0;
+};
+
 class GotSection final : public SyntheticSection {
 public:
   GotSection(Ctx &);
@@ -1300,6 +1330,24 @@ private:
   SmallVector<const Symbol *, 0> symbols;
 };
 
+struct XO65Segment;
+class XO65Section final : public SyntheticSection {
+  StringRef segmentName;
+  StringRef contents;
+  size_t size;
+
+public:
+  XO65Section(Ctx &ctx, const XO65Segment &segment);
+
+  StringRef getSegmentName() const { return segmentName; }
+  size_t getSize() const override { return size; }
+  void setContents(StringRef contents) {
+    assert(contents.size() == size);
+    this->contents = contents;
+  }
+  void writeTo(uint8_t *buf) override;
+};
+
 class DynamicDebugSection final : public SyntheticSection {
 public:
   DynamicDebugSection(Ctx &);
@@ -1319,6 +1367,7 @@ InputSection *createInterpSection(Ctx &);
 MergeInputSection *createCommentSection(Ctx &);
 template <class ELFT> void splitSections(Ctx &);
 void combineEhSections(Ctx &);
+void combineDebugFrameSections(Ctx &);
 
 bool hasMemtag(Ctx &);
 bool canHaveMemtagGlobals(Ctx &);

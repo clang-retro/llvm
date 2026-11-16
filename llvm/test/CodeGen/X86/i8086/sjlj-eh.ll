@@ -22,20 +22,20 @@ define i16 @catcher(i16 %x) personality ptr addrspace(4) @__gxx_personality_sj0 
 ; CHECK-NEXT:    movw %sp, %bp
 ; CHECK-NEXT:    pushw %di
 ; CHECK-NEXT:    pushw %si
-; CHECK-NEXT:    subw $38, %sp
+; CHECK-NEXT:    subw $40, %sp
 ; CHECK-NEXT:    movw 4(%bp), %si
-; CHECK-NEXT:    movw $___gxx_personality_sj0, -20(%bp)
-; CHECK-NEXT:    movw $GCC_except_table0, -18(%bp)
-; CHECK-NEXT:    movw %bp, -16(%bp)
-; CHECK-NEXT:    movw %sp, -12(%bp)
-; CHECK-NEXT:    movw $.LBB0_3, -14(%bp)
-; CHECK-NEXT:    leaw -42(%bp), %ax
+; CHECK-NEXT:    movw $___gxx_personality_sj0, -22(%bp)
+; CHECK-NEXT:    movw $GCC_except_table0, -20(%bp)
+; CHECK-NEXT:    movw %bp, -18(%bp)
+; CHECK-NEXT:    movw %sp, -14(%bp)
+; CHECK-NEXT:    movw $.LBB0_3, -16(%bp)
+; CHECK-NEXT:    leaw -44(%bp), %ax
 ; CHECK-NEXT:    movw %ax, -6(%bp) # 2-byte Spill
 ; CHECK-NEXT:    pushw %ax
 ; CHECK-NEXT:    callw __Unwind_SjLj_Register
 ; CHECK-NEXT:    addw $2, %sp
-; CHECK-NEXT:    movw $0, -38(%bp)
-; CHECK-NEXT:    movw $1, -40(%bp)
+; CHECK-NEXT:    movw $0, -40(%bp)
+; CHECK-NEXT:    movw $1, -42(%bp)
 ; CHECK-NEXT:  .Ltmp0: # EH_LABEL
 ; CHECK-NEXT:    pushw %si
 ; CHECK-NEXT:    callw _may_throw
@@ -53,7 +53,8 @@ define i16 @catcher(i16 %x) personality ptr addrspace(4) @__gxx_personality_sj0 
 ; CHECK-NEXT:    popw %bp
 ; CHECK-NEXT:    retw
 ; CHECK-NEXT:  .LBB0_3:
-; CHECK-NEXT:    movw -40(%bp), %ax
+; CHECK-NEXT:    movw -6(%bp), %si # 2-byte Reload
+; CHECK-NEXT:    movw -42(%bp), %ax
 ; CHECK-NEXT:    cmpw $1, %ax
 ; CHECK-NEXT:    jb .LBB0_4
 ; CHECK-NEXT:  # %bb.5:
@@ -66,24 +67,25 @@ define i16 @catcher(i16 %x) personality ptr addrspace(4) @__gxx_personality_sj0 
 ; CHECK-NEXT:    jmpw *%cs:LJTI0_0(%bx)
 ; CHECK-NEXT:  .LBB0_6: # %lpad
 ; CHECK-NEXT:  .Ltmp2: # EH_LABEL
-; CHECK-NEXT:    movw -36(%bp), %ax
+; CHECK-NEXT:    movw -38(%bp), %ax
+; CHECK-NEXT:    movw -36(%bp), %cx
 ; CHECK-NEXT:    movw -34(%bp), %cx
 ; CHECK-NEXT:    movw -32(%bp), %cx
-; CHECK-NEXT:    movw -30(%bp), %cx
-; CHECK-NEXT:    movw $-1, -38(%bp)
 ; CHECK-NEXT:    movw $-1, -40(%bp)
+; CHECK-NEXT:    movw $-1, -42(%bp)
 ; CHECK-NEXT:    pushw %ax
 ; CHECK-NEXT:    callw ___cxa_begin_catch
 ; CHECK-NEXT:    addw $2, %sp
 ; CHECK-NEXT:    movw %ax, %bx
-; CHECK-NEXT:    movw (%bx), %si
-; CHECK-NEXT:    movw $-1, -38(%bp)
+; CHECK-NEXT:    movw (%bx), %ax
+; CHECK-NEXT:    movw %ax, -8(%bp) # 2-byte Spill
 ; CHECK-NEXT:    movw $-1, -40(%bp)
+; CHECK-NEXT:    movw $-1, -42(%bp)
 ; CHECK-NEXT:    callw ___cxa_end_catch
-; CHECK-NEXT:    pushw -6(%bp) # 2-byte Folded Reload
+; CHECK-NEXT:    pushw %si
 ; CHECK-NEXT:    callw __Unwind_SjLj_Unregister
 ; CHECK-NEXT:    addw $2, %sp
-; CHECK-NEXT:    movw %si, %ax
+; CHECK-NEXT:    movw -8(%bp), %ax # 2-byte Reload
 ; CHECK-NEXT:    jmp .LBB0_2
 entry:
   invoke void @may_throw(i16 %x)

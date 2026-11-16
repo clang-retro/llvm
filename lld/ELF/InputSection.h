@@ -63,6 +63,7 @@ public:
     Synthetic,
     Spill,
     EHFrame,
+    DebugFrame,
     Merge,
     Output,
     Class,
@@ -411,6 +412,53 @@ public:
 
   // For each CIE, the output offset of the identical CIE that is emitted.
   SmallVector<uint32_t, 0> cieOutputOffs;
+};
+
+// This corresponds to a .debug_frame section of an input file.
+// Unlike .eh_frame, .debug_frame is not loaded at runtime and uses
+// absolute CIE pointers (not relative offsets).
+// A CIE or FDE record of a .debug_frame input section. Unlike .eh_frame
+// pieces, these keep a pointer to their section so that DebugFrameSection can
+// collect live records from several input sections.
+struct DebugFramePiece {
+  DebugFramePiece(size_t off, InputSectionBase *sec, uint32_t size,
+                  unsigned firstRelocation)
+      : inputOff(off), sec(sec), size(size), firstRelocation(firstRelocation) {}
+
+  ArrayRef<uint8_t> data() const {
+    return {sec->content().data() + this->inputOff, size};
+  }
+
+  size_t inputOff;
+  ssize_t outputOff = -1;
+  InputSectionBase *sec;
+  uint32_t size;
+  unsigned firstRelocation;
+};
+
+class DebugFrameInputSection : public InputSectionBase {
+public:
+  template <class ELFT>
+  DebugFrameInputSection(ObjFile<ELFT> &f, const typename ELFT::Shdr &header,
+                         StringRef name);
+  static bool classof(const SectionBase *s) {
+    return s->kind() == DebugFrame;
+  }
+  template <class ELFT> void split();
+  template <class ELFT, class RelTy> void preprocessRelocs(Relocs<RelTy> rels);
+
+  // Splittable sections are handled as a sequence of data
+  // rather than a single large blob of data.
+  SmallVector<DebugFramePiece, 0> cies, fdes;
+
+  SyntheticSection *getParent() const;
+
+  // Map an input offset to the corresponding offset within the parent
+  // synthetic section, taking piece drops and repacking into account.
+  uint64_t getParentOffset(uint64_t offset) const;
+
+  // Preprocessed relocations in uniform format.
+  SmallVector<Relocation, 0> rels;
 };
 
 // This is a section that is added directly to an output section

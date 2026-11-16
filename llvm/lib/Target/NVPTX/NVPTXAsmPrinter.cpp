@@ -349,7 +349,7 @@ public:
 
   std::string getVirtualRegisterName(Register Reg) const;
 
-  const MCSymbol *getFunctionFrameSymbol() const override;
+  const MCSymbol *getFunctionFrameSymbol(int) const override;
 
   // Make emitGlobalVariable() no-op for NVPTX.
   // Global variables have been already emitted by the time the base AsmPrinter
@@ -872,7 +872,7 @@ void NVPTXAsmPrinter::emitFunctionBodyEnd() {
   VRegMapping.clear();
 }
 
-const MCSymbol *NVPTXAsmPrinter::getFunctionFrameSymbol() const {
+const MCSymbol *NVPTXAsmPrinter::getFunctionFrameSymbol(int) const {
   return OutContext.getOrCreateSymbol(DEPOTNAME + Twine(getFunctionNumber()));
 }
 
@@ -1840,7 +1840,7 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
   // Emit the Fake Stack Object
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   if (const int64_t NumBytes = MFI.getStackSize()) {
-    TS->emitLocalDirective(MFI.getMaxAlign(), getFunctionFrameSymbol(),
+    TS->emitLocalDirective(MFI.getMaxAlign(), getFunctionFrameSymbol(0),
                            NumBytes);
 
     // Declare the frame pointers that NVPTXFrameLowering's prologue defines.
@@ -2370,7 +2370,7 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNum,
   case MachineOperand::MO_Register:
     if (MO.getReg().isPhysical()) {
       if (MO.getReg() == NVPTX::VRDepot)
-        getFunctionFrameSymbol()->print(O, MAI);
+        getFunctionFrameSymbol(0)->print(O, MAI);
       else
         O << NVPTXInstPrinter::getRegisterName(MO.getReg());
     } else {

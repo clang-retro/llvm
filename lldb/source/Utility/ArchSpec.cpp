@@ -271,6 +271,8 @@ static constexpr const CoreDefinition g_core_definitions[] = {
 
     {eByteOrderLittle, 2, 2, 4, llvm::Triple::avr, ArchSpec::eCore_avr, "avr"},
 
+    {eByteOrderLittle, 2, 1, 7, llvm::Triple::mos, ArchSpec::eCore_mos, "mos"},
+
     {eByteOrderLittle, 4, 1, 4, llvm::Triple::wasm32, ArchSpec::eCore_wasm32,
      "wasm32"},
     AMD_GPU_CORE_DEF_R600(R600),
@@ -523,6 +525,7 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
     {ArchSpec::eCore_hexagon_generic, llvm::ELF::EM_HEXAGON     }, // HEXAGON
     {ArchSpec::eCore_arc,             llvm::ELF::EM_ARC_COMPACT2}, // ARC
     {ArchSpec::eCore_avr,             llvm::ELF::EM_AVR         }, // AVR
+    {ArchSpec::eCore_mos,             llvm::ELF::EM_MOS         }, // MOS
     {ArchSpec::eCore_riscv32,         llvm::ELF::EM_RISCV,      ArchSpec::eRISCVSubType_riscv32}, // riscv32
     {ArchSpec::eCore_riscv64,         llvm::ELF::EM_RISCV,      ArchSpec::eRISCVSubType_riscv64}, // riscv64
     {ArchSpec::eCore_loongarch32,     llvm::ELF::EM_LOONGARCH,  ArchSpec::eLoongArchSubType_loongarch32}, // loongarch32
@@ -936,6 +939,7 @@ bool ArchSpec::CharIsSignedByDefault() const {
   case llvm::Triple::systemz:
   case llvm::Triple::xcore:
   case llvm::Triple::arc:
+  case llvm::Triple::mos:
     return false;
   }
 }

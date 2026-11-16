@@ -555,6 +555,8 @@ defm : OptionalBoolField<"keep-loops",
   "Preserve canonical loop structure">;
 defm : OptionalBoolField<"sink-common-insts",
   "Sink common instructions">;
+defm : OptionalBoolField<"speculate-blocks",
+  "Speculatively execute blocks">;
 defm : OptionalBoolField<"speculate-unpredictables",
   "Speculate unpredictable branches">;
 defm : OptionalBoolField<"switch-range-to-icmp",

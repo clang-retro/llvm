@@ -38,6 +38,9 @@ CHECK-NEXT:	LockReturned
 CHECK-NEXT:	Lockable
 CHECK-NEXT:	LocksExcluded
 CHECK-NEXT:	M68kInterrupt
+CHECK-NEXT:	MOSInterrupt
+CHECK-NEXT:	MOSInterruptNorecurse
+CHECK-NEXT:	MOSNoISR
 CHECK-NEXT:	MSP430Interrupt
 CHECK-NEXT:	MatrixType
 CHECK-NEXT:	MayAlias
@@ -52,6 +55,7 @@ CHECK-NEXT:	NoInstrumentFunction
 CHECK-NEXT:	NoMips16
 CHECK-NEXT:	NoReturn
 CHECK-NEXT:	NoThreadSafetyAnalysis
+CHECK-NEXT:	NonReentrant
 CHECK-NEXT:	ObjCBridge
 CHECK-NEXT:	ObjCBridgeMutable
 CHECK-NEXT:	ObjCBridgeRelated
@@ -73,6 +77,7 @@ CHECK-NEXT:	PointerFieldProtection
 CHECK-NEXT:	PtGuardedBy
 CHECK-NEXT:	PtGuardedVar
 CHECK-NEXT:	Pure
+CHECK-NEXT:	Reentrant
 CHECK-NEXT:	ReentrantCapability
 CHECK-NEXT:	ReqdWorkGroupSize
 CHECK-NEXT:	RequiresCapability
@@ -88,4 +93,4 @@ CHECK-NEXT:	Visibility
 CHECK-NEXT:	WeakImport
 CHECK-NEXT:	WeakRef
 CHECK-NEXT:	WorkGroupSizeHint
-CHECK-NEXT: Total: 82
+CHECK-NEXT: Total: 87

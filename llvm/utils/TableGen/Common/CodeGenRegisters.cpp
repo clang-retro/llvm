@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "CodeGenRegisters.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
@@ -756,6 +757,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
       RegsWithSuperRegsTopoSigs(RegBank.getNumTopoSigs()), EnumValue(-1),
       TSFlags(0) {
   GeneratePressureSet = R->getValueAsBit("GeneratePressureSet");
+  IsPressureFineGrained = R->getValueAsBit("isPressureFineGrained");
   for (const Record *Type : R->getValueAsListOfDefs("RegTypes"))
     VTs.push_back(getValueTypeByHwMode(Type, RegBank.getHwModes()));
 
@@ -846,6 +848,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
   MemberBV.resize(RegBank.getRegisters().size());
   Artificial = true;
   GeneratePressureSet = false;
+  IsPressureFineGrained = false;
   for (const auto R : Members) {
     MemberBV.set(CodeGenRegBank::getRegIndex(R));
     if (!R->getSuperRegs().empty())
@@ -881,6 +884,7 @@ void CodeGenRegisterClass::inheritProperties(CodeGenRegBank &RegBank) {
   TSFlags = Super.TSFlags;
   SpillStackID = Super.SpillStackID;
   GeneratePressureSet |= Super.GeneratePressureSet;
+  IsPressureFineGrained |= Super.IsPressureFineGrained;
 
   // Copy all allocation orders, filter out foreign registers from the larger
   // super-class.
@@ -2228,7 +2232,8 @@ void CodeGenRegBank::pruneUnitSets() {
       if (isRegUnitSubSet(SubSet.Units, SuperSet.Units) &&
           (SubSet.Units.size() + 3 > SuperSet.Units.size()) &&
           UnitWeight == RegUnits[SuperSet.Units[0]].Weight &&
-          UnitWeight == RegUnits[SuperSet.Units.back()].Weight) {
+          UnitWeight == RegUnits[SuperSet.Units.back()].Weight &&
+          !SubSet.IsFineGrained) {
         LLVM_DEBUG({
           dbgs() << "UnitSet " << SubIdx << " subsumed by " << SuperIdx << '\n';
         });
@@ -2250,6 +2255,8 @@ void CodeGenRegBank::pruneUnitSets() {
   for (unsigned SuperIdx : SuperSetIDs) {
     PrunedUnitSets.emplace_back(RegUnitSets[SuperIdx].Name);
     PrunedUnitSets.back().Units = std::move(RegUnitSets[SuperIdx].Units);
+    PrunedUnitSets.back().IsFineGrained =
+        std::move(RegUnitSets[SuperIdx].IsFineGrained);
   }
   RegUnitSets = std::move(PrunedUnitSets);
 }
@@ -2329,6 +2336,8 @@ void CodeGenRegBank::computeRegUnitSets() {
 
       RegUnitSet RUSet(RegUnitSets[Idx].Name + "_with_" +
                        RegUnitSets[SearchIdx].Name);
+      RUSet.IsFineGrained = RegUnitSets[Idx].IsFineGrained ||
+                            RegUnitSets[SearchIdx].IsFineGrained;
       std::set_union(RegUnitSets[Idx].Units.begin(),
                      RegUnitSets[Idx].Units.end(),
                      RegUnitSets[SearchIdx].Units.begin(),

@@ -30,6 +30,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/BinaryFormat/AMDGPUMetadataVerifier.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/BinaryFormat/MOSFlags.h"
 #include "llvm/BinaryFormat/MsgPackDocument.h"
 #include "llvm/BinaryFormat/SFrame.h"
 #include "llvm/Demangle/Demangle.h"
@@ -1287,6 +1288,11 @@ constexpr EnumStringDef<unsigned, 2> ElfMipsSectionFlagsDefs[] = {
 constexpr auto ElfMipsSectionFlags =
     BUILD_ENUM_STRINGS(ElfMipsSectionFlagsDefs);
 
+constexpr EnumStringDef<unsigned, 2> ElfMOSSectionFlagsDefs[] = {
+    ENUM_ENT(SHF_MOS_ZEROPAGE, "z")};
+constexpr auto ElfMOSSectionFlags =
+    BUILD_ENUM_STRINGS(ElfMOSSectionFlagsDefs);
+
 constexpr EnumStringDef<unsigned, 2> ElfX86_64SectionFlagsDefs[] = {
     ENUM_ENT(SHF_X86_64_LARGE, "l")};
 constexpr auto ElfX86_64SectionFlags =
@@ -1330,6 +1336,10 @@ getSectionFlagsForTarget(unsigned EOSAbi, unsigned EMachine) {
     break;
   case EM_XCORE:
     for (const auto &Entry : EnumStrings(ElfXCoreSectionFlags))
+      Ret.push_back(&Entry);
+    break;
+  case EM_MOS:
+    for (const auto &Entry : EnumStrings(ElfMOSSectionFlags))
       Ret.push_back(&Entry);
     break;
   default:
@@ -1698,6 +1708,11 @@ constexpr EnumStringDef<unsigned, 2> ElfRISCVSymOtherFlagsDefs[] = {
 };
 constexpr auto ElfRISCVSymOtherFlags =
     BUILD_ENUM_STRINGS(ElfRISCVSymOtherFlagsDefs);
+
+constexpr EnumStringDef<unsigned, 2> ElfMOSSymOtherFlagsDefs[] = {
+    ENUM_ENT_1(STO_MOS_ZEROPAGE)};
+constexpr auto ElfMOSSymOtherFlags =
+    BUILD_ENUM_STRINGS(ElfMOSSymOtherFlagsDefs);
 
 static const char *getElfMipsOptionsOdkType(unsigned Odk) {
   switch (Odk) {
@@ -3490,6 +3505,9 @@ ELFDumper<ELFT>::getOtherFlagsFromSymbol(const Elf_Ehdr &Header,
   } else if (Header.e_machine == EM_RISCV) {
     for (const auto &Entry : EnumStrings(ElfRISCVSymOtherFlags))
       SymOtherFlags.push_back(&Entry);
+  } else if (Header.e_machine == EM_MOS) {
+    for (const auto &Entry : EnumStrings(ElfMOSSymOtherFlags))
+      SymOtherFlags.push_back(&Entry);
   }
   return SymOtherFlags;
 }
@@ -3639,6 +3657,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printFileHeaders() {
   else if (e.e_machine == EM_RISCV)
     ElfFlags = printFlags(e.e_flags, EnumStrings(ElfHeaderRISCVFlags),
                           unsigned(ELF::EF_RISCV_FLOAT_ABI));
+  else if (e.e_machine == EM_MOS)
+    ElfFlags = printFlags(e.e_flags, MOS::getElfHeaderMOSFlags());
   else if (e.e_machine == EM_SPARC32PLUS || e.e_machine == EM_SPARCV9)
     ElfFlags = printFlags(e.e_flags, EnumStrings(ElfHeaderSPARCFlags),
                           unsigned(ELF::EF_SPARCV9_MM));
@@ -4114,6 +4134,8 @@ static void printSectionDescription(formatted_raw_ostream &OS,
     OS << ", l (large)";
   else if (EMachine == EM_ARM || EMachine == EM_AARCH64)
     OS << ", y (purecode)";
+  else if (EMachine == EM_MOS)
+    OS << ", z (zeropage)";
 
   OS << ", p (processor specific)\n";
 }
@@ -4319,6 +4341,15 @@ void GNUELFDumper<ELFT>::printSymbol(const Elf_Sym &Symbol, unsigned SymIndex,
       if (Other & STO_RISCV_VARIANT_CC) {
         Other &= ~STO_RISCV_VARIANT_CC;
         Fields[5].Str += " [VARIANT_CC";
+        if (Other != 0)
+          Fields[5].Str.append(" | " + utohexstr(Other, /*LowerCase=*/true));
+        Fields[5].Str.append("]");
+      }
+    } else if (this->Obj.getHeader().e_machine == ELF::EM_MOS) {
+      uint8_t Other = Symbol.st_other & ~0x3;
+      if (Other & STO_MOS_ZEROPAGE) {
+        Other &= ~STO_MOS_ZEROPAGE;
+        Fields[5].Str += " [ZEROPAGE";
         if (Other != 0)
           Fields[5].Str.append(" | " + utohexstr(Other, /*LowerCase=*/true));
         Fields[5].Str.append("]");
@@ -7597,6 +7628,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printFileHeaders() {
     } else if (E.e_machine == EM_RISCV)
       W.printFlags("Flags", E.e_flags, EnumStrings(ElfHeaderRISCVFlags),
                    unsigned(ELF::EF_RISCV_FLOAT_ABI));
+    else if (E.e_machine == EM_MOS)
+      W.printFlags("Flags", E.e_flags, MOS::getElfHeaderMOSFlags());
     else if (E.e_machine == EM_SPARC32PLUS || E.e_machine == EM_SPARCV9)
       W.printFlags("Flags", E.e_flags, EnumStrings(ElfHeaderSPARCFlags),
                    unsigned(ELF::EF_SPARCV9_MM));

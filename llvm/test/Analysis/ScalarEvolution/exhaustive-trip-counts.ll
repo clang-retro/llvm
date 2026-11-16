@@ -8,9 +8,9 @@ define void @f_0() {
 ;
 ; CHECK-LABEL: 'f_0'
 ; CHECK-NEXT:  Determining loop execution counts for: @f_0
-; CHECK-NEXT:  Loop %for.body: backedge-taken count is i32 5
-; CHECK-NEXT:  Loop %for.body: constant max backedge-taken count is i32 5
-; CHECK-NEXT:  Loop %for.body: symbolic max backedge-taken count is i32 5
+; CHECK-NEXT:  Loop %for.body: backedge-taken count is i4 5
+; CHECK-NEXT:  Loop %for.body: constant max backedge-taken count is i4 5
+; CHECK-NEXT:  Loop %for.body: symbolic max backedge-taken count is i4 5
 ; CHECK-NEXT:  Loop %for.body: Trip multiple is 6
 ;
 entry:
@@ -180,9 +180,9 @@ exit:
 define i32 @test_shared_subexpression() {
 ; CHECK-LABEL: 'test_shared_subexpression'
 ; CHECK-NEXT:  Determining loop execution counts for: @test_shared_subexpression
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 3
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 3
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 3
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i3 3
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i3 3
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i3 3
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 4
 ;
 entry:
@@ -270,9 +270,9 @@ exit:
 define i64 @test_fneg() {
 ; CHECK-LABEL: 'test_fneg'
 ; CHECK-NEXT:  Determining loop execution counts for: @test_fneg
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 7
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 7
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 7
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i4 7
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i4 7
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i4 7
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 8
 ;
 entry:
@@ -295,9 +295,9 @@ exit:
 define i64 @test_freeze() {
 ; CHECK-LABEL: 'test_freeze'
 ; CHECK-NEXT:  Determining loop execution counts for: @test_freeze
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 5
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 5
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 5
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i4 5
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i4 5
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i4 5
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 6
 ;
 entry:
@@ -318,9 +318,9 @@ exit:
 define i64 @test_extract_insert_element() {
 ; CHECK-LABEL: 'test_extract_insert_element'
 ; CHECK-NEXT:  Determining loop execution counts for: @test_extract_insert_element
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 4
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 4
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 4
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i4 4
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i4 4
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i4 4
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 5
 ;
 entry:
@@ -344,9 +344,9 @@ exit:
 define i64 @test_extract_insert_value() {
 ; CHECK-LABEL: 'test_extract_insert_value'
 ; CHECK-NEXT:  Determining loop execution counts for: @test_extract_insert_value
-; CHECK-NEXT:  Loop %loop: backedge-taken count is i32 4
-; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i32 4
-; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i32 4
+; CHECK-NEXT:  Loop %loop: backedge-taken count is i4 4
+; CHECK-NEXT:  Loop %loop: constant max backedge-taken count is i4 4
+; CHECK-NEXT:  Loop %loop: symbolic max backedge-taken count is i4 4
 ; CHECK-NEXT:  Loop %loop: Trip multiple is 5
 ;
 entry:
