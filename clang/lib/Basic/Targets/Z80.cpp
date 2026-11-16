@@ -54,11 +54,16 @@ Z80TargetInfo::Z80TargetInfo(const llvm::Triple &Triple, const TargetOptions &)
   LongAccumScale = 31;
   FloatWidth = 32;
   FloatAlign = 8;
-  DoubleWidth = 64;
+  // double and long double are IEEE single, as in most compilers for 8-bit
+  // processors (and avr-gcc): soft double precision is too big and slow
+  // for a 64 KB machine. -mdouble=64 makes them IEEE double, which needs a
+  // C library built the same way.
+  DoubleWidth = 32;
   DoubleAlign = 8;
-  LongDoubleWidth = 64;
+  DoubleFormat = &llvm::APFloat::IEEEsingle();
+  LongDoubleWidth = 32;
   LongDoubleAlign = 8;
-  LongDoubleFormat = &llvm::APFloat::IEEEdouble();
+  LongDoubleFormat = &llvm::APFloat::IEEEsingle();
   SuitableAlign = 8;
   DefaultAlignForAttributeAligned = 8;
   MinGlobalAlign = 8;
