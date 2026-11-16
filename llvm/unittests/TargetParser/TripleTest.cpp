@@ -135,6 +135,22 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_FALSE(T.isOSMSDOS());
   EXPECT_FALSE(T.isOSNE16());
 
+  T = Triple("z80-unknown-cpm");
+  EXPECT_EQ(Triple::z80, T.getArch());
+  EXPECT_EQ(Triple::CPM, T.getOS());
+  EXPECT_EQ(Triple::ELF, T.getObjectFormat());
+  EXPECT_TRUE(T.isOSCPM());
+  EXPECT_TRUE(T.isZ80());
+  EXPECT_TRUE(T.isArch16Bit());
+
+  T = Triple("i8080-unknown-cpm");
+  EXPECT_EQ(Triple::i8080, T.getArch());
+  EXPECT_EQ(Triple::CPM, T.getOS());
+  EXPECT_EQ(Triple::ELF, T.getObjectFormat());
+  EXPECT_TRUE(T.isZ80());
+  EXPECT_TRUE(T.isArch16Bit());
+  EXPECT_EQ(Triple::i8080, Triple("i8085-unknown-cpm").getArch());
+
   T = Triple("m68k-unknown-amigaos");
   EXPECT_EQ(Triple::m68k, T.getArch());
   EXPECT_EQ(Triple::AmigaOS, T.getOS());

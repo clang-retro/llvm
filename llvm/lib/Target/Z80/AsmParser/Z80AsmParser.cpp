@@ -160,6 +160,8 @@ public:
                const MCInstrInfo &MII)
       : MCTargetAsmParser(STI, MII), Parser(Parser) {
     MCAsmParserExtension::Initialize(Parser);
+    // .word is 16 bits, as in other Z80 and 8080 assemblers.
+    Parser.addAliasForDirective(".word", ".2byte");
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 };
