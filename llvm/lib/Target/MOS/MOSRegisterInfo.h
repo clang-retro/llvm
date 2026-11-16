@@ -51,6 +51,10 @@ public:
 
   unsigned getCSRCost(const MachineFunction &MF) const override;
 
+  bool markSpillIntervalsNotSpillable(const MachineFunction &MF) const override {
+    return true;
+  }
+
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     // Saving/restoring to stack may require temporary registers.
     return true;

@@ -892,6 +892,15 @@ public:
     return 30;
   }
 
+  /// Returns true if the register allocator should mark the intervals it
+  /// creates when spilling a live range as not spillable. This keeps the
+  /// greedy allocator from spilling around them again; targets whose
+  /// instructions can each need most of their registers (i8086) must leave
+  /// it off, or the allocator can run out of registers.
+  virtual bool markSpillIntervalsNotSpillable(const MachineFunction &MF) const {
+    return false;
+  }
+
   /// Returns true if the target requires (and can make use of) the register
   /// scavenger.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {
