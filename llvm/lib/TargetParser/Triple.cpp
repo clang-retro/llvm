@@ -165,6 +165,10 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
     return "xcore";
   case xtensa:
     return "xtensa";
+  case z80:
+    return "z80";
+  case i8080:
+    return "i8080";
   }
 
   llvm_unreachable("Invalid ArchType!");
@@ -278,6 +282,10 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
 
   case avr:
     return "avr";
+
+  case z80:
+  case i8080:
+    return "z80";
 
   case ppc64:
   case ppc64le:
@@ -478,6 +486,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
       .Case("mips64", mips64)
       .Case("mips64el", mips64el)
       .Case("msp430", msp430)
+      .Case("z80", z80)
+      .Case("i8080", i8080)
       .Case("ppc64", ppc64)
       .Case("ppc32", ppc)
       .Case("ppc", ppc)
@@ -630,6 +640,8 @@ Triple::ArchType Triple::parseArch(StringRef ArchName) {
           .Case("avr", Triple::avr)
           .Case("m68k", Triple::m68k)
           .Case("msp430", Triple::msp430)
+          .Case("z80", Triple::z80)
+          .Cases({"i8080", "i8085"}, Triple::i8080)
           .Cases({"mips", "mipseb", "mipsallegrex", "mipsisa32r6", "mipsr6"},
                  Triple::mips)
           .Cases({"mipsel", "mipsallegrexel", "mipsisa32r6el", "mipsr6el"},
@@ -994,6 +1006,8 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::mips64el:
   case Triple::mips:
   case Triple::msp430:
+  case Triple::z80:
+  case Triple::i8080:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::ppc64le:
@@ -1039,7 +1053,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
     return Triple::ELF;
 
   case Triple::i8086:
-    if (T.isOSMSDOS() || T.isOSWin16() || T.isOSOS2())
+    if (T.isOSMSDOS() || T.isOSWin16() || T.isOSOS2() || T.isOSCPM())
       return Triple::OMF;
     return Triple::ELF;
 
@@ -1782,6 +1796,8 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::avr:
   case llvm::Triple::msp430:
   case llvm::Triple::i8086:
+  case llvm::Triple::z80:
+  case llvm::Triple::i8080:
     return 16;
 
   case llvm::Triple::aarch64_32:
@@ -1892,6 +1908,8 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::msp430:
   case Triple::systemz:
   case Triple::ve:
+  case Triple::z80:
+  case Triple::i8080:
     T.setArch(UnknownArch);
     break;
 
@@ -2009,6 +2027,8 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::lanai:
   case Triple::m68k:
   case Triple::msp430:
+  case Triple::z80:
+  case Triple::i8080:
   case Triple::r600:
   case Triple::shave:
   case Triple::sparcel:
@@ -2136,6 +2156,8 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::loongarch32:
   case Triple::loongarch64:
   case Triple::msp430:
+  case Triple::z80:
+  case Triple::i8080:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::r600:
@@ -2277,6 +2299,8 @@ bool Triple::isLittleEndian() const {
   case Triple::mips64el:
   case Triple::mipsel:
   case Triple::msp430:
+  case Triple::z80:
+  case Triple::i8080:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::ppcle:
@@ -2594,7 +2618,7 @@ FloatABI::ABIType Triple::getDefaultFloatABI(StringRef ABIName) const {
   if (isMIPS())
     return isOSFreeBSD() ? FloatABI::Soft : FloatABI::Hard;
 
-  if (isCSKY() || isAVR() || getArch() == msp430 || isX86_16())
+  if (isCSKY() || isAVR() || getArch() == msp430 || isX86_16() || isZ80())
     return FloatABI::Soft;
 
   // Most targets use hard float unless soft float is explicitly requested.

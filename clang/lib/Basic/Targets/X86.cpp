@@ -2033,4 +2033,9 @@ void X86_16TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (getTriple().isOSOS2()) {
     Builder.defineMacro("__OS2__");
   }
+  // CP/M-86. __CPM__ is for any CP/M, __CPM86__ for the 8086 one.
+  if (getTriple().isOSCPM()) {
+    Builder.defineMacro("__CPM__");
+    Builder.defineMacro("__CPM86__");
+  }
 }

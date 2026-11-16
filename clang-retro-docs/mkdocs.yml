@@ -26,6 +26,7 @@ nav:
   - The 8086 backend: i8086.md
   - 68k: m68k.md
   - PowerPC: powerpc.md
+  - Z80 and 8080: z80.md
   - Tools: tools.md
   - Building: building.md
   - API reference: api/index.html

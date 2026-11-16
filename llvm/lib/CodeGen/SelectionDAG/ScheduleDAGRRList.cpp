@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -2910,25 +2911,39 @@ void RegReductionPQBase::PrescheduleNodesWithMultipleUses() {
           cast<RegisterSDNode>(N->getOperand(1))->getReg().isVirtual())
         continue;
 
+    // If the node is in a call sequence (its chain leads back to the
+    // FrameSetup without passing a FrameDestroy), we should not
+    // pre-schedule it, or else, when bottom up scheduling, ADJCALLSTACKDOWN
+    // and ADJCALLSTACKUP may hold CallResource too long and make other
+    // calls can't be scheduled. If there's no other available node to
+    // schedule, the schedular will try to rename the register by creating
+    // copy to avoid the conflict which will fail because CallResource is
+    // not a real physical register. Targets that push outgoing arguments
+    // have chains of such nodes, so follow the chain a few steps.
     SDNode *PredFrameSetup = nullptr;
-    for (const SDep &Pred : SU.Preds)
-      if (Pred.isCtrl() && Pred.getSUnit()) {
+    SmallVector<const SUnit *, 8> Worklist{&SU};
+    SmallPtrSet<const SUnit *, 8> Visited;
+    while (!Worklist.empty() && !PredFrameSetup && Visited.size() < 32) {
+      const SUnit *Cur = Worklist.pop_back_val();
+      if (!Visited.insert(Cur).second)
+        continue;
+      for (const SDep &Pred : Cur->Preds) {
+        if (!Pred.isCtrl() || !Pred.getSUnit())
+          continue;
         // Find the predecessor which is not data dependence.
         SDNode *PredND = Pred.getSUnit()->getNode();
-
-        // If PredND is FrameSetup, we should not pre-scheduled the node,
-        // or else, when bottom up scheduling, ADJCALLSTACKDOWN and
-        // ADJCALLSTACKUP may hold CallResource too long and make other
-        // calls can't be scheduled. If there's no other available node
-        // to schedule, the schedular will try to rename the register by
-        // creating copy to avoid the conflict which will fail because
-        // CallResource is not a real physical register.
-        if (PredND && PredND->isMachineOpcode() &&
-            (PredND->getMachineOpcode() == TII->getCallFrameSetupOpcode())) {
+        if (!PredND || !PredND->isMachineOpcode())
+          continue;
+        unsigned Opc = PredND->getMachineOpcode();
+        if (Opc == TII->getCallFrameSetupOpcode()) {
           PredFrameSetup = PredND;
           break;
         }
+        if (Opc != TII->getCallFrameDestroyOpcode() &&
+            Pred.getSUnit()->NumSuccs == 0)
+          Worklist.push_back(Pred.getSUnit());
       }
+    }
     // Skip the node has FrameSetup parent.
     if (PredFrameSetup != nullptr)
       continue;

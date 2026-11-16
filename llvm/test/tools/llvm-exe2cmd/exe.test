@@ -1,0 +1,24 @@
+## An .EXE file becomes a small-model CMD file: a code group, and a data
+## group at the paragraph in the "CP/M" marker. The marker's relocation is
+## dropped.
+
+# RUN: %python %S/Inputs/mk.py exe %t.exe
+# RUN: llvm-exe2cmd -v %t.exe -o %t.cmd | FileCheck %s
+# CHECK: code group: 32 bytes, min 2h max 2h paragraphs
+# CHECK: data group: 300 bytes, min 17h max 1000h paragraphs
+# CHECK: small model
+# RUN: od -An -tx1 -v -N18 %t.cmd | FileCheck %s --check-prefix=HDR
+# HDR:      01 02 00 00 00 02 00 02 00 02 13 00 00 00 17 00
+# HDR-NEXT: 00 10
+
+# RUN: %python %S/Inputs/mk.py exe-reloc %t-reloc.exe
+# RUN: not llvm-exe2cmd %t-reloc.exe -o %t.cmd 2>&1 | FileCheck %s --check-prefix=RELOC
+# RELOC: error: the program has a segment relocation at 0000:0010, which CP/M-86 can't fix up
+
+# RUN: %python %S/Inputs/mk.py exe-nomarker %t-nomarker.exe
+# RUN: not llvm-exe2cmd %t-nomarker.exe -o %t.cmd 2>&1 | FileCheck %s --check-prefix=NOMARK
+# NOMARK: error: the program doesn't start with the CP/M-86 marker
+
+# RUN: %python %S/Inputs/mk.py exe-entry %t-entry.exe
+# RUN: not llvm-exe2cmd %t-entry.exe -o %t.cmd 2>&1 | FileCheck %s --check-prefix=ENTRY
+# ENTRY: error: the program must start at the first byte of its code (it starts at 0000:0004)
