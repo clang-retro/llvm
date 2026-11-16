@@ -27,6 +27,7 @@ extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void LLVMInitializeZ80Target() {
   initializeZ80DAGToDAGISelLegacyPass(PR);
   initializeZ80ExpandPseudoPass(PR);
   initializeZ80SplitNarrowPass(PR);
+  initializeZ80PrintfVariantsPass(PR);
 }
 
 Z80TargetMachine::Z80TargetMachine(const Target &T, const Triple &TT,
@@ -77,6 +78,8 @@ public:
   void addIRPasses() override {
     addPass(createAtomicExpandLegacyPass());
     TargetPassConfig::addIRPasses();
+    // Link the integer printf and scanf where a call allows.
+    addPass(createZ80PrintfVariantsPass());
   }
   bool addInstSelector() override {
     addPass(createZ80ISelDag(getZ80TargetMachine(), getOptLevel()));

@@ -167,7 +167,7 @@ def LDri : Z80Inst<2, (outs GR8:$dst), (ins imm8:$n), "ld\t$dst, $n",
 
 let mayLoad = 1 in {
 def LDrHL : Z80Inst<1, (outs GR8:$dst), (ins HL16:$ptr), "ld\t$dst, ($ptr)",
-                    [(set i8:$dst, (load HL16:$ptr))]> {
+                    []> {
   bits<3> dst;
   let Inst{7-6} = 0b01;
   let Inst{5-3} = dst;
@@ -186,13 +186,12 @@ def LDAnn : Inn<3, 0x3A, (outs ACC:$dst), (ins addr16:$nn), "ld\t$dst, ($nn)",
 
 let mayStore = 1 in {
 def LDHLr : Z80Inst<1, (outs), (ins HL16:$ptr, GR8:$src), "ld\t($ptr), $src",
-                    [(store i8:$src, HL16:$ptr)]> {
+                    []> {
   bits<3> src;
   let Inst{7-3} = 0b01110;
   let Inst{2-0} = src;
 }
-def LDHLn : In<2, 0x36, (outs), (ins HL16:$ptr, imm8:$n), "ld\t($ptr), $n",
-               [(store (i8 imm:$n), HL16:$ptr)]>;
+def LDHLn : In<2, 0x36, (outs), (ins HL16:$ptr, imm8:$n), "ld\t($ptr), $n", []>;
 def LDrpA : Z80Inst<1, (outs), (ins BCDE:$ptr, ACC:$src), "ld\t($ptr), $src",
                     []> {
   bits<2> ptr;
@@ -225,10 +224,10 @@ def LDSPnn : Inn<3, 0x31, (outs SPR:$dst), (ins imm16:$nn), "ld\t$dst, $nn">;
 
 let mayLoad = 1 in
 def LDHLnn : Inn<3, 0x2A, (outs HL16:$dst), (ins addr16:$nn),
-                 "ld\t$dst, ($nn)", [(set i16:$dst, (load absaddr:$nn))]>;
+                 "ld\t$dst, ($nn)", []>;
 let mayStore = 1 in
 def LDnnHL : Inn<3, 0x22, (outs), (ins addr16:$nn, HL16:$src),
-                 "ld\t($nn), $src", [(store i16:$src, absaddr:$nn)]>;
+                 "ld\t($nn), $src", []>;
 
 let Defs = [SP] in
 def LDSPHL : I<1, 0xF9, (outs SPR:$dst), (ins HL16:$src), "ld\t$dst, $src">;
@@ -369,8 +368,7 @@ def CCF : I<1, 0x3F, (outs), (ins), "ccf">;
 let hasSideEffects = 0 in {
 let Defs = [F], Constraints = "$a = $dst" in {
 def ADDHLrp : Z80Inst<1, (outs HL16:$dst), (ins HL16:$a, GR16:$b),
-                      "add\t$dst, $b",
-                      [(set i16:$dst, (add i16:$a, i16:$b))]> {
+                      "add\t$dst, $b", []> {
   bits<2> b;
   let Inst{7-6} = 0b00;
   let Inst{5-4} = b;
@@ -846,7 +844,34 @@ def LD16HL : Pseudo<(outs GR16:$dst), (ins GR16:$ptr), "#LD16HL $dst, $ptr",
 let mayStore = 1 in
 def ST16HL : Pseudo<(outs), (ins GR16:$ptr, GR16:$src), "#ST16HL $ptr, $src",
                     [(store i16:$src, GR16:$ptr)]>;
+
+// Byte loads and stores through any pair: LD r,(HL), LD A,(BC) and so on
+// where the registers allow it, and otherwise through A, which they keep.
+let mayLoad = 1 in
+def LD8rp : Pseudo<(outs GR8:$dst), (ins GR16:$ptr), "#LD8rp $dst, $ptr",
+                   [(set i8:$dst, (load GR16:$ptr))]>;
+let mayStore = 1 in {
+def ST8rp : Pseudo<(outs), (ins GR16:$ptr, GR8:$src), "#ST8rp $ptr, $src",
+                   [(store i8:$src, GR16:$ptr)]>;
+def ST8rpi : Pseudo<(outs), (ins GR16:$ptr, i8imm:$n), "#ST8rpi $ptr, $n",
+                    [(store (i8 imm:$n), GR16:$ptr)]>;
 }
+
+// 16-bit loads and stores at an address, into or from any pair.
+let mayLoad = 1 in
+def LD16nn : Pseudo<(outs GR16:$dst), (ins addr16:$nn), "#LD16nn $dst, $nn",
+                    [(set i16:$dst, (load absaddr:$nn))]>;
+let mayStore = 1 in
+def ST16nn : Pseudo<(outs), (ins addr16:$nn, GR16:$src), "#ST16nn $nn, $src",
+                    [(store i16:$src, absaddr:$nn)]>;
+}
+
+// 16-bit addition into any pair: ADD HL,rp, with EX DE,HL around it for DE
+// and through HL, which it keeps, for BC.
+let hasSideEffects = 0, Defs = [F], Constraints = "$a = $dst",
+    isCommutable = 1 in
+def ADD16 : Pseudo<(outs GR16:$dst), (ins GR16:$a, GR16:$b), "#ADD16",
+                   [(set i16:$dst, (add i16:$a, i16:$b))]>;
 
 // 16-bit operations done a byte at a time through A.
 let hasSideEffects = 0, Defs = [A, F] in {
@@ -938,16 +963,16 @@ def : Pat<(Z80call (i16 tglobaladdr:$f)), (CALL tglobaladdr:$f)>;
 def : Pat<(Z80call (i16 texternalsym:$f)), (CALL texternalsym:$f)>;
 
 // 16-bit addition with a constant.
-def : Pat<(add i16:$a, imm:$b), (ADDHLrp $a, (LD16ri imm:$b))>;
+def : Pat<(add i16:$a, imm:$b), (ADD16 $a, (LD16ri imm:$b))>;
 def : Pat<(add i16:$a, 2), (INC16 (INC16 $a))>;
 def : Pat<(add i16:$a, -2), (DEC16 (DEC16 $a))>;
-def : Pat<(addc i16:$a, i16:$b), (ADDHLrp $a, $b)>;
+def : Pat<(addc i16:$a, i16:$b), (ADD16 $a, $b)>;
 def : Pat<(subc i16:$a, i16:$b), (SUB16 $a, $b)>;
 def : Pat<(sub i16:$a, imm:$b), (SUB16ri $a, imm:$b)>;
 
 // 8-bit shifts left by one bit.
 def : Pat<(Z80shl1 i8:$a), (ADDr $a, $a)>;
-def : Pat<(Z80shl1 i16:$a), (ADDHLrp $a, $a)>;
+def : Pat<(Z80shl1 i16:$a), (ADD16 $a, $a)>;
 
 def : Pat<(i8 (trunc i16:$a)), (EXTRACT_SUBREG $a, sub_lo)>;
 def : Pat<(i8 (Z80hi i16:$a)), (EXTRACT_SUBREG $a, sub_hi)>;

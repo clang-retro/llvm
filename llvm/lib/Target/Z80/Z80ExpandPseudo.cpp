@@ -629,6 +629,125 @@ static bool expandMI(Builder &B, MachineInstr &MI) {
     expandALU16ri(B, Z80::SUBn, Z80::SBCn, MI.getOperand(0).getReg(),
                   MI.getOperand(1).getImm(), false, false);
     return true;
+  case Z80::LD8rp: {
+    MCRegister Dst = MI.getOperand(0).getReg();
+    MCRegister Ptr = MI.getOperand(1).getReg();
+    if (Ptr == Z80::HL) {
+      B.ldFromHL(Dst);
+      return true;
+    }
+    if (Dst == Z80::A) {
+      B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+      return true;
+    }
+    bool SaveA = B.isLive(Z80::A);
+    if (SaveA)
+      B.push(Z80::AF);
+    B.build(Z80::LDArp, Z80::A).addReg(Ptr);
+    B.ld(Dst, Z80::A);
+    if (SaveA)
+      B.pop(Z80::AF);
+    return true;
+  }
+  case Z80::ST8rp:
+  case Z80::ST8rpi: {
+    MCRegister Ptr = MI.getOperand(0).getReg();
+    bool Imm = MI.getOpcode() == Z80::ST8rpi;
+    if (Ptr == Z80::HL) {
+      if (Imm)
+        B.build(Z80::LDHLn).addReg(Z80::HL).addImm(MI.getOperand(1).getImm() & 0xff);
+      else
+        B.stToHL(MI.getOperand(1).getReg());
+      return true;
+    }
+    if (!Imm && MI.getOperand(1).getReg() == Z80::A) {
+      B.build(Z80::LDrpA).addReg(Ptr).addReg(Z80::A);
+      return true;
+    }
+    bool SaveA = B.isLive(Z80::A);
+    if (SaveA)
+      B.push(Z80::AF);
+    if (Imm)
+      B.ldi(Z80::A, MI.getOperand(1).getImm());
+    else
+      B.ld(Z80::A, MI.getOperand(1).getReg());
+    B.build(Z80::LDrpA).addReg(Ptr).addReg(Z80::A);
+    if (SaveA)
+      B.pop(Z80::AF);
+    return true;
+  }
+  case Z80::LD16nn:
+  case Z80::ST16nn: {
+    bool Load = MI.getOpcode() == Z80::LD16nn;
+    MCRegister R = MI.getOperand(Load ? 0 : 1).getReg();
+    const MachineOperand &Addr = MI.getOperand(Load ? 1 : 0);
+    auto AddAddr = [&](MachineInstrBuilder MIB) { MIB.add(Addr); };
+    if (R == Z80::HL) {
+      if (Load)
+        AddAddr(B.build(Z80::LDHLnn, Z80::HL));
+      else
+        B.build(Z80::LDnnHL).add(Addr).addReg(Z80::HL);
+      return true;
+    }
+    if (B.HasZ80) {
+      if (Load)
+        AddAddr(B.build(Z80::LDrpnn, R));
+      else
+        B.build(Z80::LDnnrp).add(Addr).addReg(R);
+      return true;
+    }
+    if (R == Z80::DE) {
+      B.exDEHL();
+      if (Load)
+        AddAddr(B.build(Z80::LDHLnn, Z80::HL));
+      else
+        B.build(Z80::LDnnHL).add(Addr).addReg(Z80::HL);
+      B.exDEHL();
+      return true;
+    }
+    // BC, through HL.
+    B.push(Z80::HL);
+    if (Load) {
+      AddAddr(B.build(Z80::LDHLnn, Z80::HL));
+      B.ld(Z80::B, Z80::H);
+      B.ld(Z80::C, Z80::L);
+    } else {
+      B.ld(Z80::H, Z80::B);
+      B.ld(Z80::L, Z80::C);
+      B.build(Z80::LDnnHL).add(Addr).addReg(Z80::HL);
+    }
+    B.pop(Z80::HL);
+    return true;
+  }
+  case Z80::ADD16: {
+    MCRegister Dst = MI.getOperand(0).getReg();
+    MCRegister Src = MI.getOperand(2).getReg();
+    auto AddHL = [&](MCRegister RP) {
+      B.build(Z80::ADDHLrp, Z80::HL).addReg(Z80::HL).addReg(RP);
+    };
+    if (Dst == Z80::HL) {
+      AddHL(Src);
+    } else if (Dst == Z80::DE) {
+      // EX DE,HL swaps the roles of DE and HL.
+      B.exDEHL();
+      AddHL(Src == Z80::HL ? Z80::DE : Src == Z80::DE ? Z80::HL : Src);
+      B.exDEHL();
+    } else {
+      // BC: the sum in HL, which is kept on the stack.
+      B.push(Z80::HL);
+      if (Src == Z80::HL) {
+        AddHL(Z80::BC);
+      } else {
+        B.ld(Z80::H, Z80::B);
+        B.ld(Z80::L, Z80::C);
+        AddHL(Src == Z80::BC ? Z80::HL : Src);
+      }
+      B.ld(Z80::B, Z80::H);
+      B.ld(Z80::C, Z80::L);
+      B.pop(Z80::HL);
+    }
+    return true;
+  }
   case Z80::TST16: {
     MCRegister R = MI.getOperand(0).getReg();
     B.ld(Z80::A, B.hi(R));
@@ -735,6 +854,8 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
     LiveRegUnits LR(TRI);
     LR.addLiveOuts(*MBB);
     for (MachineInstr &MI : llvm::reverse(*MBB)) {
+      if (MI.isDebugInstr())
+        continue;
       if (MI.isPseudo() && !MI.isMetaInstruction())
         LiveAfter.try_emplace(&MI, LR);
       LR.stepBackward(MI);
