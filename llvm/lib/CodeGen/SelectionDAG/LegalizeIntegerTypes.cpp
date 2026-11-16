@@ -5788,6 +5788,14 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::ROTR:              Res = ExpandIntOp_Shift(N); break;
   case ISD::RETURNADDR:
   case ISD::FRAMEADDR:         Res = ExpandIntOp_RETURNADDR(N); break;
+  case ISD::SMULFIX:
+  case ISD::SMULFIXSAT:
+  case ISD::UMULFIX:
+  case ISD::UMULFIXSAT:
+  case ISD::SDIVFIX:
+  case ISD::SDIVFIXSAT:
+  case ISD::UDIVFIX:
+  case ISD::UDIVFIXSAT:        Res = ExpandIntOp_FIX(N); break;
 
   case ISD::SCMP:
   case ISD::UCMP:              Res = ExpandIntOp_CMP(N); break;
@@ -6065,6 +6073,16 @@ SDValue DAGTypeLegalizer::ExpandIntOp_RETURNADDR(SDNode *N) {
   SDValue Lo, Hi;
   GetExpandedInteger(N->getOperand(0), Lo, Hi);
   return SDValue(DAG.UpdateNodeOperands(N, Lo), 0);
+}
+
+SDValue DAGTypeLegalizer::ExpandIntOp_FIX(SDNode *N) {
+  // The scale of a fixed-point operation is a 32-bit constant, which on 8-
+  // and 16-bit targets is expanded although the result type is legal. The
+  // scale is less than the width of the result, so its low half holds it.
+  SDValue Lo, Hi;
+  GetExpandedInteger(N->getOperand(2), Lo, Hi);
+  return SDValue(
+      DAG.UpdateNodeOperands(N, N->getOperand(0), N->getOperand(1), Lo), 0);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_XINT_TO_FP(SDNode *N) {

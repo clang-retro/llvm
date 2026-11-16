@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 // For the Z80 and the 8080: only 8080 instructions. Arguments come in HL and
-// DE, the result goes in HL; A, BC, DE and the flags are not kept.
+// DE, the result goes in HL; BC is kept, A, DE and the flags are not.
 //
 //===----------------------------------------------------------------------===//
 
@@ -56,14 +56,19 @@ udivmod:
 
 	.globl	__udivhi3
 __udivhi3:
+	push	bc
 	call	udivmod
 	ld	h, b
 	ld	l, c
+	pop	bc
 	ret
 
 	.globl	__umodhi3
 __umodhi3:
-	jp	udivmod
+	push	bc
+	call	udivmod
+	pop	bc
+	ret
 
 negde:
 	ld	a, e
@@ -106,22 +111,26 @@ sdivprep:
 
 	.globl	__divhi3
 __divhi3:
+	push	bc
 	call	sdivprep
 	push	af
 	call	udivmod
 	ld	h, b
 	ld	l, c
 	pop	af
+	pop	bc
 	and	0x80
 	ret	z
 	jp	neghl
 
 	.globl	__modhi3
 __modhi3:
+	push	bc
 	call	sdivprep
 	push	af
 	call	udivmod
 	pop	af
+	pop	bc
 	and	0x40
 	ret	z
 	jp	neghl

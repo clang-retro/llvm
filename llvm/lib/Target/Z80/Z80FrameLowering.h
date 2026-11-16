@@ -27,8 +27,29 @@ public:
   // at the bottom of its frame: on the Z80, when they are all within the
   // reach of (IX+d).
   bool usesIXFrame(const MachineFunction &MF) const;
+  // With an IX frame, how far above the bottom of the frame IX points (so
+  // that a stack object at offset Off is at IX + Off - bias); otherwise -1.
+  int ixFrameBias(const MachineFunction &MF) const;
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+
+  void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
+                            RegScavenger *RS) const override;
+
+  // Callee-saved registers are pushed on entry, right below the return
+  // address, and popped before the return.
+  bool assignCalleeSavedSpillSlots(
+      MachineFunction &MF, const TargetRegisterInfo *TRI,
+      std::vector<CalleeSavedInfo> &CSI) const override;
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI,
+                                 ArrayRef<CalleeSavedInfo> CSI,
+                                 const TargetRegisterInfo *TRI) const override;
+  bool
+  restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator MI,
+                              MutableArrayRef<CalleeSavedInfo> CSI,
+                              const TargetRegisterInfo *TRI) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
   // Outgoing arguments are pushed.

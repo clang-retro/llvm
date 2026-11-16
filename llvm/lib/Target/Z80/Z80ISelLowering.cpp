@@ -419,6 +419,17 @@ SDValue Z80TargetLowering::lowerShift(SDValue Op, SelectionDAG &DAG) const {
     return V;
   };
 
+  // x >> (Bits-1), arithmetic, is all copies of the sign bit: the high byte
+  // of the byte with the sign bit sign-extended (RLA; SBC A,A).
+  if (Opc == ISD::SRA && Amt == Bits - 1) {
+    SDValue Hi = VT == MVT::i16 ? DAG.getNode(Z80ISD::HI, DL, MVT::i8, X) : X;
+    SDValue M = DAG.getNode(
+        Z80ISD::HI, DL, MVT::i8,
+        DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i16, Hi));
+    return VT == MVT::i8 ? M
+                         : DAG.getNode(Z80ISD::COMBINE, DL, MVT::i16, M, M);
+  }
+
   if (VT == MVT::i16 && Amt >= 8) {
     SDValue Zero = DAG.getConstant(0, DL, MVT::i8);
     if (Opc == ISD::SHL) {
@@ -444,6 +455,23 @@ SDValue Z80TargetLowering::emitCompare(SDValue LHS, SDValue RHS,
   EVT VT = LHS.getValueType();
   assert((VT == MVT::i8 || VT == MVT::i16) && "illegal comparison type");
 
+  // x < 0 and x >= 0 (and x <= -1, x > -1) need only the sign bit: OR A
+  // with the high byte sets the S flag from it.
+  if (auto *C = dyn_cast<ConstantSDNode>(RHS)) {
+    const APInt &CV = C->getAPIntValue();
+    bool Neg = (CC == ISD::SETLT && CV.isZero()) ||
+               (CC == ISD::SETLE && CV.isAllOnes());
+    bool NonNeg = (CC == ISD::SETGE && CV.isZero()) ||
+                  (CC == ISD::SETGT && CV.isAllOnes());
+    if (Neg || NonNeg) {
+      SDValue V =
+          VT == MVT::i16 ? DAG.getNode(Z80ISD::HI, DL, MVT::i8, LHS) : LHS;
+      Z80CC = DAG.getTargetConstant(Neg ? Z80::COND_M : Z80::COND_P, DL,
+                                    MVT::i8);
+      return DAG.getNode(Z80ISD::TST, DL, MVT::Glue, V);
+    }
+  }
+
   // A signed comparison is the unsigned one of the values with their sign
   // bits flipped.
   if (isSignedIntSetCC(CC)) {
@@ -461,7 +489,10 @@ SDValue Z80TargetLowering::emitCompare(SDValue LHS, SDValue RHS,
   case ISD::SETNE: {
     Cond = CC == ISD::SETEQ ? Z80::COND_Z : Z80::COND_NZ;
     if (VT == MVT::i8) {
-      Glue = DAG.getNode(Z80ISD::CMP, DL, MVT::Glue, LHS, RHS);
+      // OR A is a byte shorter than CP 0.
+      Glue = isNullConstant(RHS)
+                 ? DAG.getNode(Z80ISD::TST, DL, MVT::Glue, LHS)
+                 : DAG.getNode(Z80ISD::CMP, DL, MVT::Glue, LHS, RHS);
       break;
     }
     SDValue V = isNullConstant(RHS)   ? LHS

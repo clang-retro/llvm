@@ -26,8 +26,8 @@ include "Z80InstrInfo.td"
 
 defm : RemapAllTargetPseudoPointerOperands<GR16>;
 
-// No register survives a call.
-def CSR_Z80 : CalleeSavedRegs<(add)>;
+// BC survives a call (and IX, which is reserved for the frame).
+def CSR_Z80 : CalleeSavedRegs<(add BC)>;
 
 def Z80InstrInfo : InstrInfo;
 

@@ -34,3 +34,9 @@
 // RUN:   -r -### %s -o part.o 2>&1 | FileCheck %s --check-prefix=REL
 // REL:     "{{.*}}ld.lld" "-m" "elf32z80" "-r" "-o" "part.o"
 // REL-NOT: llvm-objcopy
+
+// -mdouble= goes to cc1 for these targets, as for AVR.
+// RUN: %clang -### --target=z80-unknown-cpm -mdouble=64 -c %s 2>&1 | FileCheck %s --check-prefix=MDOUBLE
+// RUN: %clang -### --target=i8080-unknown-cpm -mdouble=32 -c %s 2>&1 | FileCheck %s --check-prefix=MDOUBLE32
+// MDOUBLE: "-cc1"{{.*}} "-mdouble=64"
+// MDOUBLE32: "-cc1"{{.*}} "-mdouble=32"

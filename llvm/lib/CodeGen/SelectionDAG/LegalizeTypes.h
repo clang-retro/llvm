@@ -526,6 +526,7 @@ private:
   SDValue ExpandIntOp_TRUNCATE(SDNode *N);
   SDValue ExpandIntOp_XINT_TO_FP(SDNode *N);
   SDValue ExpandIntOp_RETURNADDR(SDNode *N);
+  SDValue ExpandIntOp_FIX(SDNode *N);
   SDValue ExpandIntOp_ATOMIC_STORE(SDNode *N);
   SDValue ExpandIntOp_SPLAT_VECTOR(SDNode *N);
   SDValue ExpandIntOp_STACKMAP(SDNode *N, unsigned OpNo);
