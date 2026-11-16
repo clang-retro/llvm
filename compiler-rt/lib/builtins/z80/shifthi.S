@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 // For the Z80 and the 8080: only 8080 instructions. Arguments come in HL and
-// DE, the result goes in HL; A, BC, DE and the flags are not kept.
+// DE, the result goes in HL; BC is kept, A, DE and the flags are not.
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,6 +28,7 @@ __lshrhi3:
 	ld	a, e
 	and	15
 	ret	z
+	push	bc
 	ld	c, a
 1:	ld	a, h
 	or	a
@@ -38,6 +39,7 @@ __lshrhi3:
 	ld	l, a
 	dec	c
 	jp	nz, 1b
+	pop	bc
 	ret
 
 	.globl	__ashrhi3
@@ -45,6 +47,7 @@ __ashrhi3:
 	ld	a, e
 	and	15
 	ret	z
+	push	bc
 	ld	c, a
 1:	ld	a, h
 	rla
@@ -56,4 +59,5 @@ __ashrhi3:
 	ld	l, a
 	dec	c
 	jp	nz, 1b
+	pop	bc
 	ret

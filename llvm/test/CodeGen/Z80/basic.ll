@@ -85,15 +85,16 @@ define i32 @add32(i32 %a, i32 %b) {
 ; Z80:       ; %bb.0:
 ; Z80-NEXT:    push bc
 ; Z80-NEXT:    push bc
+; Z80-NEXT:    push bc
 ; Z80-NEXT:    push ix
 ; Z80-NEXT:    ld ix, 2
 ; Z80-NEXT:    add ix, sp
-; Z80-NEXT:    ld c, (ix+6)
-; Z80-NEXT:    ld b, (ix+7)
-; Z80-NEXT:    ld (ix+0), c
-; Z80-NEXT:    ld (ix+1), b
 ; Z80-NEXT:    ld c, (ix+8)
 ; Z80-NEXT:    ld b, (ix+9)
+; Z80-NEXT:    ld (ix+0), c
+; Z80-NEXT:    ld (ix+1), b
+; Z80-NEXT:    ld c, (ix+10)
+; Z80-NEXT:    ld b, (ix+11)
 ; Z80-NEXT:    ld (ix+2), c
 ; Z80-NEXT:    ld (ix+3), b
 ; Z80-NEXT:    ld c, (ix+0)
@@ -108,7 +109,8 @@ define i32 @add32(i32 %a, i32 %b) {
 ; Z80-NEXT:    adc a, b
 ; Z80-NEXT:    ld d, a
 ; Z80-NEXT:    pop ix
-; Z80-NEXT:    pop bc
+; Z80-NEXT:    pop af
+; Z80-NEXT:    pop af
 ; Z80-NEXT:    pop bc
 ; Z80-NEXT:    ret
 ;
@@ -116,8 +118,9 @@ define i32 @add32(i32 %a, i32 %b) {
 ; I8080:       ; %bb.0:
 ; I8080-NEXT:    push bc
 ; I8080-NEXT:    push bc
+; I8080-NEXT:    push bc
 ; I8080-NEXT:    push hl
-; I8080-NEXT:    ld hl, 8
+; I8080-NEXT:    ld hl, 10
 ; I8080-NEXT:    add hl, sp
 ; I8080-NEXT:    ld c, (hl)
 ; I8080-NEXT:    inc hl
@@ -131,7 +134,7 @@ define i32 @add32(i32 %a, i32 %b) {
 ; I8080-NEXT:    ld (hl), b
 ; I8080-NEXT:    pop hl
 ; I8080-NEXT:    push hl
-; I8080-NEXT:    ld hl, 10
+; I8080-NEXT:    ld hl, 12
 ; I8080-NEXT:    add hl, sp
 ; I8080-NEXT:    ld c, (hl)
 ; I8080-NEXT:    inc hl
@@ -167,7 +170,8 @@ define i32 @add32(i32 %a, i32 %b) {
 ; I8080-NEXT:    ld a, d
 ; I8080-NEXT:    adc a, b
 ; I8080-NEXT:    ld d, a
-; I8080-NEXT:    pop bc
+; I8080-NEXT:    pop af
+; I8080-NEXT:    pop af
 ; I8080-NEXT:    pop bc
 ; I8080-NEXT:    ret
   %r = add i32 %a, %b
@@ -263,6 +267,7 @@ define i16 @select_lt(i16 %a, i16 %b) {
 ; Z80-LABEL: select_lt:
 ; Z80:       ; %bb.0:
 ; Z80-NEXT:    push bc
+; Z80-NEXT:    push bc
 ; Z80-NEXT:    push ix
 ; Z80-NEXT:    ld ix, 2
 ; Z80-NEXT:    add ix, sp
@@ -290,11 +295,13 @@ define i16 @select_lt(i16 %a, i16 %b) {
 ; Z80-NEXT:    ld l, e
 ; Z80-NEXT:    ld h, d
 ; Z80-NEXT:    pop ix
+; Z80-NEXT:    pop af
 ; Z80-NEXT:    pop bc
 ; Z80-NEXT:    ret
 ;
 ; I8080-LABEL: select_lt:
 ; I8080:       ; %bb.0:
+; I8080-NEXT:    push bc
 ; I8080-NEXT:    push bc
 ; I8080-NEXT:    ld c, e
 ; I8080-NEXT:    ld b, d
@@ -327,6 +334,7 @@ define i16 @select_lt(i16 %a, i16 %b) {
 ; I8080-NEXT:  .LBB10_2:
 ; I8080-NEXT:    ld l, e
 ; I8080-NEXT:    ld h, d
+; I8080-NEXT:    pop af
 ; I8080-NEXT:    pop bc
 ; I8080-NEXT:    ret
   %c = icmp slt i16 %a, %b
@@ -352,18 +360,22 @@ define i16 @mul(i16 %a, i16 %b) {
 define i16 @indirect(ptr %f) {
 ; Z80-LABEL: indirect:
 ; Z80:       ; %bb.0:
+; Z80-NEXT:    push bc
 ; Z80-NEXT:    ld c, l
 ; Z80-NEXT:    ld b, h
 ; Z80-NEXT:    ld hl, 1
 ; Z80-NEXT:    call __z80_call_bc
+; Z80-NEXT:    pop bc
 ; Z80-NEXT:    ret
 ;
 ; I8080-LABEL: indirect:
 ; I8080:       ; %bb.0:
+; I8080-NEXT:    push bc
 ; I8080-NEXT:    ld c, l
 ; I8080-NEXT:    ld b, h
 ; I8080-NEXT:    ld hl, 1
 ; I8080-NEXT:    call __z80_call_bc
+; I8080-NEXT:    pop bc
 ; I8080-NEXT:    ret
   %r = call i16 %f(i16 1)
   ret i16 %r
@@ -408,7 +420,7 @@ define i16 @frame(i16 %a) {
 ; Z80-NEXT:    ld l, (ix+0)
 ; Z80-NEXT:    ld h, (ix+1)
 ; Z80-NEXT:    pop ix
-; Z80-NEXT:    pop bc
+; Z80-NEXT:    pop af
 ; Z80-NEXT:    ret
 ;
 ; I8080-LABEL: frame:
@@ -427,7 +439,7 @@ define i16 @frame(i16 %a) {
 ; I8080-NEXT:    inc hl
 ; I8080-NEXT:    ld h, (hl)
 ; I8080-NEXT:    ld l, a
-; I8080-NEXT:    pop bc
+; I8080-NEXT:    pop af
 ; I8080-NEXT:    ret
   %x = alloca i16
   store volatile i16 %a, ptr %x

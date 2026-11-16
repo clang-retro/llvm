@@ -6,8 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// For the Z80 and the 8080: only 8080 instructions. Arguments come in HL and
-// DE, the result goes in HL; A, BC, DE and the flags are not kept.
+// For the Z80 and the 8080: only 8080 instructions.
 //
 //===----------------------------------------------------------------------===//
 

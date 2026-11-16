@@ -173,6 +173,7 @@ declare void @use(ptr)
 define i8 @bigframe(i8 %v) {
 ; Z80-LABEL: bigframe:
 ; Z80:       ; %bb.0:
+; Z80-NEXT:    push bc
 ; Z80-NEXT:    ld b, h
 ; Z80-NEXT:    ld c, l
 ; Z80-NEXT:    ld hl, 65336
@@ -181,13 +182,13 @@ define i8 @bigframe(i8 %v) {
 ; Z80-NEXT:    ld h, b
 ; Z80-NEXT:    ld l, c
 ; Z80-NEXT:    push ix
-; Z80-NEXT:    ld ix, 74
+; Z80-NEXT:    ld ix, 76
 ; Z80-NEXT:    add ix, sp
-; Z80-NEXT:    ld (ix+78), l
+; Z80-NEXT:    ld (ix+76), l
 ; Z80-NEXT:    ld hl, 2
 ; Z80-NEXT:    add hl, sp
 ; Z80-NEXT:    call use
-; Z80-NEXT:    ld l, (ix+78)
+; Z80-NEXT:    ld l, (ix+76)
 ; Z80-NEXT:    pop ix
 ; Z80-NEXT:    ld b, h
 ; Z80-NEXT:    ld c, l
@@ -196,10 +197,12 @@ define i8 @bigframe(i8 %v) {
 ; Z80-NEXT:    ld sp, hl
 ; Z80-NEXT:    ld h, b
 ; Z80-NEXT:    ld l, c
+; Z80-NEXT:    pop bc
 ; Z80-NEXT:    ret
 ;
 ; I8080-LABEL: bigframe:
 ; I8080:       ; %bb.0:
+; I8080-NEXT:    push bc
 ; I8080-NEXT:    ld b, h
 ; I8080-NEXT:    ld c, l
 ; I8080-NEXT:    ld hl, 65336
@@ -227,6 +230,7 @@ define i8 @bigframe(i8 %v) {
 ; I8080-NEXT:    ld sp, hl
 ; I8080-NEXT:    ld h, b
 ; I8080-NEXT:    ld l, c
+; I8080-NEXT:    pop bc
 ; I8080-NEXT:    ret
   %a = alloca [200 x i8]
   %p = getelementptr i8, ptr %a, i16 150

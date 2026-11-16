@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===//
 //
 // For the Z80 and the 8080: only 8080 instructions. Arguments come in HL and
-// DE, the result goes in HL; A, BC, DE and the flags are not kept.
+// DE, the result goes in HL; BC is kept, A, DE and the flags are not.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 	.text
 	.globl	__mulhi3
 __mulhi3:
+	push	bc
 	ld	b, h
 	ld	c, l
 	ld	hl, 0
@@ -28,4 +29,5 @@ __mulhi3:
 	add	hl, bc
 2:	dec	a
 	jp	nz, 1b
+	pop	bc
 	ret
