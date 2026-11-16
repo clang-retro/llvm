@@ -676,6 +676,9 @@ createXCoreTargetCodeGenInfo(CodeGenModule &CGM);
 std::unique_ptr<TargetCodeGenInfo>
 createXtensaTargetCodeGenInfo(CodeGenModule &CGM);
 
+std::unique_ptr<TargetCodeGenInfo>
+createZ80TargetCodeGenInfo(CodeGenModule &CGM);
+
 } // namespace CodeGen
 } // namespace clang
 
