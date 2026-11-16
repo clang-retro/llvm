@@ -26,6 +26,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Z80.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/ValueTracking.h"
