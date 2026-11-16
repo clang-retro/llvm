@@ -935,6 +935,23 @@ set(i8086_SOURCES
   ${GENERIC_SOURCES}
 )
 
+# The Z80 and the 8080, for CP/M-80: 8-bit processors with 16-bit register
+# pairs. 16-bit multiplication, division and variable shifts are calls, in
+# assembly with 8080 instructions only; 32-bit shifts and multiplication are
+# calls too.
+set(z80_SOURCES
+  ashlsi3.c
+  ashrsi3.c
+  lshrsi3.c
+  z80/call.S
+  z80/divmodhi.S
+  z80/mulhi3.S
+  z80/mulsi3.c
+  z80/shifthi.S
+  ${GENERIC_SOURCES}
+)
+set(i8080_SOURCES ${z80_SOURCES})
+
 # hexagon arch
 set(hexagon_SOURCES
   hexagon/common_entry_exit_abi1.S

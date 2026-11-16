@@ -117,7 +117,9 @@ public:
     renderscript32, // 32-bit RenderScript
     renderscript64, // 64-bit RenderScript
     ve,             // NEC SX-Aurora Vector Engine
-    LastArchType = ve
+    z80,            // Zilog Z80: z80
+    i8080,          // Intel 8080 (and 8085): i8080, i8085
+    LastArchType = i8080
   };
   enum SubArchType {
     NoSubArch,
@@ -360,7 +362,9 @@ public:
     TOS,          // Atari TOS (GEMDOS) on 68k, PRG executables
     OS2,          // OS/2: 1.x on i8086 (NE), 2.0 and later on i386 (LX)
     IRIX,         // SGI IRIX 5.x and 6.x on MIPS (o32, n32 and n64)
-    LastOSType = IRIX
+    CPM,          // CP/M: CP/M-86 on i8086 (CMD programs), CP/M-80 on z80
+                  // and i8080 (COM programs)
+    LastOSType = CPM
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -789,6 +793,9 @@ public:
   /// later (i386, LX executables).
   bool isOSOS2() const { return getOS() == Triple::OS2; }
 
+  /// Tests whether the OS is CP/M (CP/M-86 on i8086, CP/M-80 on z80/i8080).
+  bool isOSCPM() const { return getOS() == Triple::CPM; }
+
   /// 16-bit code for a protected-mode system with NE executables (Windows
   /// 3.x and OS/2 1.x): no segment arithmetic, and a DLL runs on its caller's
   /// stack, so SS may not be DGROUP.
@@ -1165,6 +1172,11 @@ public:
   }
 
   bool isAVR() const { return getArch() == Triple::avr; }
+
+  /// Tests whether the target is the Z80 or the 8080, which share a backend.
+  bool isZ80() const {
+    return getArch() == Triple::z80 || getArch() == Triple::i8080;
+  }
 
   /// Tests whether the target is 32-bit LoongArch.
   bool isLoongArch32() const { return getArch() == Triple::loongarch32; }

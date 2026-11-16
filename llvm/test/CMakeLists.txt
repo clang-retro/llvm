@@ -106,6 +106,7 @@ set(LLVM_TEST_DEPENDS
   llvm-dwp
   llvm-elf2hunk
   llvm-elf2tos
+  llvm-exe2cmd
   llvm-exegesis
   llvm-extract
   llvm-extract-bundle-entry

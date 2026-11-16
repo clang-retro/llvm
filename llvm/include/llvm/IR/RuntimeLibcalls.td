@@ -95,6 +95,7 @@ def IsX86_64 : LibcallPredicate<[{TT.getArch() == Triple::x86_64}]>;
 def IsX86_16 : LibcallPredicate<[{TT.getArch() == Triple::i8086}]>;
 def IsX86 : LibcallPredicate<[{TT.isX86()}]>;
 def IsXCore : LibcallPredicate<[{TT.getArch() == Triple::xcore}]>;
+def IsZ80 : LibcallPredicate<[{TT.isZ80()}]>;
 
 def IsOSzOS : LibcallPredicate<[{TT.isOSzOS()}]>;
 def IsSystemZ : LibcallPredicate<[{TT.isSystemZ()}]>;
@@ -3928,6 +3929,19 @@ def MOSSystemLibrary
                                    "unwind"]>;
 
 def : LibraryExclusion<"libc", isMOS, [memset]>;
+
+//===----------------------------------------------------------------------===//
+// Z80 and 8080 Runtime Libcalls
+//===----------------------------------------------------------------------===//
+
+// The CP/M-80 runtime (cpm-sdk) provides the 8, 16 and 32-bit helpers under
+// the libgcc names, and compiler-rt the rest.
+def isZ80 : RuntimeLibcallAvailability<(all_of IsZ80)>;
+
+def Z80SystemLibrary
+    : SystemRuntimeLibrary<isZ80,
+                           ["compiler-rt", "libatomic", "llvm-client-runtime",
+                            "libm", "libc", "unwind"]>;
 
 //===----------------------------------------------------------------------===//
 // Legacy Default Runtime Libcalls

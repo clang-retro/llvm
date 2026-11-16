@@ -16,6 +16,7 @@
 #include "ToolChains/Arch/RISCV.h"
 #include "ToolChains/AtariTOS.h"
 #include "ToolChains/BareMetal.h"
+#include "ToolChains/CPM80.h"
 #include "ToolChains/CSKYToolChain.h"
 #include "ToolChains/Clang.h"
 #include "ToolChains/CrossWindows.h"
@@ -5493,6 +5494,10 @@ InputInfoList Driver::BuildJobsForActionNoCache(
 
 const char *Driver::getDefaultImageName() const {
   llvm::Triple Target(llvm::Triple::normalize(TargetTriple));
+  if (Target.isOSCPM() && Target.getArch() == llvm::Triple::i8086)
+    return "a.cmd";
+  if (Target.isOSCPM() && Target.isZ80())
+    return "a.com";
   return Target.isOSWindows() || Target.isOSMSDOS() || Target.isOSWin16() ||
                  Target.isOSOS2()
              ? "a.exe"
@@ -6216,6 +6221,14 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
     case llvm::Triple::MSDOS:
     case llvm::Triple::Win16:
       TC = std::make_unique<toolchains::MSDOS>(*this, Target, Args);
+      break;
+    case llvm::Triple::CPM:
+      // CP/M-86 programs are linked as DOS ones are, then made CMD files.
+      if (Target.getArch() == llvm::Triple::i8086)
+        TC = std::make_unique<toolchains::MSDOS>(*this, Target, Args);
+      // CP/M-80 programs are flat images of ELF programs.
+      else if (Target.isZ80())
+        TC = std::make_unique<toolchains::CPM80>(*this, Target, Args);
       break;
     case llvm::Triple::OS2:
       // OS/2 1.x programs are linked as the DOS and Windows ones are.

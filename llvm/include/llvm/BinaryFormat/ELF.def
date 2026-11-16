@@ -199,6 +199,7 @@ ELF_MACHINE(EM_COGE,          216, "coge", "EM_COGE") // Cognitive Smart Memory 
 ELF_MACHINE(EM_COOL,          217, "cool", "EM_COOL") // iCelero CoolEngine
 ELF_MACHINE(EM_NORC,          218, "norc", "EM_NORC") // Nanoradio Optimized RISC
 ELF_MACHINE(EM_CSR_KALIMBA,   219, "csr_kalimba", "EM_CSR_KALIMBA") // CSR Kalimba architecture family
+ELF_MACHINE(EM_Z80,           220, "z80", "EM_Z80") // Zilog Z80
 ELF_MACHINE(EM_CSKY,          252, "csky", "EM_CSKY") // C-SKY 32-bit processor
 #undef ELF_MACHINE
 #endif

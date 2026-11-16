@@ -184,11 +184,11 @@ static bool addExceptionArgs(const ArgList &Args, types::ID InputType,
   }
 
   if (types::isCXX(InputType)) {
-    // Disable C++ EH by default on XCore, PS4/PS5, DOS and GPU targets.
-    bool CXXExceptionsEnabled = Triple.getArch() != llvm::Triple::xcore &&
-                                !Triple.isPS() && !Triple.isDriverKit() &&
-                                !Triple.isOSMSDOS() && !Triple.isOSNE16() &&
-                                !(Triple.isGPU() && !IsDeviceOffloadAction);
+    // Disable C++ EH by default on XCore, PS4/PS5, DOS, CP/M and GPU targets.
+    bool CXXExceptionsEnabled =
+        Triple.getArch() != llvm::Triple::xcore && !Triple.isPS() &&
+        !Triple.isDriverKit() && !Triple.isOSMSDOS() && !Triple.isOSNE16() &&
+        !Triple.isOSCPM() && !(Triple.isGPU() && !IsDeviceOffloadAction);
     Arg *ExceptionArg = Args.getLastArg(
         options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
         options::OPT_fexceptions, options::OPT_fno_exceptions);
@@ -6374,7 +6374,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mdouble_EQ)) {
-    if (TC.getArch() == llvm::Triple::avr)
+    if (TC.getArch() == llvm::Triple::avr ||
+        TC.getArch() == llvm::Triple::z80 ||
+        TC.getArch() == llvm::Triple::i8080)
       A->render(Args, CmdArgs);
     else
       D.Diag(diag::err_drv_unsupported_opt_for_target)

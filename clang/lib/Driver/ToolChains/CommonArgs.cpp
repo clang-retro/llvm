@@ -96,8 +96,11 @@ static bool useFramePointerForTargetByDefault(const llvm::opt::ArgList &Args,
   case llvm::Triple::wasm32:
   case llvm::Triple::wasm64:
   case llvm::Triple::msp430:
+  case llvm::Triple::z80:
+  case llvm::Triple::i8080:
     // XCore never wants frame pointers, regardless of OS.
     // WebAssembly never wants frame pointers.
+    // The Z80 and the 8080 have IX or nothing to spare for one.
     return false;
   case llvm::Triple::ppc:
   case llvm::Triple::ppcle:

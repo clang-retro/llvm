@@ -346,6 +346,9 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
   }
   case llvm::Triple::xtensa:
     return createXtensaTargetCodeGenInfo(CGM);
+  case llvm::Triple::z80:
+  case llvm::Triple::i8080:
+    return createZ80TargetCodeGenInfo(CGM);
   }
 }
 

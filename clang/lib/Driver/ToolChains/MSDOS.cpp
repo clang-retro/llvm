@@ -35,6 +35,12 @@ MSDOS::MSDOS(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
       (MemoryModel == "tiny" || StringRef(MemoryModel).starts_with("huge")))
     D.Diag(diag::err_drv_unsupported_option_argument_for_target)
         << "-mcmodel=" << MemoryModel << Triple.str();
+  // CP/M-86 1.1 cannot fix up segment addresses in a program, so a CMD
+  // file is the 8080 model (tiny: code and data in one 64 KiB group) or the
+  // small model (a code group and a data group).
+  if (Triple.isOSCPM() && MemoryModel != "tiny" && MemoryModel != "small")
+    D.Diag(diag::err_drv_unsupported_option_argument_for_target)
+        << "-mcmodel=" << MemoryModel << Triple.str();
 
   // Libraries for the memory model first, then shared ones. Windows
   // libraries are in lib/win16, OS/2 1.x ones in lib/os2.
@@ -74,7 +80,8 @@ std::string MSDOS::computeSysRoot() const {
   if (!getDriver().SysRoot.empty())
     return getDriver().SysRoot;
   SmallString<128> Dir(getDriver().Dir);
-  llvm::sys::path::append(Dir, "..", "i8086-msdos");
+  llvm::sys::path::append(Dir, "..",
+                          getTriple().isOSCPM() ? "i8086-cpm" : "i8086-msdos");
   return std::string(Dir);
 }
 
@@ -166,13 +173,23 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
 
   // The tiny model gives a .COM program, the others an MZ executable. For
-  // Windows and OS/2 1.x, an NE program, or a DLL with -shared.
+  // Windows and OS/2 1.x, an NE program, or a DLL with -shared. For CP/M-86
+  // the linker writes a .COM or .EXE file, which llvm-exe2cmd then makes a
+  // CMD file: the 8080 model from a .COM file, the small model from an
+  // .EXE file.
+  bool CPM = TC.getTriple().isOSCPM();
   bool Win16 = TC.getTriple().isOSWin16();
   bool OS2 = TC.getTriple().isOSOS2();
   bool IsDLL = (Win16 || OS2) && Args.hasArg(options::OPT_shared);
   CmdArgs.push_back("format");
   CmdArgs.push_back(Win16 ? "windows" : OS2 ? "os2" : "dos");
   bool IsCOM = !Win16 && !OS2 && TC.getMemoryModel() == "tiny";
+  const char *LinkOut = Output.getFilename();
+  if (CPM) {
+    std::string Tmp = TC.getDriver().GetTemporaryPath(
+        llvm::sys::path::stem(Output.getFilename()), IsCOM ? "com" : "exe");
+    LinkOut = C.addTempFile(Args.MakeArgString(Tmp));
+  }
   if (IsCOM)
     CmdArgs.push_back("com");
   if (IsDLL) {
@@ -204,7 +221,7 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   assert(Output.isFilename() && "unexpected linker output");
   CmdArgs.push_back("name");
-  CmdArgs.push_back(quoteName(Args, Output.getFilename()));
+  CmdArgs.push_back(quoteName(Args, LinkOut));
 
   for (const Arg *A : Args.filtered(options::OPT_L)) {
     CmdArgs.push_back("libpath");
@@ -357,4 +374,15 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(std::make_unique<Command>(JA, *this, ResponseFileSupport::None(),
                                          Args.MakeArgString(Linker), CmdArgs,
                                          Inputs, Output));
+
+  if (CPM) {
+    ArgStringList CmdFileArgs;
+    CmdFileArgs.push_back(LinkOut);
+    CmdFileArgs.push_back("-o");
+    CmdFileArgs.push_back(Output.getFilename());
+    C.addCommand(std::make_unique<Command>(
+        JA, *this, ResponseFileSupport::None(),
+        Args.MakeArgString(TC.GetProgramPath("llvm-exe2cmd")), CmdFileArgs,
+        Inputs, Output));
+  }
 }

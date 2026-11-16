@@ -636,6 +636,9 @@ def get_run_handler(triple):
         "nvptx": (scrub_asm_nvptx, ASM_FUNCTION_NVPTX_RE),
         "loongarch32": (scrub_asm_loongarch, ASM_FUNCTION_LOONGARCH_RE),
         "loongarch64": (scrub_asm_loongarch, ASM_FUNCTION_LOONGARCH_RE),
+        # The Z80 and the 8080 print functions as M68k does.
+        "z80": (scrub_asm_m68k, ASM_FUNCTION_M68K_RE),
+        "i8080": (scrub_asm_m68k, ASM_FUNCTION_M68K_RE),
     }
     handler = None
     best_prefix = ""

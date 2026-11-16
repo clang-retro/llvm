@@ -552,6 +552,10 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
     return "e-m:e-p:16:8-p1:8:8-i16:8-i32:8-i64:8-f32:8-f64:8-a:8-Fi8-n8";
   case Triple::msp430:
     return "e-m:e-p:16:16-i32:16-i64:16-f32:16-f64:16-a:8-n8:16-S16";
+  case Triple::z80:
+  case Triple::i8080:
+    // 8-bit machines: everything is byte aligned.
+    return "e-m:e-p:16:8-i16:8-i32:8-i64:8-f32:8-f64:8-a:8-n8:16-S8";
   case Triple::ppc:
   case Triple::ppcle:
   case Triple::ppc64:
