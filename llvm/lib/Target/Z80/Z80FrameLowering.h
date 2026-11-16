@@ -27,6 +27,9 @@ public:
   // at the bottom of its frame: on the Z80, when they are all within the
   // reach of (IX+d).
   bool usesIXFrame(const MachineFunction &MF) const;
+  // With an IX frame, how far above the bottom of the frame IX points (so
+  // that a stack object at offset Off is at IX + Off - bias); otherwise -1.
+  int ixFrameBias(const MachineFunction &MF) const;
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;

@@ -79,9 +79,9 @@ static void adjustSP(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
       .setMIFlag(Flag);
 }
 
-bool Z80FrameLowering::usesIXFrame(const MachineFunction &MF) const {
+int Z80FrameLowering::ixFrameBias(const MachineFunction &MF) const {
   if (!STI.hasZ80())
-    return false;
+    return -1;
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   int64_t End = MFI.getStackSize();
   bool Any = End != 0;
@@ -92,7 +92,16 @@ bool Z80FrameLowering::usesIXFrame(const MachineFunction &MF) const {
     End = std::max(End, int64_t(MFI.getStackSize()) + MFI.getObjectOffset(FI) +
                             int64_t(MFI.getObjectSize(FI)));
   }
-  return Any && End <= 128;
+  // (IX+d) reaches d in -128..127, so IX can point up to 128 bytes into the
+  // frame, and frames of up to 256 bytes (including the incoming arguments)
+  // fit.
+  if (!Any || End > 256)
+    return -1;
+  return End > 128 ? int(End - 128) : 0;
+}
+
+bool Z80FrameLowering::usesIXFrame(const MachineFunction &MF) const {
+  return ixFrameBias(MF) >= 0;
 }
 
 // The frame is the locals, at SP after the prologue, then the return
@@ -106,12 +115,13 @@ void Z80FrameLowering::emitPrologue(MachineFunction &MF,
   DebugLoc DL;
   adjustSP(MBB, MBBI, DL, TII, -int64_t(MFI.getStackSize()),
            MachineInstr::FrameSetup);
-  if (usesIXFrame(MF)) {
+  int Bias = ixFrameBias(MF);
+  if (Bias >= 0) {
     BuildMI(MBB, MBBI, DL, TII.get(Z80::IXPUSH))
         .addReg(Z80::IX)
         .setMIFlag(MachineInstr::FrameSetup);
     BuildMI(MBB, MBBI, DL, TII.get(Z80::IXLDri), Z80::IX)
-        .addImm(2)
+        .addImm(2 + Bias)
         .setMIFlag(MachineInstr::FrameSetup);
     BuildMI(MBB, MBBI, DL, TII.get(Z80::IXADDSP), Z80::IX)
         .addReg(Z80::IX)

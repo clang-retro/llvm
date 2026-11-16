@@ -60,20 +60,22 @@ public:
   const LiveRegUnits &Live; // The registers live after the pseudo.
   int &Delta;               // How far SP is below its value after the prologue.
   bool HasZ80;
-  bool IXFrame; // Stack objects are at IX + their offset.
+  bool IXFrame; // Stack objects are at IX + their offset - IXBias.
+  int IXBias;
 
   Builder(MachineInstr &MI, const TargetInstrInfo &TII,
           const TargetRegisterInfo &TRI, const LiveRegUnits &Live, int &Delta,
-          bool HasZ80, bool IXFrame)
+          bool HasZ80, int IXBias)
       : MBB(*MI.getParent()), I(MI), DL(MI.getDebugLoc()), TII(TII), TRI(TRI),
-        Live(Live), Delta(Delta), HasZ80(HasZ80), IXFrame(IXFrame) {}
+        Live(Live), Delta(Delta), HasZ80(HasZ80), IXFrame(IXBias >= 0),
+        IXBias(IXBias) {}
 
-  // R = (IX + D) and (IX + D) = R.
-  void ldFromIX(MCRegister R, int64_t D) {
-    build(Z80::IXLDrd, R).addReg(Z80::IX).addImm(D);
+  // R = (stack object at Off) and back, through IX.
+  void ldFromIX(MCRegister R, int64_t Off) {
+    build(Z80::IXLDrd, R).addReg(Z80::IX).addImm(Off - IXBias);
   }
-  void stToIX(int64_t D, MCRegister R) {
-    build(Z80::IXSTdr).addReg(Z80::IX).addImm(D).addReg(R);
+  void stToIX(int64_t Off, MCRegister R) {
+    build(Z80::IXSTdr).addReg(Z80::IX).addImm(Off - IXBias).addReg(R);
   }
 
   bool isLive(MCRegister R) const { return !Live.available(R); }
@@ -843,8 +845,8 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   // call sequence can span blocks when an argument needs a select.
   DenseMap<const MachineBasicBlock *, int> DeltaIn;
   // With an IX frame, the prologue pushes IX below the frame.
-  bool IXFrame = STI.getFrameLowering()->usesIXFrame(MF);
-  if (IXFrame)
+  int IXBias = STI.getFrameLowering()->ixFrameBias(MF);
+  if (IXBias >= 0)
     DeltaIn[&MF.front()] = 2;
 
   ReversePostOrderTraversal<MachineFunction *> RPOT(&MF);
@@ -865,7 +867,7 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : llvm::make_early_inc_range(*MBB)) {
       auto It = LiveAfter.find(&MI);
       if (It != LiveAfter.end()) {
-        Builder B(MI, TII, TRI, It->second, Delta, STI.hasZ80(), IXFrame);
+        Builder B(MI, TII, TRI, It->second, Delta, STI.hasZ80(), IXBias);
         if (expandMI(B, MI)) {
           MI.eraseFromParent();
           Changed = true;
@@ -879,6 +881,26 @@ bool Z80ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
     }
     for (MachineBasicBlock *Succ : MBB->successors())
       DeltaIn.try_emplace(Succ, Delta);
+  }
+
+  // The expansions copy through A, which can leave LD R,A followed by
+  // LD A,R: the second copy changes nothing.
+  for (MachineBasicBlock &MBB : MF) {
+    MachineInstr *Prev = nullptr;
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBB)) {
+      if (MI.isDebugInstr())
+        continue;
+      if (Prev && MI.getOpcode() == Z80::LDrr &&
+          Prev->getOpcode() == Z80::LDrr &&
+          MI.getOperand(0).getReg() == Prev->getOperand(1).getReg() &&
+          MI.getOperand(1).getReg() == Prev->getOperand(0).getReg()) {
+        Prev->getOperand(1).setIsKill(false);
+        MI.eraseFromParent();
+        Changed = true;
+        continue;
+      }
+      Prev = &MI;
+    }
   }
   return Changed;
 }
