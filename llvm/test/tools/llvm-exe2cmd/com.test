@@ -1,0 +1,19 @@
+## A .COM file becomes an 8080-model CMD file: one code group holding the
+## base page and the program, with the marker's word as its least size.
+
+# RUN: %python %S/Inputs/mk.py com %t.com
+# RUN: llvm-exe2cmd -v %t.com -o %t.cmd | FileCheck %s --check-prefix=V
+# RUN: od -An -tx1 -v -N16 %t.cmd | FileCheck %s --check-prefix=HDR
+# V: code group: 272 bytes, min 124h max 1000h paragraphs
+# V: 8080 model
+## Type 1, 17 paragraphs, relocatable, min 124h, max 1000h.
+# HDR: 01 11 00 00 00 24 01 00 10 00 00 00 00 00 00 00
+
+## The image follows the 128-byte header, after the 256-byte base page.
+# RUN: od -An -tx1 -v -j384 -N8 %t.cmd | FileCheck %s --check-prefix=IMG
+# IMG: eb 06 43 50 2f 4d 34 12
+
+## Without the marker, the group is the image's size. -max (decimal) sets the most.
+# RUN: %python %S/Inputs/mk.py com-plain %t2.com
+# RUN: llvm-exe2cmd -v -max=2048 %t2.com -o %t2.cmd | FileCheck %s --check-prefix=PLAIN
+# PLAIN: code group: 276 bytes, min 12h max 800h paragraphs

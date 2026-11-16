@@ -7,7 +7,7 @@ hide:
 
 This is [LLVM](https://llvm.org) and clang with support for 16 and 32-bit
 systems that upstream LLVM does not target: MS-DOS and 16-bit Windows on
-the 8086, OS/2, Windows from Win32s and NT 3.1 to 11, classic Mac OS on
+the 8086, CP/M-86, OS/2, Windows from Win32s and NT 3.1 to 11, classic Mac OS on
 68k and PowerPC, AmigaOS, the Atari ST family, and 32-bit Mac OS X on
 PowerPC. These pages describe only what the fork adds. For everything
 else, see the [upstream LLVM documentation](https://llvm.org/docs/) and

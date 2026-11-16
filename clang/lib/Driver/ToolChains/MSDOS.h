@@ -20,7 +20,8 @@ namespace toolchains {
 /// programs are linked with a Watcom-style linker (wlink or JWlink) into an
 /// MZ .EXE, or a .COM file for the tiny memory model. The same toolchain
 /// builds 16-bit Windows (i8086-pc-win16) NE programs, and DLLs with -shared,
-/// from the libraries in lib/win16/<model>/.
+/// from the libraries in lib/win16/<model>/, and CP/M-86 (i8086-*-cpm) CMD
+/// programs, whose sysroot is <install>/i8086-cpm.
 ///
 /// The sysroot (--sysroot, or <install>/i8086-msdos by default) holds
 /// include/ and one library directory per memory model, lib/<model>/, with

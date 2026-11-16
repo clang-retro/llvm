@@ -127,6 +127,14 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_TRUE(T.isOSOS2());
   EXPECT_FALSE(T.isOSNE16());
 
+  T = Triple("i8086-unknown-cpm");
+  EXPECT_EQ(Triple::i8086, T.getArch());
+  EXPECT_EQ(Triple::CPM, T.getOS());
+  EXPECT_EQ(Triple::OMF, T.getObjectFormat());
+  EXPECT_TRUE(T.isOSCPM());
+  EXPECT_FALSE(T.isOSMSDOS());
+  EXPECT_FALSE(T.isOSNE16());
+
   T = Triple("m68k-unknown-amigaos");
   EXPECT_EQ(Triple::m68k, T.getArch());
   EXPECT_EQ(Triple::AmigaOS, T.getOS());
@@ -4171,6 +4179,7 @@ TEST(TripleTest, X86_16) {
   EXPECT_EQ("msdos", Triple::getOSTypeName(Triple::MSDOS));
   EXPECT_EQ("win16", Triple::getOSTypeName(Triple::Win16));
   EXPECT_EQ("os2", Triple::getOSTypeName(Triple::OS2));
+  EXPECT_EQ("cpm", Triple::getOSTypeName(Triple::CPM));
   EXPECT_EQ("irix", Triple::getOSTypeName(Triple::IRIX));
   EXPECT_EQ("macosclassic", Triple::getOSTypeName(Triple::MacOSClassic));
   EXPECT_EQ("omf", Triple::getObjectFormatTypeName(Triple::OMF));

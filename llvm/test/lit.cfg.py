@@ -273,6 +273,7 @@ tools.extend(
         "llvm-dwp",
         "llvm-elf2hunk",
         "llvm-elf2tos",
+        "llvm-exe2cmd",
         "llvm-dlltool",
         "llvm-exegesis",
         "llvm-extract",

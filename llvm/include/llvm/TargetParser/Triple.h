@@ -359,7 +359,8 @@ public:
     TOS,          // Atari TOS (GEMDOS) on 68k, PRG executables
     OS2,          // OS/2: 1.x on i8086 (NE), 2.0 and later on i386 (LX)
     IRIX,         // SGI IRIX 5.x and 6.x on MIPS (o32, n32 and n64)
-    LastOSType = IRIX
+    CPM,          // CP/M: CP/M-86 on i8086 (CMD programs)
+    LastOSType = CPM
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -787,6 +788,9 @@ public:
   /// OS/2: 16-bit OS/2 1.x (i8086, NE executables) or 32-bit OS/2 2.0 and
   /// later (i386, LX executables).
   bool isOSOS2() const { return getOS() == Triple::OS2; }
+
+  /// Tests whether the OS is CP/M (CP/M-86 on i8086).
+  bool isOSCPM() const { return getOS() == Triple::CPM; }
 
   /// 16-bit code for a protected-mode system with NE executables (Windows
   /// 3.x and OS/2 1.x): no segment arithmetic, and a DLL runs on its caller's

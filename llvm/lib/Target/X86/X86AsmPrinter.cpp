@@ -1142,11 +1142,11 @@ void X86AsmPrinter::emitEndOfAsmFile(Module &M) {
     }
   } else if (TT.isOSBinFormatELF()) {
     FM.serializeToFaultMapSection();
-  } else if (TT.isOSBinFormatOMF() && !TT.isOSMSDOS()) {
+  } else if (TT.isOSBinFormatOMF() && !TT.isOSMSDOS() && !TT.isOSCPM()) {
     // The names of dllexport (__export) functions and variables, for the
-    // OMF writer's export records. DOS programs have no export table, and
-    // the linker writes a broken .EXE header when it sees export records,
-    // so on DOS __export is accepted and ignored.
+    // OMF writer's export records. DOS and CP/M programs have no export
+    // table, and the linker writes a broken .EXE header when it sees export
+    // records, so there __export is accepted and ignored.
     MCSection *Exports = nullptr;
     for (const GlobalValue &GV : M.global_values()) {
       if (!GV.hasDLLExportStorageClass() || GV.isDeclaration())

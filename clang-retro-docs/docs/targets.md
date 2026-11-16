@@ -11,6 +11,7 @@ puts it.
 | --- | --- | --- | --- | --- | --- |
 | MS-DOS | `i8086-pc-msdos` | OMF | JWlink or Open Watcom `wlink` | `.COM` (tiny model) or MZ `.EXE` | [dos-sdk](https://clang-retro.github.io/dos-sdk/) |
 | Windows 1.x to 3.x | `i8086-pc-win16`, `i8086-pc-win16X.YY` | OMF | JWlink or `wlink` | NE program or DLL | [win16-sdk](https://clang-retro.github.io/win16-sdk/) |
+| CP/M-86 | `i8086-unknown-cpm` | OMF | JWlink or `wlink`, then `llvm-exe2cmd` | CMD program (8080 or small model) | [cpm-sdk](https://github.com/clang-retro/cpm-sdk) |
 | OS/2 1.x | `i8086-pc-os2` | OMF | JWlink or `wlink` | NE program | [os2-sdk](https://clang-retro.github.io/os2-sdk/) |
 | OS/2 2.0 to 4.x, ArcaOS | `i386-pc-os2` | ELF | JWlink or `wlink` | LX program or DLL | [os2-sdk](https://clang-retro.github.io/os2-sdk/) |
 | Win32s, NT 3.1 to 11, 95/98/ME | `i386-pc-windowsX.Y-gnu` (and `i486`, `i586`, `i686`, `x86_64`) | COFF | lld | PE | [win32-sdk](https://clang-retro.github.io/win32-sdk/) |
@@ -39,6 +40,17 @@ libraries; Windows uses `lib/win16/<model>/`, and OS/2 `lib/os2/<model>/`.
 
 The [dos-sdk documentation](https://clang-retro.github.io/dos-sdk/dos/)
 describes the models, the keywords and the C library in detail.
+
+## CP/M-86
+
+`i8086-unknown-cpm` uses the same toolchain, with the sysroot
+`i8086-cpm/`, and defines `__CPM__` and `__CPM86__` instead of
+`__MSDOS__`. CP/M-86 cannot fix up segment addresses, so only the `tiny`
+and `small` models are accepted. The linker writes a `.COM` file (tiny)
+or an MZ `.EXE` file (small) to a temporary file, and
+[`llvm-exe2cmd`](tools.md#llvm-exe2cmd) turns it into the CMD program:
+the 8080 model from a `.COM` file, a code and a data group from an
+`.EXE` file. The default output is `a.cmd`.
 
 ## 32-bit OS/2
 
