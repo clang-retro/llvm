@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -1083,6 +1084,8 @@ bool SIFrameLowering::isSupportedStackID(TargetStackID::Value ID) const {
   case TargetStackID::WasmLocal:
   case TargetStackID::ScalablePredicateVector:
   case TargetStackID::AvrAlign:
+  case TargetStackID::MosStatic:
+  case TargetStackID::MosZeroPage:
     return false;
   }
   llvm_unreachable("Invalid TargetStackID::Value");

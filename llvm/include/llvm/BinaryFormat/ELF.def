@@ -179,6 +179,7 @@ ELF_MACHINE(EM_LANAI,         244, "lanai", "EM_LANAI") // Lanai 32-bit processo
 ELF_MACHINE(EM_BPF,           247, "bpf", "EM_BPF") // Linux kernel bpf virtual machine
 ELF_MACHINE(EM_VE,            251, "ve", "NEC SX-Aurora Vector Engine") // NEC SX-Aurora VE
 ELF_MACHINE(EM_LOONGARCH,     258, "loongarch", "LoongArch")
+ELF_MACHINE(EM_MOS,         6502, "mos", "MOS Technologies") // MOS Technologies 65xx
 ELF_MACHINE(EM_BA1,           201, "ba1", "EM_BA1") // Beyond BA1 CPU architecture
 ELF_MACHINE(EM_BA2,           202, "ba2", "EM_BA2") // Beyond BA2 CPU architecture
 ELF_MACHINE(EM_XCORE,         203, "xcore", "EM_XCORE") // XMOS xCORE processor family

@@ -2217,7 +2217,9 @@ ValueUniformity GCNTTIImpl::getValueUniformity(const Value *V) const {
 
 InstructionCost GCNTTIImpl::getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                                  StackOffset BaseOffset,
-                                                 bool HasBaseReg, int64_t Scale,
+                                                 bool HasBaseReg,
+                                                 Type *BaseType, int64_t Scale,
+                                                 Type *ScaleType,
                                                  unsigned AddrSpace) const {
   if (HasBaseReg && Scale != 0) {
     // gfx1250+ can fold base+scale*index when scale matches the memory access
@@ -2234,8 +2236,8 @@ InstructionCost GCNTTIImpl::getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
     }
     return 1;
   }
-  return BaseT::getScalingFactorCost(Ty, BaseGV, BaseOffset, HasBaseReg, Scale,
-                                     AddrSpace);
+  return BaseT::getScalingFactorCost(Ty, BaseGV, BaseOffset, HasBaseReg,
+                                     BaseType, Scale, ScaleType, AddrSpace);
 }
 
 bool GCNTTIImpl::isLSRCostLess(const TTI::LSRCost &A,

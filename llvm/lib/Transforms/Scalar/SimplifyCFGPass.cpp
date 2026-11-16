@@ -303,6 +303,8 @@ static void applyCommandLineOverridesToOptions(const ScalarOptions &Opts,
               Options.HoistLoadsStoresWithCondFaulting);
   Options.SinkCommonInsts =
       valueOr(Opts.sink_common_insts, Options.SinkCommonInsts);
+  Options.SpeculateBlocks =
+      valueOr(Opts.speculate_blocks, Options.SpeculateBlocks);
   Options.SpeculateUnpredictables =
       valueOr(Opts.speculate_unpredictables, Options.SpeculateUnpredictables);
 }

@@ -11,19 +11,8 @@ define i8 @sgt_i128_smax_hi(i128 %x) {
 ; CHECK-NEXT:    push r8
 ; CHECK-NEXT:    push r9
 ; CHECK-NEXT:    push r10
-; CHECK-NEXT:    push r11
 ; CHECK-NEXT:    push r16
 ; CHECK-NEXT:    push r17
-; CHECK-NEXT:    push r28
-; CHECK-NEXT:    push r29
-; CHECK-NEXT:    in r28, 61
-; CHECK-NEXT:    in r29, 62
-; CHECK-NEXT:    sbiw r28, 1
-; CHECK-NEXT:    in r0, 63
-; CHECK-NEXT:    cli
-; CHECK-NEXT:    out 62, r29
-; CHECK-NEXT:    out 63, r0
-; CHECK-NEXT:    out 61, r28
 ; CHECK-NEXT:    mov r30, r24
 ; CHECK-NEXT:    mov r31, r25
 ; CHECK-NEXT:    mov r8, r16
@@ -48,11 +37,9 @@ define i8 @sgt_i128_smax_hi(i128 %x) {
 ; CHECK-NEXT:    cpc r30, r16
 ; CHECK-NEXT:    cpc r31, r17
 ; CHECK-NEXT:    ldi r25, 1
-; CHECK-NEXT:    std Y+1, r25 ; 1-byte Folded Spill
 ; CHECK-NEXT:    breq .LBB0_2
 ; CHECK-NEXT:  ; %bb.1:
-; CHECK-NEXT:    mov r11, r1
-; CHECK-NEXT:    std Y+1, r11 ; 1-byte Folded Spill
+; CHECK-NEXT:    mov r25, r1
 ; CHECK-NEXT:  .LBB0_2:
 ; CHECK-NEXT:    cp r10, r18
 ; CHECK-NEXT:    cpc r10, r19
@@ -83,24 +70,14 @@ define i8 @sgt_i128_smax_hi(i128 %x) {
 ; CHECK-NEXT:  ; %bb.5:
 ; CHECK-NEXT:    mov r24, r1
 ; CHECK-NEXT:  .LBB0_6:
-; CHECK-NEXT:    ldd r25, Y+1 ; 1-byte Folded Reload
 ; CHECK-NEXT:    cpi r25, 0
 ; CHECK-NEXT:    brne .LBB0_8
 ; CHECK-NEXT:  ; %bb.7:
 ; CHECK-NEXT:    mov r24, r18
 ; CHECK-NEXT:  .LBB0_8:
 ; CHECK-NEXT:    andi r24, 1
-; CHECK-NEXT:    adiw r28, 1
-; CHECK-NEXT:    in r0, 63
-; CHECK-NEXT:    cli
-; CHECK-NEXT:    out 62, r29
-; CHECK-NEXT:    out 63, r0
-; CHECK-NEXT:    out 61, r28
-; CHECK-NEXT:    pop r29
-; CHECK-NEXT:    pop r28
 ; CHECK-NEXT:    pop r17
 ; CHECK-NEXT:    pop r16
-; CHECK-NEXT:    pop r11
 ; CHECK-NEXT:    pop r10
 ; CHECK-NEXT:    pop r9
 ; CHECK-NEXT:    pop r8

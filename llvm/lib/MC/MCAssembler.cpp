@@ -1163,7 +1163,8 @@ unsigned MCAssembler::relaxOnce(unsigned FirstStable) {
       Res = I;
       // Assume each iteration finalizes at least one extra fragment. If the
       // layout does not converge after N+1 iterations, bail out.
-      if (Iters > Sec.curFragList()->Tail->getLayoutOrder())
+      // LLVM-MOS HACK: We need a lot more than this.
+      if (Iters > 100 * Sec.curFragList()->Tail->getLayoutOrder())
         break;
     }
     MaxIterations = std::max(MaxIterations, Iters);

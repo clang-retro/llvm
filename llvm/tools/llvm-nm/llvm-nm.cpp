@@ -1861,14 +1861,14 @@ static bool getSymbolNamesFromObject(SymbolicFile &Obj,
 
       // Drop format-specific symbols (STT_FILE, STT_SECTION, etc.) but
       // retain mapping symbols (STT_NOTYPE such as $d, $x) on ARM, AArch64,
-      // CSKY, and RISC-V targets to honor the --special-syms option.
+      // CSKY, MOS, and RISC-V targets to honor the --special-syms option.
       if (!DebugSyms && (*SymFlagsOrErr & SymbolRef::SF_FormatSpecific)) {
         auto *ELFObj = dyn_cast<ELFObjectFileBase>(&Obj);
         bool IsMappingSymbol =
             ELFObj &&
-            llvm::is_contained(
-                {ELF::EM_ARM, ELF::EM_AARCH64, ELF::EM_CSKY, ELF::EM_RISCV},
-                ELFObj->getEMachine()) &&
+            llvm::is_contained({ELF::EM_ARM, ELF::EM_AARCH64, ELF::EM_CSKY,
+                                ELF::EM_MOS, ELF::EM_RISCV},
+                               ELFObj->getEMachine()) &&
             ELFSymbolRef(Sym).getELFType() == ELF::STT_NOTYPE;
         if (!IsMappingSymbol)
           continue;

@@ -82,6 +82,7 @@ llvm_config.feature_config(
                 "LoongArch": "loongarch",
                 "M68k": "m68k",
                 "Mips": "mips",
+                "MOS": "mos",
                 "MSP430": "msp430",
                 "NVPTX": "nvptx",
                 "PowerPC": "ppc",

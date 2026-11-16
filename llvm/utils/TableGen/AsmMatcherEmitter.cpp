@@ -4086,10 +4086,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "        } else {\n";
     OS << "          DEBUG_WITH_TYPE(\"asm-matcher\", dbgs() << \"but formal "
           "operand not required\\n\");\n";
-    OS << "          if (isSubclass(Formal, OptionalMatchClass)) {\n";
-    OS << "            OptionalOperandsMask.set("
-       << (HasMnemonicFirst ? "FormalIdx + 1" : "FormalIdx") << ");\n";
-    OS << "          }\n";
+    if (HasOptionalOperands) {
+      OS << "          if (isSubclass(Formal, OptionalMatchClass)) {\n";
+      OS << "            OptionalOperandsMask.set("
+         << (HasMnemonicFirst ? "FormalIdx + 1" : "FormalIdx") << ");\n";
+      OS << "          }\n";
+    }
     OS << "        }\n";
     OS << "        continue;\n";
   } else {

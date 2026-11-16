@@ -41,10 +41,13 @@ namespace lld::elf {
 class InputFile;
 class BinaryFile;
 class BitcodeFile;
+class XO65Enclave;
+class XO65File;
 class ELFFileBase;
 class SharedFile;
 class InputSectionBase;
 class EhInputSection;
+class DebugFrameInputSection;
 class Defined;
 class Undefined;
 class Symbol;
@@ -58,6 +61,7 @@ struct PhdrEntry;
 
 class ARMExidxSyntheticSection;
 class BssSection;
+class DebugFrameSection;
 class BuildIdSection;
 class EhFrameHeader;
 class EhFrameSection;
@@ -189,7 +193,7 @@ struct VersionDefinition {
 
 // Deferred file-load job: one per input, expanded by loadFiles().
 struct LoadJob {
-  enum Kind : uint8_t { Obj, Bitcode, Archive, Shared, Binary };
+  enum Kind : uint8_t { Obj, Bitcode, Archive, Shared, Binary, XO65 };
   llvm::MemoryBufferRef mbref;
   llvm::StringRef path;
   Kind kind;
@@ -490,6 +494,9 @@ struct Config {
   StringRef thinLTOJobs;
   unsigned timeTraceGranularity;
   int32_t splitStackAdjustSize;
+  StringRef ld65Path;
+  StringRef od65Path;
+  StringRef cc65Launcher;
   SmallVector<uint8_t, 0> packageMetadata;
 
   // The following config options do not directly correspond to any
@@ -641,6 +648,7 @@ struct InStruct {
   std::unique_ptr<SyntheticSection> mipsRldMap;
   std::unique_ptr<SyntheticSection> ppc32Got2;
   // Non-SHF_ALLOC sections
+  std::unique_ptr<DebugFrameSection> debugFrame;
   std::unique_ptr<SyntheticSection> debugNames;
   std::unique_ptr<GdbIndexSection> gdbIndex;
   std::unique_ptr<StringTableSection> shStrTab;
@@ -727,8 +735,10 @@ struct Ctx : CommonLinkerContext {
   SmallVector<BinaryFile *, 0> binaryFiles;
   SmallVector<BitcodeFile *, 0> bitcodeFiles;
   SmallVector<BitcodeFile *, 0> lazyBitcodeFiles;
+  XO65Enclave *xo65Enclave = nullptr;
   SmallVector<InputSectionBase *, 0> inputSections;
   SmallVector<EhInputSection *, 0> ehInputSections;
+  SmallVector<DebugFrameInputSection *, 0> debugFrameInputSections;
 
   SmallVector<SymbolAux, 0> symAux;
   // Duplicate symbol candidates.

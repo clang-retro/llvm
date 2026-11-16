@@ -159,6 +159,9 @@ public:
 
   /// dump - This method is used for debugging.
   LLVM_ABI void dump() const;
+
+protected:
+  bool AddUsersImpl(Instruction *I, bool AllowNonNative);
 };
 
 LLVM_ABI Pass *createIVUsersPass();

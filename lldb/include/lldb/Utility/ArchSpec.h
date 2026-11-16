@@ -240,6 +240,8 @@ public:
 
     eCore_avr,
 
+    eCore_mos,
+
     eCore_wasm32,
 
     eCore_amd_gpu_r600_R600,

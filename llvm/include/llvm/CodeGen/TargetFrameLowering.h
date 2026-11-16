@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #ifndef LLVM_CODEGEN_TARGETFRAMELOWERING_H
 #define LLVM_CODEGEN_TARGETFRAMELOWERING_H
 
@@ -35,6 +36,8 @@ enum Value {
   WasmLocal = 3,
   ScalablePredicateVector = 4,
   AvrAlign = 5,
+  MosStatic = 6,
+  MosZeroPage = 7,
   NoAlloc = 255
 };
 }
@@ -337,6 +340,17 @@ public:
   /// returned directly, and the base register is returned via FrameReg.
   virtual StackOffset getFrameIndexReference(const MachineFunction &MF, int FI,
                                              Register &FrameReg) const;
+
+  /// Replace the frame index debug operand \p OpIdx of the DBG_VALUE or
+  /// DBG_VALUE_LIST \p MI with a target-specific location, for frame objects
+  /// that are not addressed as a register plus an offset. Return true if the
+  /// operand was replaced. Return false to let PEI substitute the register
+  /// and offset given by getFrameIndexReference.
+  virtual bool replaceFrameIndexDebugOperand(MachineFunction &MF,
+                                             MachineInstr &MI,
+                                             unsigned OpIdx) const {
+    return false;
+  }
 
   /// Same as \c getFrameIndexReference, except that the stack pointer (as
   /// opposed to the frame pointer) will be the preferred value for \p

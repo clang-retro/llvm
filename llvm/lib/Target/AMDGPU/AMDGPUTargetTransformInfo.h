@@ -340,7 +340,8 @@ public:
 
   InstructionCost getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                        StackOffset BaseOffset, bool HasBaseReg,
-                                       int64_t Scale,
+                                       Type *BaseType, int64_t Scale,
+                                       Type *ScaleType,
                                        unsigned AddrSpace) const override;
 
   bool isLSRCostLess(const TTI::LSRCost &A,

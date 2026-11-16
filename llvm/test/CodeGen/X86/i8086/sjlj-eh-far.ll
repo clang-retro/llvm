@@ -19,22 +19,22 @@ define i16 @catcher(i16 %x) addrspace(5) personality ptr addrspace(5) @__gxx_per
 ; CHECK-NEXT:    movw %sp, %bp
 ; CHECK-NEXT:    pushw %di
 ; CHECK-NEXT:    pushw %si
-; CHECK-NEXT:    subw $40, %sp
+; CHECK-NEXT:    subw $42, %sp
 ; CHECK-NEXT:    movw 6(%bp), %si
-; CHECK-NEXT:    movw $___gxx_personality_sj0@SEG, -20(%bp)
-; CHECK-NEXT:    movw $___gxx_personality_sj0, -22(%bp)
-; CHECK-NEXT:    movw $GCC_except_table0, -18(%bp)
-; CHECK-NEXT:    movw %bp, -16(%bp)
-; CHECK-NEXT:    movw %sp, -12(%bp)
-; CHECK-NEXT:    movw $.LBB0_3, -14(%bp)
-; CHECK-NEXT:    movw %cs, -10(%bp)
-; CHECK-NEXT:    leaw -44(%bp), %ax
+; CHECK-NEXT:    movw $___gxx_personality_sj0@SEG, -22(%bp)
+; CHECK-NEXT:    movw $___gxx_personality_sj0, -24(%bp)
+; CHECK-NEXT:    movw $GCC_except_table0, -20(%bp)
+; CHECK-NEXT:    movw %bp, -18(%bp)
+; CHECK-NEXT:    movw %sp, -14(%bp)
+; CHECK-NEXT:    movw $.LBB0_3, -16(%bp)
+; CHECK-NEXT:    movw %cs, -12(%bp)
+; CHECK-NEXT:    leaw -46(%bp), %ax
 ; CHECK-NEXT:    movw %ax, -6(%bp) # 2-byte Spill
 ; CHECK-NEXT:    pushw %ax
 ; CHECK-NEXT:    lcallw $__Unwind_SjLj_Register@SEG, $__Unwind_SjLj_Register
 ; CHECK-NEXT:    addw $2, %sp
-; CHECK-NEXT:    movw $0, -40(%bp)
-; CHECK-NEXT:    movw $1, -42(%bp)
+; CHECK-NEXT:    movw $0, -42(%bp)
+; CHECK-NEXT:    movw $1, -44(%bp)
 ; CHECK-NEXT:  .Ltmp0: # EH_LABEL
 ; CHECK-NEXT:    pushw %si
 ; CHECK-NEXT:    lcallw $_may_throw@SEG, $_may_throw
@@ -52,7 +52,8 @@ define i16 @catcher(i16 %x) addrspace(5) personality ptr addrspace(5) @__gxx_per
 ; CHECK-NEXT:    popw %bp
 ; CHECK-NEXT:    lretw
 ; CHECK-NEXT:  .LBB0_3:
-; CHECK-NEXT:    movw -42(%bp), %ax
+; CHECK-NEXT:    movw -6(%bp), %si # 2-byte Reload
+; CHECK-NEXT:    movw -44(%bp), %ax
 ; CHECK-NEXT:    cmpw $1, %ax
 ; CHECK-NEXT:    jb .LBB0_4
 ; CHECK-NEXT:  # %bb.5:
@@ -65,26 +66,27 @@ define i16 @catcher(i16 %x) addrspace(5) personality ptr addrspace(5) @__gxx_per
 ; CHECK-NEXT:    jmpw *%cs:LJTI0_0(%bx)
 ; CHECK-NEXT:  .LBB0_6: # %lpad
 ; CHECK-NEXT:  .Ltmp2: # EH_LABEL
-; CHECK-NEXT:    movw -38(%bp), %ax
-; CHECK-NEXT:    movw -36(%bp), %cx
+; CHECK-NEXT:    movw -40(%bp), %ax
+; CHECK-NEXT:    movw -38(%bp), %cx
+; CHECK-NEXT:    movw -36(%bp), %dx
 ; CHECK-NEXT:    movw -34(%bp), %dx
-; CHECK-NEXT:    movw -32(%bp), %dx
-; CHECK-NEXT:    movw $-1, -40(%bp)
 ; CHECK-NEXT:    movw $-1, -42(%bp)
+; CHECK-NEXT:    movw $-1, -44(%bp)
 ; CHECK-NEXT:    pushw %cx
 ; CHECK-NEXT:    pushw %ax
 ; CHECK-NEXT:    lcallw $___cxa_begin_catch@SEG, $___cxa_begin_catch
 ; CHECK-NEXT:    addw $4, %sp
 ; CHECK-NEXT:    movw %ax, %bx
 ; CHECK-NEXT:    movw %dx, %es
-; CHECK-NEXT:    movw %es:(%bx), %si
-; CHECK-NEXT:    movw $-1, -40(%bp)
+; CHECK-NEXT:    movw %es:(%bx), %ax
+; CHECK-NEXT:    movw %ax, -8(%bp) # 2-byte Spill
 ; CHECK-NEXT:    movw $-1, -42(%bp)
+; CHECK-NEXT:    movw $-1, -44(%bp)
 ; CHECK-NEXT:    lcallw $___cxa_end_catch@SEG, $___cxa_end_catch
-; CHECK-NEXT:    pushw -6(%bp) # 2-byte Folded Reload
+; CHECK-NEXT:    pushw %si
 ; CHECK-NEXT:    lcallw $__Unwind_SjLj_Unregister@SEG, $__Unwind_SjLj_Unregister
 ; CHECK-NEXT:    addw $2, %sp
-; CHECK-NEXT:    movw %si, %ax
+; CHECK-NEXT:    movw -8(%bp), %ax # 2-byte Reload
 ; CHECK-NEXT:    jmp .LBB0_2
 entry:
   invoke addrspace(5) void @may_throw(i16 %x)
@@ -165,13 +167,14 @@ define void @cleanup(i16 %x) addrspace(5) personality ptr addrspace(5) @__gxx_pe
 ; CHECK-NEXT:    jmpw *%cs:LJTI1_0(%bx)
 ; CHECK-NEXT:  .LBB1_5: # %lpad
 ; CHECK-NEXT:  .Ltmp6: # EH_LABEL
-; CHECK-NEXT:    movw -38(%bp), %si
-; CHECK-NEXT:    movw -36(%bp), %di
+; CHECK-NEXT:    movw -38(%bp), %ax
+; CHECK-NEXT:    movw %ax, -6(%bp) # 2-byte Spill
+; CHECK-NEXT:    movw -36(%bp), %si
 ; CHECK-NEXT:    lcallw $_dtor@SEG, $_dtor
 ; CHECK-NEXT:    movw $-1, -40(%bp)
 ; CHECK-NEXT:    movw $-1, -42(%bp)
-; CHECK-NEXT:    pushw %di
 ; CHECK-NEXT:    pushw %si
+; CHECK-NEXT:    pushw -6(%bp) # 2-byte Folded Reload
 ; CHECK-NEXT:    lcallw $__Unwind_SjLj_Resume@SEG, $__Unwind_SjLj_Resume
 entry:
   invoke addrspace(5) void @may_throw(i16 %x)

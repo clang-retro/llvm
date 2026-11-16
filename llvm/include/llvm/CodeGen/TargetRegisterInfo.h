@@ -883,13 +883,22 @@ public:
     return 0;
   }
   /// FIXME: We should deprecate this usage.
-  virtual unsigned getCSRCost() const { return 0; }
+  virtual unsigned getCSRCost(const MachineFunction &MF) const { return 0; }
 
   /// Scale the CSRFirstUseCost with this number.
   /// The scale is a percentage (e.g., 30 means 30% of the base cost).
   /// Target can tune and override this default value.
   virtual unsigned getCSRCostScale(const MachineFunction &MF) const {
     return 30;
+  }
+
+  /// Returns true if the register allocator should mark the intervals it
+  /// creates when spilling a live range as not spillable. This keeps the
+  /// greedy allocator from spilling around them again; targets whose
+  /// instructions can each need most of their registers (i8086) must leave
+  /// it off, or the allocator can run out of registers.
+  virtual bool markSpillIntervalsNotSpillable(const MachineFunction &MF) const {
+    return false;
   }
 
   /// Returns true if the target requires (and can make use of) the register
@@ -1012,6 +1021,14 @@ public:
                                      const TargetRegisterClass *RC,
                                      Register Reg) const {
     return false;
+  }
+
+  /// Returns whether or not a target can support saveScavengerRegister for the
+  /// given Register and spill locations
+  virtual bool
+  canSaveScavengerRegister(Register Reg, MachineBasicBlock::iterator I,
+                           MachineBasicBlock::iterator UseMI) const {
+    return true;
   }
 
   /// Process frame indices in reverse block order. This changes the behavior of

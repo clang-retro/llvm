@@ -118,7 +118,7 @@ frameInfo:
 body: |
   ; CHECK-LABEL: name: hot_loop_use
   ; The use in bb.1 is more expensive to rematerialize than using a CSR.
-  ; CHECK: - { id: 8, class: sreg_32, preferred-register: '', flags: [  ], assigned-phys: '$sgpr53' }
+  ; CHECK: - { id: 8, class: sreg_32, preferred-register: '', flags: [  ], assigned-phys: '$sgpr33' }
   bb.0:
     successors: %bb.1
     liveins: $sgpr4_sgpr5, $sgpr6_sgpr7, $sgpr8_sgpr9, $sgpr10_sgpr11, $sgpr12, $sgpr13, $sgpr14, $sgpr15, $sgpr32

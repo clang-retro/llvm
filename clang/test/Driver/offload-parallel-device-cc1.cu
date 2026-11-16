@@ -15,7 +15,7 @@
 // RUN:   -O3 -c %s -o %t.o
 
 // RUN: cd %t && %clang -x cuda --target=x86_64-unknown-linux-gnu \
-// RUN:   -nocudainc -nocudalib \
+// RUN:   -nocudainc -nocudalib --cuda-path=%S/Inputs/CUDA_111/usr/local/cuda \
 // RUN:   --cuda-gpu-arch=sm_70 --cuda-gpu-arch=sm_80 --offload-jobs=2 \
 // RUN:   --cuda-device-only -S -Werror %s
 
@@ -42,7 +42,7 @@
 
 // RUN: mkdir -p %t/cuda-save-temps
 // RUN: cd %t/cuda-save-temps && %clang -x cuda --target=x86_64-unknown-linux-gnu \
-// RUN:   -nocudainc -nocudalib \
+// RUN:   -nocudainc -nocudalib --cuda-path=%S/Inputs/CUDA_111/usr/local/cuda \
 // RUN:   --cuda-gpu-arch=sm_70 --cuda-gpu-arch=sm_80 --offload-jobs=2 \
 // RUN:   --cuda-device-only -S -save-temps -Werror %s
 
@@ -52,12 +52,12 @@
 // RUN:   --offload-arch=gfx900 --offload-arch=gfx906 --offload-jobs=2 \
 // RUN:   --offload-device-only -fsyntax-only -Werror %s
 // RUN: %clang -x cuda --target=x86_64-unknown-linux-gnu \
-// RUN:   -nocudainc -nocudalib \
+// RUN:   -nocudainc -nocudalib --cuda-path=%S/Inputs/CUDA_111/usr/local/cuda \
 // RUN:   --cuda-gpu-arch=sm_70 --cuda-gpu-arch=sm_80 --offload-jobs=2 \
 // RUN:   --cuda-device-only -fsyntax-only -Werror %s
 
 // RUN: not %clang -x cuda --target=x86_64-unknown-linux-gnu \
-// RUN:   -nocudainc -nocudalib \
+// RUN:   -nocudainc -nocudalib --cuda-path=%S/Inputs/CUDA_111/usr/local/cuda \
 // RUN:   --cuda-gpu-arch=sm_70 --cuda-gpu-arch=sm_80 --offload-jobs=0x4 \
 // RUN:   --cuda-device-only -S %s 2>&1 | FileCheck -check-prefix=INVJOBS %s
 // INVJOBS: clang: error: invalid integral value '0x4' in '--offload-jobs=0x4'

@@ -67,6 +67,8 @@ private:
   void readOutput();
   void readOutputArch();
   void readOutputFormat();
+  void readCustomOutputFormat();
+  void readCustomOutputFormatStmt(StringRef tok);
   void readOverwriteSections();
   void readPhdrs();
   void readRegionAlias();
@@ -83,6 +85,7 @@ private:
   StringRef readName();
   SymbolAssignment *readSymbolAssignment(StringRef name);
   ByteCommand *readByteCommand(StringRef tok);
+  MemoryRegionCommand *readMemoryRegionCommand(StringRef tok);
   std::array<uint8_t, 4> readFill();
   bool readSectionDirective(OutputSection *cmd, StringRef tok);
   void readSectionAddressType(OutputSection *cmd);
@@ -497,6 +500,11 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
 // big if -EB is specified, little if -EL is specified, or default if neither is
 // specified.
 void ScriptParser::readOutputFormat() {
+  if (peek() == "{") {
+    readCustomOutputFormat();
+    return;
+  }
+
   expect("(");
 
   StringRef s = readName();
@@ -938,8 +946,7 @@ Expr ScriptParser::readAssert() {
   };
 }
 
-#define ECase(X)                                                               \
-  { #X, X }
+#define ECase(X) {#X, X}
 constexpr std::pair<const char *, unsigned> typeMap[] = {
     ECase(SHT_PROGBITS),   ECase(SHT_NOTE),       ECase(SHT_NOBITS),
     ECase(SHT_INIT_ARRAY), ECase(SHT_FINI_ARRAY), ECase(SHT_PREINIT_ARRAY),
@@ -1427,6 +1434,32 @@ ByteCommand *ScriptParser::readByteCommand(StringRef tok) {
   return make<ByteCommand>(e, size, std::move(commandString));
 }
 
+MemoryRegionCommand *ScriptParser::readMemoryRegionCommand(StringRef tok) {
+  int isFull =
+      StringSwitch<int>(tok).Case("FULL", 1).Case("TRIM", 0).Default(-1);
+  if (isFull == -1)
+    return nullptr;
+
+  Expr regionStart = nullptr;
+  Expr regionLength = nullptr;
+  expect("(");
+  StringRef name = next();
+  if (consume(",")) {
+    regionStart = readExpr();
+    if (consume(",")) {
+      regionLength = readExpr();
+    }
+  }
+  expect(")");
+  auto *iter = ctx.script->memoryRegions.find(name);
+  if (iter == ctx.script->memoryRegions.end()) {
+    setError("memory region '" + name + "' is not defined");
+    return nullptr;
+  }
+  return make<MemoryRegionCommand>(iter->second, isFull, regionStart,
+                                   regionLength);
+}
+
 static std::optional<uint64_t> parseFlag(StringRef tok) {
   if (std::optional<uint64_t> asInt = parseInt(tok))
     return asInt;
@@ -1827,6 +1860,24 @@ ScriptParser::readSymbols() {
     expect(";");
   }
   return {locals, globals};
+}
+
+void ScriptParser::readCustomOutputFormatStmt(StringRef tok) {
+  if (tok == "INCLUDE")
+    readInclude(
+        [&] { readStmts([&](StringRef t) { readCustomOutputFormatStmt(t); }); });
+  else if (ByteCommand *data = readByteCommand(tok))
+    ctx.script->outputFormat.push_back(data);
+  else if (MemoryRegionCommand *region = readMemoryRegionCommand(tok))
+    ctx.script->outputFormat.push_back(region);
+  else
+    setError("custom output format command expected, but got " + tok);
+}
+
+void ScriptParser::readCustomOutputFormat() {
+  expect("{");
+  while (!errorCount() && !consume("}"))
+    readCustomOutputFormatStmt(next());
 }
 
 // Reads an "extern C++" directive, e.g.,

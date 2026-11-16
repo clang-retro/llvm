@@ -492,7 +492,7 @@ static void assignCalleeSavedSpillSlots(MachineFunction &F,
     for (auto &CS : CSI) {
       // If the target has spilled this register to another register or already
       // handled it , we don't need to allocate a stack slot.
-      if (CS.isSpilledToReg())
+      if (CS.isSpilledToReg() || CS.isTargetSpilled())
         continue;
 
       MCRegister Reg = CS.getReg();
@@ -1399,6 +1399,9 @@ bool PEIImpl::replaceFrameIndexDebugInstr(MachineFunction &MF, MachineInstr &MI,
     assert(MI.isDebugOperand(&Op) &&
            "Frame indices can only appear as a debug operand in a DBG_VALUE*"
            " machine instruction");
+    if (TFI->replaceFrameIndexDebugOperand(MF, MI, OpIdx))
+      return true;
+
     Register Reg;
     unsigned FrameIdx = Op.getIndex();
     unsigned Size = MF.getFrameInfo().getObjectSize(FrameIdx);

@@ -54,6 +54,7 @@
 #include "llvm/Remarks/HotnessThresholdParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compression.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GlobPattern.h"
 #include "llvm/Support/LEB128.h"
@@ -67,6 +68,8 @@
 #include <cstdlib>
 #include <tuple>
 #include <utility>
+
+#define DEBUG_TYPE "lld"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -177,6 +180,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(Ctx &ctx,
           .Case("elf64_sparc", {ELF64BEKind, EM_SPARCV9})
           .Case("msp430elf", {ELF32LEKind, EM_MSP430})
           .Case("m68kelf", {ELF32BEKind, EM_68K})
+          .Case("moself", {ELF32LEKind, EM_MOS})
           .Case("elf64_amdgpu", {ELF64LEKind, EM_AMDGPU})
           .Case("elf64loongarch", {ELF64LEKind, EM_LOONGARCH})
           .Case("elf64_s390", {ELF64BEKind, EM_S390})
@@ -273,6 +277,9 @@ void LinkerDriver::addFile(StringRef path, bool withLOption) {
         return;
       }
       kind = LoadJob::Shared;
+      break;
+    case file_magic::xo65_object:
+      kind = LoadJob::XO65;
       break;
     default:
       Err(ctx) << path << ": unknown file type";
@@ -644,8 +651,8 @@ static void checkZOptions(Ctx &ctx, opt::InputArgList &args) {
 }
 
 constexpr const char *saveTempsValues[] = {
-    "resolution", "preopt",     "promote", "internalize",  "import",
-    "opt",        "precodegen", "prelink", "combinedindex"};
+    "resolution", "preopt",     "promote", "internalize",   "import",
+    "opt",        "precodegen", "prelink", "combinedindex", "ld65"};
 
 LinkerDriver::LinkerDriver(Ctx &ctx) : ctx(ctx) {}
 
@@ -1495,6 +1502,7 @@ static void readConfigs(Ctx &ctx, opt::InputArgList &args) {
   ctx.arg.ignoreFunctionAddressEquality =
       args.hasArg(OPT_ignore_function_address_equality);
   ctx.arg.init = args.getLastArgValue(OPT_init, "_init");
+  ctx.arg.ld65Path = args.getLastArgValue(OPT_ld65_path);
   ctx.arg.ltoAAPipeline = args.getLastArgValue(OPT_lto_aa_pipeline);
   ctx.arg.ltoCSProfileGenerate = args.hasArg(OPT_lto_cs_profile_generate);
   ctx.arg.ltoCSProfileFile = args.getLastArgValue(OPT_lto_cs_profile_file);
@@ -1537,6 +1545,8 @@ static void readConfigs(Ctx &ctx, opt::InputArgList &args) {
       args.hasFlag(OPT_mmap_output_file, OPT_no_mmap_output_file, true);
   ctx.arg.nmagic = args.hasFlag(OPT_nmagic, OPT_no_nmagic, false);
   ctx.arg.nostdlib = args.hasArg(OPT_nostdlib);
+  ctx.arg.od65Path = args.getLastArgValue(OPT_od65_path);
+  ctx.arg.cc65Launcher = args.getLastArgValue(OPT_cc65_launcher);
   ctx.arg.oFormatBinary = isOutputFormatBinary(ctx, args);
   ctx.arg.omagic = args.hasFlag(OPT_omagic, OPT_no_omagic, false);
   ctx.arg.optRemarksFilename = args.getLastArgValue(OPT_opt_remarks_filename);
@@ -2204,6 +2214,9 @@ void LinkerDriver::loadFiles() {
       }
       case LoadJob::Binary:
         job.out.push_back(std::make_unique<BinaryFile>(ctx, job.mbref));
+        break;
+      case LoadJob::XO65:
+        job.out.push_back(std::make_unique<XO65File>(ctx, job.mbref));
         break;
       }
       for (auto &m : job.out)
@@ -3388,6 +3401,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
     initSectionsAndLocalSyms(file, /*ignoreComdats=*/false);
   });
   parallelForEach(ctx.objectFiles, postParseObjectFile);
+  if (ctx.xo65Enclave)
+    ctx.xo65Enclave->postParse();
   parallelForEach(ctx.bitcodeFiles,
                   [](BitcodeFile *file) { file->postParse(); });
   for (auto &it : ctx.nonPrevailingSyms) {
@@ -3524,6 +3539,12 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
           continue;
         if (LLVM_UNLIKELY(isa<EhInputSection>(s)))
           ctx.ehInputSections.push_back(cast<EhInputSection>(s));
+        else if (LLVM_UNLIKELY(isa<DebugFrameInputSection>(s))) {
+          LLVM_DEBUG(llvm::dbgs()
+                     << "Driver: collecting DebugFrameInputSection from "
+                     << f->getName() << "\n");
+          ctx.debugFrameInputSections.push_back(cast<DebugFrameInputSection>(s));
+        }
         else
           ctx.inputSections.push_back(s);
       }
@@ -3531,6 +3552,11 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
     for (BinaryFile *f : ctx.binaryFiles)
       for (InputSectionBase *s : f->getSections())
         ctx.inputSections.push_back(cast<InputSection>(s));
+    if (ctx.xo65Enclave) {
+      ctx.xo65Enclave->createSections();
+      for (InputSectionBase *s : ctx.xo65Enclave->getSections())
+        ctx.inputSections.push_back(s);
+    }
   }
 
   {
@@ -3609,8 +3635,10 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   // Some input sections that are used for exception handling need to be moved
   // into synthetic sections. Do that now so that they aren't assigned to
   // output sections in the usual way.
-  if (!ctx.arg.relocatable)
+  if (!ctx.arg.relocatable) {
     combineEhSections(ctx);
+    combineDebugFrameSections(ctx);
+  }
 
   // Merge .hexagon.attributes sections.
   if (ctx.arg.emachine == EM_HEXAGON)

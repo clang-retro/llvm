@@ -20,9 +20,10 @@ body: |
     ; CHECK-LABEL: name: tuple_unused_csr
     ; CHECK: liveins: $sgpr48
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: S_NOP 0, implicit renamable $sgpr48
-    ; CHECK-NEXT: S_NOP 0, implicit renamable $sgpr48
-    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $sgpr48
+    ; CHECK-NEXT: renamable $vcc_hi = COPY $sgpr48
+    ; CHECK-NEXT: S_NOP 0, implicit renamable $vcc_hi
+    ; CHECK-NEXT: S_NOP 0, implicit renamable $vcc_hi
+    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $vcc_hi
     ; CHECK-NEXT: dead $sgpr30_sgpr31 = SI_CALL undef $sgpr4_sgpr5, @callee, csr_amdgpu
     ; CHECK-NEXT: renamable $sgpr0_sgpr1 = S_MOV_B64 1
     ; CHECK-NEXT: S_NOP 0, implicit killed renamable $sgpr0_sgpr1
@@ -50,12 +51,13 @@ body: |
     ; CHECK-LABEL: name: tuple_unused_lane
     ; CHECK: liveins: $sgpr48
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: S_NOP 0, implicit renamable $sgpr48
-    ; CHECK-NEXT: S_NOP 0, implicit renamable $sgpr48
-    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $sgpr48
-    ; CHECK-NEXT: renamable $sgpr48 = S_MOV_B32 1
+    ; CHECK-NEXT: renamable $vcc_hi = COPY $sgpr48
+    ; CHECK-NEXT: S_NOP 0, implicit renamable $vcc_hi
+    ; CHECK-NEXT: S_NOP 0, implicit renamable $vcc_hi
+    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $vcc_hi
     ; CHECK-NEXT: dead $sgpr30_sgpr31 = SI_CALL undef $sgpr4_sgpr5, @callee, csr_amdgpu
-    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $sgpr48
+    ; CHECK-NEXT: renamable $sgpr0 = S_MOV_B32 1
+    ; CHECK-NEXT: S_NOP 0, implicit killed renamable $sgpr0
     ; CHECK-NEXT: S_ENDPGM 0
     %0:sgpr_32 = COPY $sgpr48
     S_NOP 0, implicit %0

@@ -242,7 +242,7 @@ void MachineOperand::ChangeToMCSymbol(MCSymbol *Sym, unsigned TargetFlags) {
   setTargetFlags(TargetFlags);
 }
 
-void MachineOperand::ChangeToFrameIndex(int Idx, unsigned TargetFlags) {
+void MachineOperand::ChangeToFrameIndex(int Idx, int64_t Offset, unsigned TargetFlags) {
   assert((!isReg() || !isTied()) &&
          "Cannot change a tied operand into a FrameIndex");
 
@@ -250,6 +250,7 @@ void MachineOperand::ChangeToFrameIndex(int Idx, unsigned TargetFlags) {
 
   OpKind = MO_FrameIndex;
   setIndex(Idx);
+  setOffset(Offset);
   setTargetFlags(TargetFlags);
 }
 
@@ -346,7 +347,6 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_MachineBasicBlock:
     return getMBB() == Other.getMBB();
   case MachineOperand::MO_FrameIndex:
-    return getIndex() == Other.getIndex();
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_TargetIndex:
     return getIndex() == Other.getIndex() && getOffset() == Other.getOffset();
@@ -737,6 +737,13 @@ static void printCFI(raw_ostream &OS, const MCCFIInstruction &CFI,
     printCFIRegister(CFI.getRegister(), OS, TRI);
     OS << ", " << CFI.getOffset();
     break;
+  case MCCFIInstruction::OpValOffset:
+    OS << "val_offset ";
+    if (MCSymbol *Label = CFI.getLabel())
+      MachineOperand::printSymbol(OS, *Label);
+    printCFIRegister(CFI.getRegister(), OS, TRI);
+    OS << ", " << CFI.getOffset();
+    break;
   case MCCFIInstruction::OpAdjustCfaOffset:
     OS << "adjust_cfa_offset ";
     if (MCSymbol *Label = CFI.getLabel())
@@ -973,6 +980,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     if (const MachineFunction *MF = getMFIfAvailable(*this))
       MFI = &MF->getFrameInfo();
     printFrameIndex(OS, FrameIndex, IsFixed, MFI);
+    printOperandOffset(OS, getOffset());
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:
