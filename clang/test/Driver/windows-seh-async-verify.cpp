@@ -1,14 +1,18 @@
 // RUN: %clang --target=x86_64-pc-windows -fasync-exceptions -fsyntax-only -### %s 2>&1 | FileCheck %s
 // RUN: %clang_cl --target=x86_64-pc-windows /EHa -fsyntax-only -### -- %s 2>&1 | FileCheck %s
-// RUN: %clang --target=x86_64-pc-windows-gnu -fasync-exceptions -fsyntax-only -### %s 2>&1 | FileCheck %s --check-prefixes=GNU-ALL,GNU
-// RUN: %clang_cl --target=x86_64-pc-windows-gnu /EHa -fsyntax-only -### -- %s 2>&1 | FileCheck %s --check-prefixes=GNU-ALL,CL-GNU
+// MinGW lowers SEH __try as MSVC does, and takes it too.
+// RUN: %clang --target=x86_64-pc-windows-gnu -fasync-exceptions -fsyntax-only -### %s 2>&1 | FileCheck %s
+// RUN: %clang --target=i686-w64-windows-gnu -fasync-exceptions -fsyntax-only -### %s 2>&1 | FileCheck %s
+// RUN: %clang --target=x86_64-linux-gnu -fasync-exceptions -fsyntax-only -### %s 2>&1 | FileCheck %s --check-prefix=LINUX
+// clang-cl's /EHa is still MSVC's only.
+// RUN: %clang_cl --target=x86_64-pc-windows-gnu /EHa -fsyntax-only -### -- %s 2>&1 | FileCheck %s --check-prefix=CL-GNU
 
 // CHECK-NOT: warning
-// GNU: warning: argument unused during compilation: '-fasync-exceptions' [-Wunused-command-line-argument]
-// CL-GNU: warning: argument unused during compilation: '/EHa' [-Wunused-command-line-argument]
-
 // CHECK: -fasync-exceptions
-// GNU-ALL-NOT: -fasync-exceptions
+// LINUX: warning: argument unused during compilation: '-fasync-exceptions' [-Wunused-command-line-argument]
+// LINUX-NOT: "-fasync-exceptions"
+// CL-GNU: warning: argument unused during compilation: '/EHa' [-Wunused-command-line-argument]
+// CL-GNU-NOT: "-fasync-exceptions"
 struct S {
     union _Un {
         ~_Un() {}

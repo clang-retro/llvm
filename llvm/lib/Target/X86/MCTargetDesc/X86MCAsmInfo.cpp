@@ -175,6 +175,11 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple,
     InternalSymbolPrefix = ".L";
     CodePointerSize = 8;
     WinEHEncodingType = WinEH::EncodingType::Itanium;
+  } else {
+    // As for MSVC: with -fseh-exceptions (the exception model WinEH), the
+    // Windows EHStreamer emits the tables of SEH __try (_except_handler3's
+    // scope tables), which drivers built with MinGW's headers use.
+    WinEHEncodingType = WinEH::EncodingType::X86;
   }
 
   AssemblerDialect = X86_MC::getCLOpts(Options).asm_syntax;
