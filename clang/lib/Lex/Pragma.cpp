@@ -117,7 +117,10 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
       Tok.is(tok::identifier) &&
       !FindHandler(Tok.getIdentifierInfo()->getName()) &&
       PP.isMacroDefined(Tok.getIdentifierInfo())) {
-    PP.EnterToken(Tok, /*IsReinject=*/true);
+    auto Toks = std::make_unique<Token[]>(1);
+    Toks[0] = Tok;
+    PP.EnterTokenStream(std::move(Toks), 1, /*DisableMacroExpansion=*/false,
+                        /*IsReinject=*/false);
     PP.Lex(Tok);
   }
 
