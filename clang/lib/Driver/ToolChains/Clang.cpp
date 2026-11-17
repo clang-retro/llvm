@@ -815,6 +815,25 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
 
   CheckPreprocessingOptions(D, Args);
 
+  // Visual C++'s #import of a type library runs tlbimport, found next to
+  // clang or on PATH, and includes the headers it writes: beside the object
+  // file for -c -o, or else in the current directory, as cl.exe does.
+  if (getToolChain().getTriple().isOSWindows()) {
+    std::string Importer = getToolChain().GetProgramPath("tlbimport");
+    if (llvm::sys::path::is_absolute(Importer)) {
+      CmdArgs.push_back("-tlbimport");
+      CmdArgs.push_back(Args.MakeArgString(Importer));
+      if (Args.hasArg(options::OPT_c) && Args.hasArg(options::OPT_o) &&
+          Output.isFilename()) {
+        StringRef Dir = llvm::sys::path::parent_path(Output.getFilename());
+        if (!Dir.empty()) {
+          CmdArgs.push_back("-tlbimport-dir");
+          CmdArgs.push_back(Args.MakeArgString(Dir));
+        }
+      }
+    }
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_C);
   Args.AddLastArg(CmdArgs, options::OPT_CC);
 

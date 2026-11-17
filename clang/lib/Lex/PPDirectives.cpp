@@ -25,6 +25,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/MacroInfo.h"
@@ -44,7 +45,12 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/IOSandbox.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include <algorithm>
 #include <cassert>
@@ -2188,13 +2194,31 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
 
+  HandleIncludeDirectiveWithFilename(HashLoc, IncludeTok, FilenameTok,
+                                     LookupFrom, LookupFromFile);
+}
+
+/// The rest of HandleIncludeDirective, once the file name has been read.
+void Preprocessor::HandleIncludeDirectiveWithFilename(
+    SourceLocation HashLoc, Token &IncludeTok, Token &FilenameTok,
+    ConstSearchDirIterator LookupFrom, const FileEntry *LookupFromFile) {
   // Verify that there is nothing after the filename, other than EOD.  Note
   // that we allow macros that expand to nothing after the filename, because
   // this falls into the category of "#include pp-tokens new-line" specified
   // in C99 6.10.2p4.
   SourceLocation EndLoc =
       CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getNameStart(), true);
+  HandleIncludeAction(HashLoc, IncludeTok, FilenameTok, EndLoc, LookupFrom,
+                      LookupFromFile);
+}
 
+/// Includes the file FilenameTok names, the end of the directive having been
+/// read.
+void Preprocessor::HandleIncludeAction(SourceLocation HashLoc,
+                                       Token &IncludeTok, Token &FilenameTok,
+                                       SourceLocation EndLoc,
+                                       ConstSearchDirIterator LookupFrom,
+                                       const FileEntry *LookupFromFile) {
   auto Action = HandleHeaderIncludeOrImport(HashLoc, IncludeTok, FilenameTok,
                                             EndLoc, LookupFrom, LookupFromFile);
   switch (Action.Kind) {
@@ -2865,30 +2889,246 @@ void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
                                 LookupFromFile);
 }
 
-/// HandleMicrosoftImportDirective - Implements \#import for Microsoft Mode
-void Preprocessor::HandleMicrosoftImportDirective(Token &Tok) {
-  // The Microsoft #import directive takes a type library and generates header
-  // files from it, and includes those.  This is beyond the scope of what clang
-  // does, so we ignore it and error out.  However, #import can optionally have
-  // trailing attributes that span multiple lines.  We're going to eat those
-  // so we can continue processing from there.
-  Diag(Tok, diag::err_pp_import_directive_ms );
+/// Whether the file begins as a type library does: MSFT or SLTG, or MZ for
+/// a program or DLL whose TYPELIB resource holds one.
+static bool looksLikeTypeLibrary(FileManager &FM, FileEntryRef File) {
+  auto Buf = FM.getBufferForFile(File, /*isVolatile=*/false,
+                                 /*RequiresNullTerminator=*/false);
+  if (!Buf)
+    return false;
+  StringRef Data = (*Buf)->getBuffer();
+  return Data.starts_with("MSFT") || Data.starts_with("SLTG") ||
+         Data.starts_with("MZ");
+}
 
-  // Read tokens until we get to the end of the directive.  Note that the
-  // directive can be split over multiple lines using the backslash character.
-  DiscardUntilEndOfDirective();
+/// Implements Visual C++'s \#import of a type library: runs the type library
+/// importer (tlbimport) on it, with the directive's attributes, and includes
+/// the primary header (.tlh) it writes. Returns false when FilenameTok does
+/// not name a type library, having read nothing more, so that the directive
+/// can be handled as an include.
+bool Preprocessor::HandleTypeLibraryImport(SourceLocation HashLoc,
+                                           Token &ImportTok,
+                                           Token &FilenameTok) {
+  SmallString<128> FilenameBuffer;
+  StringRef Filename = getSpelling(FilenameTok, FilenameBuffer);
+  bool IsAngled =
+      GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);
+  if (Filename.empty())
+    return false;
+  std::string Name = Filename.str();
+
+  auto Fail = [&](const Twine &Why) {
+    Diag(FilenameTok, diag::err_pp_import_typelib) << Name << Why.str();
+    DiscardUntilEndOfDirective();
+    return true;
+  };
+  if (Filename.starts_with_insensitive("progid:") ||
+      Filename.starts_with_insensitive("libid:"))
+    return Fail("type libraries named by ProgID or LIBID are found through "
+                "the registry; name the file instead");
+
+  // "file\N" names the Nth TYPELIB resource of a DLL or program.
+  StringRef Path = Filename, Resource;
+  size_t Slash = Filename.rfind('\\');
+  if (Slash != StringRef::npos && Slash + 1 < Filename.size() &&
+      llvm::all_of(Filename.substr(Slash + 1),
+                   [](char C) { return C >= '0' && C <= '9'; })) {
+    Path = Filename.substr(0, Slash);
+    Resource = Filename.substr(Slash);
+  }
+  StringRef Ext = llvm::sys::path::extension(Path);
+  bool KnownExt =
+      Ext.equals_insensitive(".tlb") || Ext.equals_insensitive(".olb") ||
+      Ext.equals_insensitive(".dll") || Ext.equals_insensitive(".ocx") ||
+      Ext.equals_insensitive(".exe");
+
+  // Search as for an include, then (as Visual C++ does) PATH and LIB.
+  SmallString<128> LookupName(Path);
+  if (llvm::sys::path::is_style_posix(llvm::sys::path::Style::native))
+    llvm::sys::path::native(LookupName);
+  OptionalFileEntryRef File =
+      LookupFile(FilenameTok.getLocation(), LookupName, IsAngled, nullptr,
+                 nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+  if (!File && KnownExt && !llvm::sys::path::is_absolute(LookupName)) {
+    for (const char *Var : {"PATH", "LIB"}) {
+      std::optional<std::string> Value = llvm::sys::Process::GetEnv(Var);
+      if (!Value)
+        continue;
+      SmallVector<StringRef, 16> Dirs;
+      StringRef(*Value).split(Dirs, llvm::sys::EnvPathSeparator, -1, false);
+      for (StringRef Dir : Dirs) {
+        SmallString<256> Candidate(Dir);
+        llvm::sys::path::append(Candidate, LookupName);
+        if ((File = getFileManager().getOptionalFileRef(Candidate)))
+          break;
+      }
+      if (File)
+        break;
+    }
+  }
+  if (!File) {
+    if (!KnownExt)
+      return false;
+    return Fail("file not found");
+  }
+  if (!KnownExt && !looksLikeTypeLibrary(getFileManager(), *File))
+    return false;
+
+  // The attributes, one argument each, as they are written: no_namespace,
+  // rename("Old","New") and so on, separated by spaces or commas.
+  std::vector<std::string> Attrs;
+  std::string Cur;
+  int Depth = 0;
+  Token Tok;
+  LexUnexpandedToken(Tok);
+  while (Tok.isNot(tok::eod)) {
+    if (Depth == 0 && Tok.is(tok::comma)) {
+      if (!Cur.empty())
+        Attrs.push_back(std::move(Cur));
+      Cur.clear();
+    } else {
+      if (Depth == 0 && Tok.getIdentifierInfo() && !Cur.empty()) {
+        Attrs.push_back(std::move(Cur));
+        Cur.clear();
+      }
+      if (Tok.is(tok::l_paren))
+        ++Depth;
+      else if (Tok.is(tok::r_paren) && Depth > 0)
+        --Depth;
+      Cur += getSpelling(Tok);
+    }
+    LexUnexpandedToken(Tok);
+  }
+  if (!Cur.empty())
+    Attrs.push_back(std::move(Cur));
+  SourceLocation EndLoc = Tok.getLocation();
+
+  const std::string &Importer = PPOpts.TypeLibImporter;
+  if (Importer.empty()) {
+    Diag(FilenameTok, diag::err_pp_import_typelib)
+        << Name
+        << "no type library importer (tlbimport) was found next to "
+           "the compiler";
+    return true;
+  }
+
+  // Running the importer and reading what it wrote is deliberate IO outside
+  // the VFS.
+  std::string Tlh;
+  {
+    auto BypassSandbox = llvm::sys::sandbox::scopedDisable();
+    SmallString<256> OutDir(PPOpts.TypeLibImportDir.empty()
+                                ? StringRef(".")
+                                : StringRef(PPOpts.TypeLibImportDir));
+    llvm::sys::fs::make_absolute(OutDir);
+    llvm::sys::fs::create_directories(OutDir);
+    SmallString<256> LibPath(File->getName());
+    llvm::sys::fs::make_absolute(LibPath);
+
+    std::vector<std::string> Args = {Importer, "-o", std::string(OutDir),
+                                     "--print-tlh"};
+    // The type libraries it imports (stdole2.tlb and the like) are looked
+    // for beside it, in the sysroot and in LIB.
+    auto AddLibDir = [&](StringRef Dir) {
+      if (Dir.empty())
+        return;
+      Args.push_back("-L");
+      Args.push_back(Dir.str());
+    };
+    AddLibDir(llvm::sys::path::parent_path(LibPath));
+    StringRef Sysroot = HeaderInfo.getHeaderSearchOpts().Sysroot;
+    if (!Sysroot.empty() && Sysroot != "/") {
+      SmallString<256> SysLib(Sysroot);
+      llvm::sys::path::append(SysLib, "lib");
+      AddLibDir(SysLib);
+    }
+    if (std::optional<std::string> Lib = llvm::sys::Process::GetEnv("LIB")) {
+      SmallVector<StringRef, 8> Dirs;
+      StringRef(*Lib).split(Dirs, llvm::sys::EnvPathSeparator, -1, false);
+      for (StringRef Dir : Dirs)
+        AddLibDir(Dir);
+    }
+    for (std::string &A : Attrs)
+      Args.push_back(std::move(A));
+    Args.push_back((LibPath + Resource).str());
+
+    SmallString<128> OutFile, ErrFile;
+    if (llvm::sys::fs::createTemporaryFile("tlbimport", "out", OutFile) ||
+        llvm::sys::fs::createTemporaryFile("tlbimport", "err", ErrFile))
+      return Fail("cannot create a temporary file");
+    llvm::scope_exit RemoveTemps([&] {
+      llvm::sys::fs::remove(OutFile);
+      llvm::sys::fs::remove(ErrFile);
+    });
+    SmallVector<StringRef, 16> ArgRefs(Args.begin(), Args.end());
+    std::optional<StringRef> Redirects[] = {std::nullopt, StringRef(OutFile),
+                                            StringRef(ErrFile)};
+    std::string ErrMsg;
+    int RC = llvm::sys::ExecuteAndWait(Importer, ArgRefs, std::nullopt,
+                                       Redirects, 0, 0, &ErrMsg);
+    auto ReadFile = [](StringRef P) {
+      auto B = llvm::MemoryBuffer::getFile(P, /*IsText=*/true);
+      return B ? (*B)->getBuffer().trim().str() : std::string();
+    };
+    if (RC != 0) {
+      std::string Why = ReadFile(ErrFile);
+      if (Why.empty())
+        Why = ErrMsg.empty() ? "the type library importer failed" : ErrMsg;
+      Diag(FilenameTok, diag::err_pp_import_typelib) << Name << Why;
+      return true;
+    }
+    Tlh = ReadFile(OutFile);
+    if (Tlh.empty()) {
+      Diag(FilenameTok, diag::err_pp_import_typelib)
+          << Name << "the type library importer wrote no header";
+      return true;
+    }
+    // The importer's warnings (unknown attributes and the like).
+    SmallVector<StringRef, 4> Warnings;
+    std::string ErrText = ReadFile(ErrFile);
+    StringRef(ErrText).split(Warnings, '\n', -1, false);
+    for (StringRef W : Warnings)
+      Diag(FilenameTok, diag::warn_pp_import_typelib) << W.trim();
+  }
+
+  // Include the .tlh as if the directive had named it.
+  Token HeaderTok;
+  HeaderTok.startToken();
+  CreateString("\"" + Tlh + "\"", HeaderTok);
+  HeaderTok.setKind(tok::header_name);
+  HandleIncludeAction(HashLoc, ImportTok, HeaderTok, EndLoc, nullptr, nullptr);
+  return true;
 }
 
 /// HandleImportDirective - Implements \#import.
 ///
 void Preprocessor::HandleImportDirective(SourceLocation HashLoc,
                                          Token &ImportTok) {
-  if (!LangOpts.ObjC) {  // #import is standard for ObjC.
-    if (LangOpts.MSVCCompat)
-      return HandleMicrosoftImportDirective(ImportTok);
-    Diag(ImportTok, diag::ext_pp_import_directive);
+  if (LangOpts.ObjC) // #import is standard for ObjC.
+    return HandleIncludeDirective(HashLoc, ImportTok);
+
+  Token FilenameTok;
+  if (LexHeaderName(FilenameTok))
+    return;
+  // Visual C++'s #import of a type library.
+  if (FilenameTok.is(tok::header_name) &&
+      HandleTypeLibraryImport(HashLoc, ImportTok, FilenameTok))
+    return;
+  if (LangOpts.MSVCCompat) {
+    Diag(ImportTok, diag::err_pp_import_directive_ms);
+    if (FilenameTok.isNot(tok::eod))
+      DiscardUntilEndOfDirective();
+    return;
   }
-  return HandleIncludeDirective(HashLoc, ImportTok);
+  Diag(ImportTok, diag::ext_pp_import_directive);
+  if (FilenameTok.isNot(tok::header_name)) {
+    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+    if (FilenameTok.isNot(tok::eod))
+      DiscardUntilEndOfDirective();
+    return;
+  }
+  HandleIncludeDirectiveWithFilename(HashLoc, ImportTok, FilenameTok, nullptr,
+                                     nullptr);
 }
 
 /// HandleIncludeMacrosDirective - The -imacros command line option turns into a
