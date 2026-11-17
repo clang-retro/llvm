@@ -1,4 +1,5 @@
 ; RUN: llc < %s | FileCheck %s
+; RUN: llc -mtriple i686-w64-windows-gnu -exception-model=wineh < %s | FileCheck %s
 
 target datalayout = "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-a:0:32-S32"
 target triple = "i686-pc-windows-msvc"

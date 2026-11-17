@@ -163,8 +163,10 @@ static bool addExceptionArgs(const ArgList &Args, types::ID InputType,
   bool EH = Args.hasFlag(options::OPT_fexceptions, options::OPT_fno_exceptions,
                          false);
 
-  // Async exceptions are Windows MSVC only.
-  if (Triple.isWindowsMSVCEnvironment()) {
+  // Async exceptions are Windows only: MSVC, and MinGW, whose SEH __try
+  // lowers the same way (drivers built against ntoskrnl, which exports
+  // _except_handler3 and __C_specific_handler).
+  if (Triple.isWindowsMSVCEnvironment() || Triple.isWindowsGNUEnvironment()) {
     bool EHa = Args.hasFlag(options::OPT_fasync_exceptions,
                             options::OPT_fno_async_exceptions, false);
     if (EHa) {
