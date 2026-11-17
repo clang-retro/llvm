@@ -2937,6 +2937,16 @@ private:
   void HandleIncludeDirective(SourceLocation HashLoc, Token &Tok,
                               ConstSearchDirIterator LookupFrom = nullptr,
                               const FileEntry *LookupFromFile = nullptr);
+  void HandleIncludeDirectiveWithFilename(SourceLocation HashLoc,
+                                          Token &IncludeTok, Token &FilenameTok,
+                                          ConstSearchDirIterator LookupFrom,
+                                          const FileEntry *LookupFromFile);
+  void HandleIncludeAction(SourceLocation HashLoc, Token &IncludeTok,
+                           Token &FilenameTok, SourceLocation EndLoc,
+                           ConstSearchDirIterator LookupFrom,
+                           const FileEntry *LookupFromFile);
+  bool HandleTypeLibraryImport(SourceLocation HashLoc, Token &ImportTok,
+                               Token &FilenameTok);
   ImportAction
   HandleHeaderIncludeOrImport(SourceLocation HashLoc, Token &IncludeTok,
                               Token &FilenameTok, SourceLocation EndLoc,
@@ -2945,7 +2955,6 @@ private:
   void HandleIncludeNextDirective(SourceLocation HashLoc, Token &Tok);
   void HandleIncludeMacrosDirective(SourceLocation HashLoc, Token &Tok);
   void HandleImportDirective(SourceLocation HashLoc, Token &Tok);
-  void HandleMicrosoftImportDirective(Token &Tok);
   void HandleObjCImportDirective(Token &AtTok, Token &ImportTok);
 
 public:

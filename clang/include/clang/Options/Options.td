@@ -8931,6 +8931,12 @@ def fixit_to_temp : Flag<["-"], "fixit-to-temporary">,
 def foverride_record_layout_EQ : Joined<["-"], "foverride-record-layout=">,
   HelpText<"Override record layouts with those in the given file">,
   MarshallingInfoString<FrontendOpts<"OverrideRecordLayoutsFile">>;
+def tlbimport : Separate<["-"], "tlbimport">, MetaVarName<"<program>">,
+  HelpText<"The program that #import runs to turn a type library into headers">,
+  MarshallingInfoString<PreprocessorOpts<"TypeLibImporter">>;
+def tlbimport_dir : Separate<["-"], "tlbimport-dir">, MetaVarName<"<directory>">,
+  HelpText<"Where #import writes the headers of a type library">,
+  MarshallingInfoString<PreprocessorOpts<"TypeLibImportDir">>;
 def pch_through_header_EQ : Joined<["-"], "pch-through-header=">,
   HelpText<"Stop PCH generation after including this file.  When using a PCH, "
            "skip tokens until after this file is included.">,

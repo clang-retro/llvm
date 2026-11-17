@@ -120,6 +120,13 @@ public:
   /// The implicit PCH included at the start of the translation unit, or empty.
   std::string ImplicitPCHInclude;
 
+  /// The program that turns a type library into the headers that Visual
+  /// C++'s \#import includes (tlbimport), or empty when there is none.
+  std::string TypeLibImporter;
+
+  /// Where \#import writes those headers (default: the current directory).
+  std::string TypeLibImportDir;
+
   /// Headers that will be converted to chained PCHs in memory.
   std::vector<std::string> ChainedIncludes;
 
