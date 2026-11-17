@@ -107,6 +107,20 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
   // expand it, the user can have a STDC #define, that should not affect this.
   PP.LexUnexpandedToken(Tok);
 
+  // Microsoft's compiler expands a macro that a pragma starts with, as in
+  // the Windows 9x DDK's
+  //   #define VxD_LOCKED_CODE_SEG code_seg("_LTEXT", "LCODE")
+  //   #pragma VxD_LOCKED_CODE_SEG
+  // With -fms-extensions, expand a macro in place of a pragma's name when no
+  // pragma has that name.
+  if (getName().empty() && PP.getLangOpts().MicrosoftExt &&
+      Tok.is(tok::identifier) &&
+      !FindHandler(Tok.getIdentifierInfo()->getName()) &&
+      PP.isMacroDefined(Tok.getIdentifierInfo())) {
+    PP.EnterToken(Tok, /*IsReinject=*/true);
+    PP.Lex(Tok);
+  }
+
   // Get the handler for this token.  If there is no handler, ignore the pragma.
   PragmaHandler *Handler
     = FindHandler(Tok.getIdentifierInfo() ? Tok.getIdentifierInfo()->getName()
