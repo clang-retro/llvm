@@ -1211,6 +1211,18 @@ bool Parser::HandlePragmaMSSegment(StringRef PragmaName,
     // Setting section "" has no effect
     if (SegmentName->getLength())
       Action = (Sema::PragmaMsStackAction)(Action | Sema::PSK_Set);
+    // A segment class can follow the name, as in the Windows 9x DDK's
+    // code_seg("_LTEXT", "LCODE"); Microsoft's compiler ignores it.
+    if (Tok.is(tok::comma)) {
+      PP.Lex(Tok); // ,
+      if (Tok.isNot(tok::string_literal)) {
+        PP.Diag(PragmaLocation, diag::warn_pragma_expected_rparen)
+            << PragmaName;
+        return false;
+      }
+      if (ParseStringLiteralExpression().isInvalid())
+        return false; // Already diagnosed.
+    }
   }
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(PragmaLocation, diag::warn_pragma_expected_rparen) << PragmaName;
