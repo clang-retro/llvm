@@ -7827,8 +7827,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(diag::err_drv_invalid_value)
           << A->getAsString(Args) << A->getValue();
     }
-  } else if (!IsMSVCCompat) {
+  } else if (!IsMSVCCompat || RawTriple.isWindowsGNUEnvironment()) {
     // Imitate GCC 4.2.1 by default if -fms-compatibility is not in effect.
+    // A MinGW target keeps it with -fms-compatibility too: its C runtime and
+    // Windows headers are written for GCC, and choose their GNU forms only
+    // when __GNUC__ is defined, while code written for Visual C++ (WTL, for
+    // one) wants -fms-compatibility's rules.
     GNUCVer = VersionTuple(4, 2, 1);
   }
   if (!GNUCVer.empty()) {

@@ -5,6 +5,13 @@
 // RUN: %clang -c %s --target=i686-linux -### 2>&1 | FileCheck %s --check-prefix=GNUC-DEFAULT
 // GNUC-DEFAULT: "-fgnuc-version=4.2.1"
 
+// -fms-compatibility drops it, except for MinGW, whose headers need it.
+// RUN: %clang -c %s --target=i686-linux -fms-compatibility -### 2>&1 | FileCheck %s --check-prefix=GNUC-DISABLE
+// RUN: %clang -c %s --target=i686-windows-msvc -fms-compatibility -### 2>&1 | FileCheck %s --check-prefix=GNUC-DISABLE
+// RUN: %clang -c %s --target=i686-w64-windows-gnu -fms-compatibility -### 2>&1 | FileCheck %s --check-prefix=GNUC-DEFAULT
+// RUN: %clang -c %s --target=x86_64-w64-windows-gnu -fms-compatibility -### 2>&1 | FileCheck %s --check-prefix=GNUC-DEFAULT
+// RUN: %clang -c %s --target=i686-w64-windows-gnu -fms-compatibility -fgnuc-version=0 -### 2>&1 | FileCheck %s --check-prefix=GNUC-DISABLE
+
 // RUN: %clang -c %s --target=i686-linux -fgnuc-version=100.99.99 -### 2>&1 | FileCheck %s --check-prefix=GNUC-OVERRIDE
 // GNUC-OVERRIDE: "-fgnuc-version=100.99.99"
 
