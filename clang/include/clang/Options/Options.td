@@ -5687,6 +5687,10 @@ def mwindows_dll : Flag<["-"], "mwindows-dll">, Group<m_Group>,
            "caller's stack: in the small and medium models, locals whose "
            "address is taken live in DGROUP (implied by -shared)">,
   MarshallingInfoFlag<CodeGenOpts<"WindowsDLL">>;
+def mquickwin : Flag<["-"], "mquickwin">, Group<m_Group>,
+  Flags<[TargetSpecific]>, Visibility<[ClangOption]>,
+  HelpText<"Link a 16-bit Windows program with a window for its standard "
+           "input, output and error, as Microsoft's QuickWin (i8086 win16)">;
 def mlarge_data_threshold_EQ : Joined<["-"], "mlarge-data-threshold=">, Group<m_Group>,
   Flags<[TargetSpecific]>, Visibility<[ClangOption, CC1Option,FlangOption, FC1Option]>,
   MarshallingInfoInt<TargetOpts<"LargeDataThreshold">, "0">;

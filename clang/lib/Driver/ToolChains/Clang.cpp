@@ -2291,6 +2291,8 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
     if (getToolChain().getTriple().isOSNE16() &&
         Args.hasArg(options::OPT_shared, options::OPT_mwindows_dll))
       CmdArgs.push_back("-mwindows-dll");
+    // -mquickwin selects a link input only; the compiler ignores it.
+    Args.ClaimAllArgs(options::OPT_mquickwin);
   }
 
   if (!Args.hasFlag(options::OPT_mred_zone, options::OPT_mno_red_zone, true) ||

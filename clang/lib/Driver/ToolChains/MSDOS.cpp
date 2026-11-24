@@ -57,20 +57,28 @@ MSDOS::MSDOS(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   const Arg *EH = Args.getLastArg(
       options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
       options::OPT_fexceptions, options::OPT_fno_exceptions);
-  if (EH && (EH->getOption().matches(options::OPT_fexceptions) ||
-             EH->getOption().matches(options::OPT_fcxx_exceptions))) {
+  bool WithEH = EH && (EH->getOption().matches(options::OPT_fexceptions) ||
+                       EH->getOption().matches(options::OPT_fcxx_exceptions));
+  // A Windows or OS/2 DLL in the small or medium model links the libraries
+  // built with -mwindows-dll, from <model>/dll, and with exceptions from
+  // <model>/dll/eh before them. The libraries of <model>/eh do not work
+  // in such a DLL.
+  bool NearDLL = (Triple.isOSWin16() || Triple.isOSOS2()) &&
+                 (MemoryModel == "small" || MemoryModel == "medium") &&
+                 Args.hasArg(options::OPT_shared, options::OPT_mwindows_dll);
+  if (NearDLL) {
+    SmallString<128> DLLDir(ModelDir);
+    llvm::sys::path::append(DLLDir, "dll");
+    if (WithEH) {
+      SmallString<128> DLLEHDir(DLLDir);
+      llvm::sys::path::append(DLLEHDir, "eh");
+      getFilePaths().push_back(std::string(DLLEHDir));
+    }
+    getFilePaths().push_back(std::string(DLLDir));
+  } else if (WithEH) {
     SmallString<128> EHDir(ModelDir);
     llvm::sys::path::append(EHDir, "eh");
     getFilePaths().push_back(std::string(EHDir));
-  }
-  // A Windows or OS/2 DLL in the small or medium model links the libraries
-  // built with -mwindows-dll, from <model>/dll.
-  if ((Triple.isOSWin16() || Triple.isOSOS2()) &&
-      (MemoryModel == "small" || MemoryModel == "medium") &&
-      Args.hasArg(options::OPT_shared, options::OPT_mwindows_dll)) {
-    SmallString<128> DLLDir(ModelDir);
-    llvm::sys::path::append(DLLDir, "dll");
-    getFilePaths().push_back(std::string(DLLDir));
   }
   getFilePaths().push_back(std::string(ModelDir));
   getFilePaths().push_back(std::string(LibDir));
@@ -299,6 +307,12 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("file");
     CmdArgs.push_back(
         quoteName(Args, TC.GetFilePath(IsDLL ? "libentry.obj" : "crt0.obj")));
+    // -mquickwin: a window for the standard input, output and error of a
+    // Windows program with main(), from win16-sdk's quickwin.obj.
+    if (Win16 && !IsDLL && Args.hasArg(options::OPT_mquickwin)) {
+      CmdArgs.push_back("file");
+      CmdArgs.push_back(quoteName(Args, TC.GetFilePath("quickwin.obj")));
+    }
   }
 
   bool HaveResources = false;
