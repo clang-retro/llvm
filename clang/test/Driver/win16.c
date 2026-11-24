@@ -53,6 +53,21 @@
 // NEARDLL:      "-cc1" {{.*}}"-mwindows-dll"
 // NEARDLL:      "{{.*}}wlink"
 // NEARDLL-SAME: "library" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}dll{{/|\\\\}}libc.lib"
+// With C++ exceptions, such a DLL links the C++ libraries and the unwinder
+// of <model>/dll/eh, not those of <model>/eh.
+// RUN: %clangxx --target=i8086-pc-win16 --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -shared -fexceptions -### %s -o MYLIB.DLL 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=NEARDLLEH
+// NEARDLLEH:      "{{.*}}wlink"
+// NEARDLLEH-SAME: "library" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}dll{{/|\\\\}}eh{{/|\\\\}}libc++.a"
+// NEARDLLEH-SAME: "library" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}dll{{/|\\\\}}eh{{/|\\\\}}libc++abi.a"
+// NEARDLLEH-SAME: "library" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}dll{{/|\\\\}}eh{{/|\\\\}}libunwind.a"
+// A program gets those of <model>/eh.
+// RUN: %clangxx --target=i8086-pc-win16 --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -fexceptions -### %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=PROGEH
+// PROGEH:      "{{.*}}wlink"
+// PROGEH-SAME: "library" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}eh{{/|\\\\}}libc++.a"
 // RUN: %clang --target=i8086-pc-win16 -mwindows-dll -### -c %s 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=MDLL
 // MDLL: "-mwindows-dll"
@@ -112,3 +127,19 @@
 // WIN1:      "format" "windows" "dll"
 // WIN1-SAME: "option" "version=1.01" "segment" "type" "code" "fixed" "segment" "type" "data" "fixed"
 // WIN1-SAME: "@{{.*}}win16{{/|\\\\}}windows100.lnk"
+
+// -mquickwin links quickwin.obj after the startup code. A DLL does not get it,
+// and a compile-only run accepts the flag.
+// RUN: %clang --target=i8086-pc-win16 --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -mquickwin -### %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=QUICKWIN
+// QUICKWIN:      "file" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}crt0.obj"
+// QUICKWIN-SAME: "file" "{{.*}}win16{{/|\\\\}}small{{/|\\\\}}quickwin.obj"
+// RUN: %clang --target=i8086-pc-win16 --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -mquickwin -shared -### %s -o MYLIB.DLL 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=QUICKWINDLL
+// QUICKWINDLL-NOT: quickwin.obj
+// RUN: %clang --target=i8086-pc-win16 -mquickwin -### -c %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=QUICKWINCC
+// QUICKWINCC-NOT: warning:
+// QUICKWINCC-NOT: error:

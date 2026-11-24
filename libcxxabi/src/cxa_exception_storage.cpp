@@ -14,7 +14,53 @@
 
 #include <__thread/support.h>
 
-#if defined(_LIBCXXABI_HAS_NO_THREADS)
+#if defined(_LIBCXXABI_HAS_NO_THREADS) && defined(__I86__) && defined(__WINDOWS__)
+
+#include "abort_message.h"
+
+// 16-bit Windows: a DLL runs on the stack of each task that calls it, and
+// one task may yield (in GetMessage, for example) inside a catch handler
+// while another task throws in the same DLL. So each task, found by its
+// stack segment, has the globals of its own. A slot with no exception in
+// it is free for any task.
+namespace __cxxabiv1 {
+namespace {
+    const int kTasks = 8;
+    struct TaskGlobals {
+        unsigned short ss;
+        __cxa_eh_globals globals;
+    };
+    TaskGlobals task_globals[kTasks];
+
+    /// Returns true if \p g holds no exception.
+    bool isIdle(const __cxa_eh_globals &g) {
+        return g.caughtExceptions == nullptr && g.uncaughtExceptions == 0;
+    }
+
+    /// Returns the globals of the current task, from the slot of its stack
+    /// segment, or from a free slot.
+    __cxa_eh_globals *taskGlobals() {
+        unsigned short ss;
+        __asm__("movw %%ss, %0" : "=r"(ss));
+        for (TaskGlobals &t : task_globals)
+            if (t.ss == ss && !isIdle(t.globals))
+                return &t.globals;
+        for (TaskGlobals &t : task_globals)
+            if (isIdle(t.globals)) {
+                t.ss = ss;
+                return &t.globals;
+            }
+        __abort_message("%s", "too many tasks are handling C++ exceptions");
+    }
+} // namespace
+
+extern "C" {
+    __cxa_eh_globals *__cxa_get_globals() { return taskGlobals(); }
+    __cxa_eh_globals *__cxa_get_globals_fast() { return taskGlobals(); }
+} // extern "C"
+} // namespace __cxxabiv1
+
+#elif defined(_LIBCXXABI_HAS_NO_THREADS)
 
 namespace __cxxabiv1 {
 extern "C" {

@@ -1877,6 +1877,24 @@ static QualType deduceOpenCLPointeeAddrSpace(Sema &S, QualType PointeeType) {
   return PointeeType;
 }
 
+/// i8086: a pointer to data qualified with the memory model's own kind of
+/// pointer (__near in the near-data models, __far in compact and large,
+/// __huge in huge) is a plain pointer, as in Microsoft C and Open Watcom.
+/// In the large model `char __far *` and `char *` are one type, so that C++
+/// overloads and templates treat LPSTR and char * alike. Returns the pointee
+/// type without that qualifier.
+static QualType stripI8086DefaultAddrSpace(ASTContext &Context, QualType T) {
+  if (Context.getTargetInfo().getTriple().getArch() != llvm::Triple::i8086 ||
+      T->isFunctionType())
+    return T;
+  LangAS AS = T.getAddressSpace();
+  if (AS == LangAS::Default || !isTargetAddressSpace(AS) ||
+      Context.getTargetAddressSpace(AS) !=
+          Context.getTargetAddressSpace(LangAS::Default))
+    return T;
+  return Context.removeAddrSpaceQualType(T);
+}
+
 QualType Sema::BuildPointerType(QualType T,
                                 SourceLocation Loc, DeclarationName Entity) {
   if (T->isReferenceType()) {
@@ -1910,6 +1928,8 @@ QualType Sema::BuildPointerType(QualType T,
 
   if (getLangOpts().OpenCL)
     T = deduceOpenCLPointeeAddrSpace(*this, T);
+
+  T = stripI8086DefaultAddrSpace(Context, T);
 
   // In WebAssembly, pointers to reference types and pointers to tables are
   // illegal.
@@ -1987,6 +2007,8 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
 
   if (getLangOpts().OpenCL)
     T = deduceOpenCLPointeeAddrSpace(*this, T);
+
+  T = stripI8086DefaultAddrSpace(Context, T);
 
   // In WebAssembly, references to reference types and tables are illegal.
   if (getASTContext().getTargetInfo().getTriple().isWasm() &&

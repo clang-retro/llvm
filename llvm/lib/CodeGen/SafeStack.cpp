@@ -381,6 +381,18 @@ Value *SafeStack::getStackGuard(IRBuilder<> &IRB, Function &F) {
   return IRB.CreateLoad(StackPtrTy, StackGuardVar, "StackGuard");
 }
 
+/// Returns true if \p AI is the function context of SjLj exception handling
+/// (the operand of llvm.eh.sjlj.functioncontext). The dispatch code that
+/// instruction selection makes addresses the context through its frame
+/// index, so the context must stay on the stack.
+static bool isSjLjFunctionContext(const AllocaInst *AI) {
+  for (const User *U : AI->users())
+    if (const auto *II = dyn_cast<IntrinsicInst>(U))
+      if (II->getIntrinsicID() == Intrinsic::eh_sjlj_functioncontext)
+        return true;
+  return false;
+}
+
 void SafeStack::findInsts(Function &F,
                           SmallVectorImpl<AllocaInst *> &StaticAllocas,
                           SmallVectorImpl<AllocaInst *> &DynamicAllocas,
@@ -392,7 +404,7 @@ void SafeStack::findInsts(Function &F,
       ++NumAllocas;
 
       uint64_t Size = getStaticAllocaAllocationSize(AI);
-      if (IsSafeStackAlloca(AI, Size))
+      if (isSjLjFunctionContext(AI) || IsSafeStackAlloca(AI, Size))
         continue;
 
       if (AI->isStaticAlloca()) {
