@@ -32,9 +32,12 @@ enum RecordType : uint8_t {
   PUBDEF = 0x90,
   LNAMES = 0x96,
   SEGDEF = 0x98,
+  SEGDEF32 = 0x99,
   GRPDEF = 0x9A,
   FIXUPP = 0x9C,
+  FIXUPP32 = 0x9D,
   LEDATA = 0xA0,
+  LEDATA32 = 0xA1,
   COMDEF = 0xB0,
   LEXTDEF = 0xB4,
   COMDAT = 0xC2,
@@ -72,6 +75,7 @@ enum LocationType : uint8_t {
   LT_Base16 = 2,
   LT_Pointer32 = 3,
   LT_HighByte = 4,
+  LT_Offset32 = 9,
 };
 
 /// Frame methods.

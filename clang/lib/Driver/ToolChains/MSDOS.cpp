@@ -223,6 +223,17 @@ void msdos::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("name");
   CmdArgs.push_back(quoteName(Args, LinkOut));
 
+  // With -g, the linker puts the DWARF sections of the objects in an ELF
+  // image at the end of the program (or in the file that "option symfile"
+  // names), and adds the publics of the modules without DWARF. The
+  // directive applies to the files that follow it. A CP/M-86 CMD file has
+  // no room for it.
+  if (!CPM) {
+    const Arg *G = Args.getLastArg(options::OPT_g_Group);
+    if (G && !G->getOption().matches(options::OPT_g0))
+      CmdArgs.append({"debug", "dwarf", "all"});
+  }
+
   for (const Arg *A : Args.filtered(options::OPT_L)) {
     CmdArgs.push_back("libpath");
     CmdArgs.push_back(quoteName(Args, A->getValue()));

@@ -25,6 +25,9 @@ class R:
     def u16(self):
         v = self.b[self.i] | self.b[self.i + 1] << 8; self.i += 2; return v
 
+    def u32(self):
+        v = self.u16(); return v | self.u16() << 16
+
     def name(self):
         n = self.u8(); s = self.b[self.i:self.i + n]; self.i += n
         return s.decode('latin1')
@@ -66,12 +69,13 @@ def dump(path, out=sys.stdout):
                 lnames.append(r.name())
             print('LNAMES', ' '.join('%d=%r' % (base + k, n) for k, n in
                                      enumerate(lnames[base:])), file=out)
-        elif typ == 0x98:
-            a = r.u8(); ln16 = r.u16(); si, ci, oi = r.idx(), r.idx(), r.idx()
+        elif typ in (0x98, 0x99):
+            a = r.u8(); ln16 = r.u32() if typ & 1 else r.u16()
+            si, ci, oi = r.idx(), r.idx(), r.idx()
             align = {0: 'abs', 1: 'byte', 2: 'word', 3: 'para', 4: 'page', 5: 'dword'}[a >> 5]
             comb = {0: 'private', 2: 'public', 4: 'public4', 5: 'stack', 6: 'common', 7: 'public7'}.get((a >> 2) & 7, '?')
-            print('SEGDEF %s align=%s combine=%s big=%d use32=%d len=%04X class=%s' % (
-                lnames[si], align, comb, a >> 1 & 1, a & 1, ln16, lnames[ci]), file=out)
+            print('%s %s align=%s combine=%s big=%d use32=%d len=%04X class=%s' % (
+                nm, lnames[si], align, comb, a >> 1 & 1, a & 1, ln16, lnames[ci]), file=out)
         elif typ == 0x9A:
             g = r.idx(); segs = []
             while r.more():
@@ -92,10 +96,10 @@ def dump(path, out=sys.stdout):
             while r.more():
                 n = r.name(); off = r.u16(); t = r.idx()
                 print('%s %r group=%d seg=%d off=%04X' % (nm, n, g, s, off), file=out)
-        elif typ == 0xA0:
-            s = r.idx(); off = r.u16()
-            print('LEDATA seg=%d off=%04X len=%d %s' % (s, off, len(rec) - r.i, bytes(rec[r.i:]).hex()), file=out)
-        elif typ == 0x9C:
+        elif typ in (0xA0, 0xA1):
+            s = r.idx(); off = r.u32() if typ & 1 else r.u16()
+            print(nm + ' seg=%d off=%04X len=%d %s' % (s, off, len(rec) - r.i, bytes(rec[r.i:]).hex()), file=out)
+        elif typ in (0x9C, 0x9D):
             while r.more():
                 b = r.u8()
                 if not b & 0x80:
@@ -106,7 +110,7 @@ def dump(path, out=sys.stdout):
                 f = (fd >> 4) & 7; t = fd & 3; p = (fd >> 2) & 1
                 fdat = r.idx() if (not fd & 0x80) and f < 3 else None
                 tdat = r.idx() if not fd & 8 else None
-                disp = None if p else r.u16()
+                disp = None if p else (r.u32() if typ & 1 else r.u16())
                 print('  FIXUP @%03X %s %s frame=F%d%s target=T%d:%s disp=%s' % (
                     off, 'seg' if m else 'self', LOC.get(loc, loc), f,
                     '' if fdat is None else ':%d' % fdat, t + 4 * p, tdat, disp), file=out)
