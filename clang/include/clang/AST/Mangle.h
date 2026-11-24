@@ -258,6 +258,11 @@ public:
                                 ArrayRef<const CXXRecordDecl *> BasePath,
                                 raw_ostream &Out) = 0;
 
+  /// Mangle a declaration as Visual C++ 6.0 and before mangled it: a
+  /// function template specialization as a plain function, without its
+  /// template arguments.
+  virtual void mangleCXXNameAsVC6(GlobalDecl GD, raw_ostream &Out) = 0;
+
   /// Mangle vbtable symbols.  Only a subset of the bases along the path
   /// to the vbtable are included in the name.  It's up to the caller to pick
   /// them correctly.

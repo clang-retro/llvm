@@ -666,6 +666,17 @@ void WinException::emitSEHActionsForRange(const WinEHFuncInfo &FuncInfo,
   }
 }
 
+/// Returns true if the personality function of \p F is __CxxFrameHandler,
+/// the C++ handler of Visual C++ 2003 and before, which takes the
+/// 0x19930520 version of FuncInfo.
+static bool isOldCXXFrameHandler(const Function &F) {
+  if (!F.hasPersonalityFn())
+    return false;
+  const auto *Pers =
+      dyn_cast<GlobalValue>(F.getPersonalityFn()->stripPointerCasts());
+  return Pers && Pers->getName() == "__CxxFrameHandler";
+}
+
 void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function &F = MF->getFunction();
   auto &OS = *Asm->OutStreamer;
@@ -732,8 +743,14 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   OS.emitValueToAlignment(Align(4));
   OS.emitLabel(FuncInfoXData);
 
+  // __CxxFrameHandler, the handler of Visual C++ 2003 and before, takes
+  // only the first version of FuncInfo (0x19930520), which ends after
+  // IPToStateMap (UnwindHelp on x64). It has no ESTypeList and no EHFlags,
+  // so it can catch asynchronous (SEH) exceptions in catch (...), as those
+  // compilers did.
+  bool OldFuncInfo = isOldCXXFrameHandler(F);
   AddComment("MagicNumber");
-  OS.emitInt32(0x19930522);
+  OS.emitInt32(OldFuncInfo ? 0x19930520 : 0x19930522);
 
   AddComment("MaxState");
   OS.emitInt32(FuncInfo.CxxUnwindMap.size());
@@ -759,14 +776,16 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     OS.emitInt32(UnwindHelpOffset);
   }
 
-  AddComment("ESTypeList");
-  OS.emitInt32(0);
-
-  AddComment("EHFlags");
-  if (MMI->getModule()->getModuleFlag("eh-asynch")) {
+  if (!OldFuncInfo) {
+    AddComment("ESTypeList");
     OS.emitInt32(0);
-  } else {
-    OS.emitInt32(1);
+
+    AddComment("EHFlags");
+    if (MMI->getModule()->getModuleFlag("eh-asynch")) {
+      OS.emitInt32(0);
+    } else {
+      OS.emitInt32(1);
+    }
   }
 
   // UnwindMapEntry {

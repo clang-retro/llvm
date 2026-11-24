@@ -46,6 +46,10 @@ EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
       .Case("_except_handler4", EHPersonality::MSVC_X86SEH)
       .Case("__C_specific_handler", EHPersonality::MSVC_TableSEH)
       .Case("__CxxFrameHandler3", EHPersonality::MSVC_CXX)
+      // The C++ handler of the C runtime of Visual C++ 2003 and before
+      // (msvcrt.dll, msvcr70.dll, msvcr71.dll). It takes the same funclets
+      // and state tables as __CxxFrameHandler3, in their older version.
+      .Case("__CxxFrameHandler", EHPersonality::MSVC_CXX)
       .Case("ProcessCLRException", EHPersonality::CoreCLR)
       // Rust mangles its personality function, so we can't test exact equality.
       .EndsWith("rust_eh_personality", EHPersonality::Rust)

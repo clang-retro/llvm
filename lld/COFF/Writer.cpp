@@ -883,6 +883,24 @@ void Writer::fixPartialSectionChars(StringRef name, uint32_t chars) {
   }
 }
 
+// The place of a chunk from a long-format import library of Microsoft's in
+// its .idata$* section, among the chunks of objects with the same name (the
+// members of such a library all have the DLL's name, MSVCRT.dll and the
+// like). The import descriptor declares .idata$4 and .idata$5 as empty
+// sections: these empty chunks start the tables of the DLL. The object
+// that defines the "\x7f<DLL>_NULL_THUNK_DATA" symbol ends them. LINK 5.0
+// and before wrote these libraries (Visual C++ 5.0's msvcrt.lib).
+static int longImportLibRank(SectionChunk *sc) {
+  if (sc->getSize() == 0)
+    return 0;
+  for (Symbol *sym : sc->file->getSymbols())
+    if (auto *d = dyn_cast_or_null<DefinedRegular>(sym))
+      if (d->getName().starts_with("\x7f") &&
+          d->getName().ends_with("_NULL_THUNK_DATA"))
+        return 2;
+  return 1;
+}
+
 // Sort concrete section chunks from GNU import libraries.
 //
 // GNU binutils doesn't use short import files, but instead produces import
@@ -910,6 +928,15 @@ bool Writer::fixGnuImportChunks() {
 
     if (!pSec->chunks.empty())
       hasIdata = true;
+    // The import directory entries (.idata$2 and the terminator in
+    // .idata$3) of long-format import libraries from LINK 5.0 and before
+    // have an alignment of 1. Their linker put .idata at the start of a
+    // section. Here the directory can follow other read-only data, and it
+    // must be aligned like the entries that lld makes.
+    if (pSec->name == ".idata$2" || pSec->name == ".idata$3")
+      for (Chunk *c : pSec->chunks)
+        if (c->getAlignment() < 4)
+          c->setAlignment(4);
     llvm::stable_sort(pSec->chunks, [&](Chunk *s, Chunk *t) {
       SectionChunk *sc1 = dyn_cast<SectionChunk>(s);
       SectionChunk *sc2 = dyn_cast<SectionChunk>(t);
@@ -925,7 +952,9 @@ bool Writer::fixGnuImportChunks() {
           (sc1->file->parentName + "/" + sc1->file->getName()).str();
       std::string key2 =
           (sc2->file->parentName + "/" + sc2->file->getName()).str();
-      return key1 < key2;
+      if (key1 != key2)
+        return key1 < key2;
+      return longImportLibRank(sc1) < longImportLibRank(sc2);
     });
   }
   return hasIdata;

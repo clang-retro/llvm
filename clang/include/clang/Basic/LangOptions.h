@@ -171,6 +171,8 @@ public:
 
   // Corresponds to _MSC_VER
   enum MSVCMajorVersion {
+    MSVC2002 = 1300,
+    MSVC2005 = 1400,
     MSVC2010 = 1600,
     MSVC2012 = 1700,
     MSVC2013 = 1800,

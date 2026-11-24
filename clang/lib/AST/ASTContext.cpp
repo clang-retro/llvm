@@ -13159,6 +13159,16 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
   return getFunctionType(ResType, ArgTypes, EPI);
 }
 
+/// Returns true if an explicit instantiation declaration of an inline
+/// function does not stop its instantiation, as with Visual C++ 2003 and
+/// before (-fms-compatibility-version below 14.00 for the Microsoft ABI).
+static bool ignoresExternTemplateOfInlineFunctions(const ASTContext &Context) {
+  const LangOptions &LO = Context.getLangOpts();
+  return Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+         LO.MSCompatibilityVersion != 0 &&
+         !LO.isCompatibleWithMSVC(LangOptions::MSVC2005);
+}
+
 static GVALinkage basicGVALinkageForFunction(const ASTContext &Context,
                                              const FunctionDecl *FD) {
   if (!FD->isExternallyVisible())
@@ -13186,6 +13196,14 @@ static GVALinkage basicGVALinkageForFunction(const ASTContext &Context,
   //   inlining, but that no out-of-line copy of the inline function would be
   //   generated in the translation unit. -- end note ]
   case TSK_ExplicitInstantiationDeclaration:
+    // Visual C++ 2003 and before ignore an explicit instantiation
+    // declaration of an inline function that is not dllimport, and emit
+    // the function where it is used. The C++ library headers of those
+    // compilers declare inline operators of std::basic_string so, and the
+    // library (msvcp60.dll) does not export them.
+    if (FD->isInlined() && !FD->hasAttr<DLLImportAttr>() &&
+        ignoresExternTemplateOfInlineFunctions(Context))
+      return GVA_DiscardableODR;
     return GVA_AvailableExternally;
 
   case TSK_ImplicitInstantiation:

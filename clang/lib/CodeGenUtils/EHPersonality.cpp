@@ -43,6 +43,8 @@ const EHPersonality EHPersonality::MSVC_C_specific_handler = {
     "__C_specific_handler", nullptr};
 const EHPersonality EHPersonality::MSVC_CxxFrameHandler3 = {
     "__CxxFrameHandler3", nullptr};
+const EHPersonality EHPersonality::MSVC_CxxFrameHandler = {
+    "__CxxFrameHandler", nullptr};
 const EHPersonality EHPersonality::GNU_Wasm_CPlusPlus = {
     "__gxx_wasm_personality_v0", nullptr};
 const EHPersonality EHPersonality::XL_CPlusPlus = {"__xlcxx_personality_v1",
@@ -162,6 +164,18 @@ static const EHPersonality &getSEHPersonalityMSVC(const llvm::Triple &T) {
   return EHPersonality::MSVC_C_specific_handler;
 }
 
+/// Returns true if C++ exceptions use __CxxFrameHandler, the handler of the
+/// C runtime of Visual C++ 2003 and before (msvcrt.dll up to msvcr71.dll),
+/// in place of __CxxFrameHandler3, which came with Visual C++ 2005. This is
+/// so for 32-bit x86 when -fms-compatibility-version names one of those
+/// compilers (13.10 or less).
+static bool usesOldCXXFrameHandler(const TargetInfo &Target,
+                                   const LangOptions &LangOpts) {
+  return Target.getTriple().getArch() == llvm::Triple::x86 &&
+         LangOpts.MSCompatibilityVersion != 0 &&
+         !LangOpts.isCompatibleWithMSVC(LangOptions::MSVC2005);
+}
+
 const EHPersonality &getEHPersonality(const TargetInfo &Target,
                                       const LangOptions &LangOpts,
                                       const CodeGenOptions &CGOpts,
@@ -170,11 +184,16 @@ const EHPersonality &getEHPersonality(const TargetInfo &Target,
   if (FD && FD->usesSEHTry())
     return getSEHPersonalityMSVC(Target.getTriple());
 
-  if (LangOpts.ObjC)
-    return LangOpts.CPlusPlus ? getObjCXXPersonality(Target, CGOpts, LangOpts)
-                              : getObjCPersonality(Target, CGOpts, LangOpts);
-  return LangOpts.CPlusPlus ? getCXXEHPersonality(Target, CGOpts)
-                            : getCPersonality(Target, CGOpts);
+  const EHPersonality &P =
+      LangOpts.ObjC
+          ? (LangOpts.CPlusPlus ? getObjCXXPersonality(Target, CGOpts, LangOpts)
+                                : getObjCPersonality(Target, CGOpts, LangOpts))
+          : (LangOpts.CPlusPlus ? getCXXEHPersonality(Target, CGOpts)
+                                : getCPersonality(Target, CGOpts));
+  if (&P == &EHPersonality::MSVC_CxxFrameHandler3 &&
+      usesOldCXXFrameHandler(Target, LangOpts))
+    return EHPersonality::MSVC_CxxFrameHandler;
+  return P;
 }
 
 } // namespace clang::CodeGenUtils
