@@ -51,6 +51,14 @@
 using namespace clang;
 using namespace sema;
 
+/// Returns true if the compiler that -fms-compatibility-version names is
+/// Visual C++ 6.0 or before. These compilers accept explicit specializations
+/// without 'template<>' and default template arguments given again.
+static bool acceptsPreStandardTemplates(const LangOptions &LangOpts) {
+  return LangOpts.MSVCCompat && LangOpts.MSCompatibilityVersion != 0 &&
+         !LangOpts.isCompatibleWithMSVC(LangOptions::MSVC2002);
+}
+
 // Exported for use by Parser.
 SourceRange
 clang::getTemplateParamsRange(TemplateParameterList const * const *Ps,
@@ -2655,7 +2663,13 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     // argument to be repeated across translation unit. Note that the ODR is
     // checked elsewhere. But it is still not allowed to repeat template default
     // argument in the same translation unit.
-    if (RedundantDefaultArg) {
+    if (RedundantDefaultArg && acceptsPreStandardTemplates(getLangOpts())) {
+      // Visual C++ 6.0 and before accept a default argument again in the
+      // definition, and their C++ library headers have them.
+      Diag(NewDefaultLoc,
+           diag::ext_ms_template_param_default_arg_redefinition);
+      Diag(OldDefaultLoc, diag::note_template_param_prev_default_arg);
+    } else if (RedundantDefaultArg) {
       Diag(NewDefaultLoc, diag::err_template_param_default_arg_redefinition);
       Diag(OldDefaultLoc, diag::note_template_param_prev_default_arg);
       Invalid = true;
@@ -2987,8 +3001,12 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
     else
       ExpectedTemplateLoc = DeclStartLoc;
 
+    // Visual C++ 6.0 and before accept an explicit specialization without
+    // 'template<>', and their C++ library headers have them.
     if (!SuppressDiagnostic)
-      Diag(DeclLoc, diag::err_template_spec_needs_header)
+      Diag(DeclLoc, acceptsPreStandardTemplates(getLangOpts())
+                        ? diag::ext_ms_template_spec_needs_header
+                        : diag::err_template_spec_needs_header)
         << Range
         << FixItHint::CreateInsertion(ExpectedTemplateLoc, "template<> ");
     return false;
