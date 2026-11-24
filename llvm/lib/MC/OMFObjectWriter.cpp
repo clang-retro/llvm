@@ -31,8 +31,20 @@
 // link order.
 //
 // DGROUP holds CONST, _DATA, _BSS and STACK, and _TEXT as well for the tiny
-// memory model. Non-allocatable sections (debug info, notes) and unwind
-// tables are not written.
+// memory model. Unwind tables and the other non-allocatable sections
+// (notes and the like) are not written, except the DWARF debug sections.
+//
+// Each DWARF section (.debug_info, .debug_line and the others) is a segment
+// of the same name and of class DWARF, as Open Watcom writes them. The
+// linker (WLINK or JWlink with DEBUG DWARF) joins the segments of each name
+// from all modules and puts them in an ELF image at the end of the program.
+// These segments use the 32-bit SEGDEF, LEDATA and FIXUPP records, because
+// they can be larger than 64 KiB. An offset into a DWARF section is a 32-bit
+// offset fixup, relative to the start of the joined section. An address of
+// code or data is a far pointer (the address size of the DWARF units is 4):
+// the offset in the low word and the segment in the high word, so that the
+// addresses of code in different segments stay apart. Near data is reached
+// through DGROUP.
 //
 // Far data is outside DGROUP, in private segments of class FAR_DATA
 // (FAR_BSS for .farbss). A section named .fardata.<name>, .farrodata.<name>
@@ -83,6 +95,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/BinaryFormat/OMF.h"
 #include "llvm/MC/MCAssembler.h"
@@ -154,6 +167,8 @@ struct Segment {
   // With far code, the code that does not fit in the module's code segment
   // goes on in more code segments; this one is the CodePart'th after it.
   unsigned CodePart = 0;
+  // A DWARF debug section (class DWARF), written with 32-bit records.
+  bool Debug = false;
 };
 
 /// The segments of a module: the fixed kinds first, as in SegmentKind, then
@@ -173,7 +188,9 @@ struct OMFFixup {
   // The target is DGROUP itself (DGROUP@SEG, as in "mov ax, DGROUP").
   bool GroupTarget = false;
 
-  unsigned size() const { return LocType == OMF::LT_Pointer32 ? 4 : 2; }
+  unsigned size() const {
+    return LocType == OMF::LT_Pointer32 || LocType == OMF::LT_Offset32 ? 4 : 2;
+  }
 };
 
 /// One OMF record, assembled in memory and then written with its length and
@@ -307,20 +324,27 @@ class OMFObjectWriter final : public MCObjectWriter {
     auto IsLate = [&](SegIdx K) {
       return BssLast && Segs[K].Class != "FAR_DATA";
     };
+    auto IsFarData = [&](SegIdx K) {
+      return !Segs[K].CodePart && !Segs[K].Debug;
+    };
     SmallVector<SegIdx, 16> Order = {SK_Text};
     for (SegIdx K = SK_Count, E = Segs.size(); K != E; ++K)
       if (Segs[K].CodePart)
         Order.push_back(K);
     for (SegIdx K = SK_Count, E = Segs.size(); K != E; ++K)
-      if (!Segs[K].CodePart && !IsLate(K))
+      if (IsFarData(K) && !IsLate(K))
         Order.push_back(K);
     for (SegIdx K = SK_Text + 1; K != SK_Count; ++K)
       Order.push_back(K);
     for (unsigned Late : {0, 1})
       for (SegIdx K = SK_Count, E = Segs.size(); K != E; ++K)
-        if (!Segs[K].CodePart && IsLate(K) &&
+        if (IsFarData(K) && IsLate(K) &&
             (Segs[K].Class == "FAR_END") == bool(Late))
           Order.push_back(K);
+    // The DWARF segments come last: they are not part of the program.
+    for (SegIdx K = SK_Count, E = Segs.size(); K != E; ++K)
+      if (Segs[K].Debug)
+        Order.push_back(K);
     return Order;
   }
   unsigned getExternalIndex(const MCSymbol &Sym);
@@ -340,6 +364,10 @@ class OMFObjectWriter final : public MCObjectWriter {
   void writeSegmentData(SegIdx K);
   void writeFixups(SegIdx K, uint64_t Start, uint64_t End,
                    ArrayRef<const OMFFixup *> SegFixups);
+  void addDebugSection(const MCSectionELF &Sec);
+  bool isInDebugSection(const MCSymbol &Sym) const;
+  // The DWARF segment of each debug section name.
+  StringMap<SegIdx> DebugSegs;
   void writeModuleEnd();
 
 public:
@@ -360,6 +388,7 @@ public:
     NumCodeParts = 0;
     NumLNames = 0;
     DGroupIndex = 0;
+    DebugSegs.clear();
     MCObjectWriter::reset();
   }
 
@@ -628,6 +657,39 @@ void OMFObjectWriter::addFarSection(const MCSectionELF &Sec) {
   } while (Offset < Size);
 }
 
+/// Returns true if the section is a DWARF debug section, which is written
+/// as a segment of class DWARF.
+static bool isDebugSection(const MCSectionELF &Sec) {
+  return !(Sec.getFlags() & (ELF::SHF_ALLOC | ELF::SHF_EXCLUDE)) &&
+         Sec.getName().starts_with(".debug_");
+}
+
+/// Returns true if the symbol is defined in a DWARF debug section.
+bool OMFObjectWriter::isInDebugSection(const MCSymbol &Sym) const {
+  const MCSymbol *Base = Asm->getBaseSymbol(Sym);
+  return Base && Base->isInSection() &&
+         isDebugSection(static_cast<const MCSectionELF &>(Base->getSection()));
+}
+
+/// Puts a DWARF debug section in the DWARF segment of its name. Sections of
+/// the same name (in COMDAT groups) go one after the other in one segment.
+void OMFObjectWriter::addDebugSection(const MCSectionELF &Sec) {
+  auto [It, Inserted] = DebugSegs.try_emplace(Sec.getName(), Segs.size());
+  if (Inserted) {
+    Segment &Seg = Segs.emplace_back();
+    Seg.Present = true;
+    Seg.Debug = true;
+    Seg.Name = Sec.getName().take_front(255).str();
+    Seg.Class = "DWARF";
+    Seg.Combine = OMF::SC_Public;
+  }
+  Segment &Seg = Segs[It->second];
+  Seg.Size = alignTo(Seg.Size, Sec.getAlign());
+  SectionMap[&Sec] = {It->second, Seg.Size};
+  Seg.Sections.push_back(&Sec);
+  Seg.Size += Asm->getSectionAddressSize(Sec);
+}
+
 void OMFObjectWriter::executePostLayoutBinding() {
   findComdats();
   computeTextName();
@@ -642,8 +704,11 @@ void OMFObjectWriter::executePostLayoutBinding() {
     if (ComdatIndex.count(&Sec))
       continue;
     std::optional<SegmentKind> K = classifySection(Sec);
-    if (!K)
+    if (!K) {
+      if (isDebugSection(Sec))
+        addDebugSection(Sec);
       continue;
+    }
     if (*K == SK_Count) {
       addFarSection(Sec);
       continue;
@@ -702,7 +767,7 @@ void OMFObjectWriter::executePostLayoutBinding() {
       continue;
     Segs[K].Index = ++Index;
     AnyInGroup |= inDGROUP(K);
-    if (Segs[K].Size > 0x10000)
+    if (Segs[K].Size > 0x10000 && !Segs[K].Debug)
       getContext().reportError(SMLoc(), Twine("segment ") + segmentName(K) +
                                             " is larger than 64 KiB");
   }
@@ -786,12 +851,20 @@ void OMFObjectWriter::recordRelocation(const MCFragment &F,
     Ctx.reportError(Loc, "a segment reference cannot be PC-relative");
     return;
   }
-  // A 4-byte reference is a far pointer, segment:offset.
+  // A 4-byte reference is a far pointer, segment:offset, also in a DWARF
+  // section, where it is an address; a 4-byte reference to a DWARF section
+  // is a 32-bit offset into it.
+  bool InDebug = SecIt != SectionMap.end() && Segs[SecIt->second.first].Debug;
   bool FarPtr = false;
+  bool Offset32 = false;
   switch (Fixup.getKind()) {
   case FK_Data_2:
     break;
   case FK_Data_4:
+    if (InDebug && !PCRel && !SegRef && isInDebugSection(*Sym)) {
+      Offset32 = true;
+      break;
+    }
     if (PCRel || SegRef) {
       Ctx.reportError(Loc, "a far pointer cannot be PC-relative or a segment "
                            "reference");
@@ -814,9 +887,11 @@ void OMFObjectWriter::recordRelocation(const MCFragment &F,
     R.Seg = SecIt->second.first;
     R.Offset =
         SecIt->second.second + Asm->getFragmentOffset(F) + Fixup.getOffset();
-    normalize(R.Seg, R.Offset);
+    if (!InDebug)
+      normalize(R.Seg, R.Offset);
   }
-  R.LocType = FarPtr   ? OMF::LT_Pointer32
+  R.LocType = Offset32 ? OMF::LT_Offset32
+              : FarPtr ? OMF::LT_Pointer32
               : SegRef ? OMF::LT_Base16
                        : OMF::LT_Offset16;
   R.SegRelative = !PCRel;
@@ -891,7 +966,7 @@ void OMFObjectWriter::recordRelocation(const MCFragment &F,
 
   // The linker and the loader add the frame number to a base16 field, so it
   // holds the addend in paragraphs.
-  FixedValue = uint64_t(Addend) & 0xffff;
+  FixedValue = uint64_t(Addend) & (Offset32 ? 0xffffffff : 0xffff);
   Fixups.push_back(R);
 }
 
@@ -949,6 +1024,19 @@ void OMFObjectWriter::writeNamesAndSegments() {
                 : Seg.MaxAlign.value() == 2  ? OMF::SA_Word
                 : Seg.MaxAlign.value() <= 16 ? OMF::SA_Para
                                              : OMF::SA_Page;
+    if (Seg.Debug) {
+      // A DWARF segment: 32-bit SEGDEF, byte aligned, with the P bit set
+      // (a USE32 segment), as Open Watcom writes them.
+      Record SegDef(OMF::SEGDEF32);
+      SegDef.byte((OMF::SA_Byte << 5) | (segmentCombine(K) << 2) | 1);
+      SegDef.word(Seg.Size & 0xffff);
+      SegDef.word(Seg.Size >> 16);
+      SegDef.index(SegName[K]);
+      SegDef.index(ClassName[K]);
+      SegDef.index(1);
+      SegDef.write(OS);
+      continue;
+    }
     bool Big = Seg.Size == 0x10000;
     Record SegDef(OMF::SEGDEF);
     SegDef.byte((A << 5) | (segmentCombine(K) << 2) | (Big << 1));
@@ -1125,7 +1213,7 @@ void OMFObjectWriter::writePublics() {
 
 void OMFObjectWriter::writeFixups(SegIdx K, uint64_t Start, uint64_t End,
                                   ArrayRef<const OMFFixup *> SegFixups) {
-  Record FixUpp(OMF::FIXUPP);
+  Record FixUpp(Segs[K].Debug ? OMF::FIXUPP32 : OMF::FIXUPP);
   for (const OMFFixup *R : SegFixups) {
     if (R->Offset < Start || R->Offset >= End)
       continue;
@@ -1215,8 +1303,9 @@ void OMFObjectWriter::writeSegmentData(SegIdx K) {
     return J - I;
   };
 
-  // LEDATA payload: segment index (1 byte for < 128) and a 2-byte offset.
-  const uint64_t MaxChunk = OMF::MaxRecordData - 4;
+  // LEDATA payload: segment index (1 or 2 bytes) and a 2-byte offset; a
+  // DWARF segment has LEDATA32 records, with a 4-byte offset.
+  const uint64_t MaxChunk = OMF::MaxRecordData - (Seg.Debug ? 6 : 4);
   uint64_t I = 0;
   while (I < Seg.Size) {
     uint64_t Zeros = ZeroRunAt(I);
@@ -1240,9 +1329,11 @@ void OMFObjectWriter::writeSegmentData(SegIdx K) {
       if (R->Offset < End && R->Offset + R->size() > End)
         End = R->Offset;
 
-    Record LEData(OMF::LEDATA);
+    Record LEData(Seg.Debug ? OMF::LEDATA32 : OMF::LEDATA);
     LEData.index(Seg.Index);
-    LEData.word(I);
+    LEData.word(I & 0xffff);
+    if (Seg.Debug)
+      LEData.word(I >> 16);
     LEData.bytes(ArrayRef(Image).slice(I, End - I));
     LEData.write(OS);
     writeFixups(K, I, End, SegFixups);

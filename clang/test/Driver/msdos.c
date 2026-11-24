@@ -142,3 +142,13 @@ int main(void) { return 0; }
 // SECTIONS: "-ffunction-sections" "-fdata-sections"
 // NOSECTIONS-NOT: "-ffunction-sections"
 // NOSECTIONS-NOT: "-fdata-sections"
+
+// With -g, the linker puts the DWARF sections of the objects in the program.
+// RUN: %clang --target=i8086-pc-msdos --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -g -### %s 2>&1 | FileCheck %s --check-prefix=DEBUG
+// DEBUG:      "{{.*}}wlink" "format" "dos" "option" "quiet" "option" "eliminate" "name" "a.exe"
+// DEBUG-SAME: "debug" "dwarf" "all"
+// DEBUG-SAME: "file" "{{.*}}crt0.obj"
+// RUN: %clang --target=i8086-pc-msdos --sysroot=%S/Inputs/msdos_tree \
+// RUN:   -fuse-ld=wlink -g -g0 -### %s 2>&1 | FileCheck %s --check-prefix=NODEBUG
+// NODEBUG-NOT: "debug"
