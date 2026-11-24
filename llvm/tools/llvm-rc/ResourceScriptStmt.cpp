@@ -74,8 +74,8 @@ raw_ostream &HTMLResource::log(raw_ostream &OS) const {
 
 /// Write the button size and each item of the toolbar to \p OS.
 raw_ostream &ToolbarResource::log(raw_ostream &OS) const {
-  OS << "Toolbar (" << ResName << "): " << ButtonWidth << " x "
-     << ButtonHeight << "\n";
+  OS << "Toolbar (" << ResName << "): " << ButtonWidth << " x " << ButtonHeight
+     << "\n";
   OptStatements->log(OS);
   for (uint32_t Id : Items) {
     if (Id == 0)
