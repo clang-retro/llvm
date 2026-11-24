@@ -59,6 +59,9 @@ public:
 protected:
   Tool *buildLinker() const override;
   std::string computeSysRoot() const override;
+
+private:
+  std::string findLibstdcxxDir() const;
 };
 
 } // end namespace toolchains

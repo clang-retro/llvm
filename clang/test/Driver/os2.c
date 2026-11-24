@@ -90,3 +90,27 @@
 // CXX32-SAME: "-femulated-tls"
 // CXX32-SAME: "-fcxx-exceptions"
 // CXX32-SAME: "-exception-model=sjlj"
+
+// libstdc++ (-stdlib=libstdc++): the headers of the newest GCC version in
+// lib/gcc/i386-os2, and libstdc++.a with the SjLj unwinder.
+// RUN: %clangxx --target=i386-pc-os2 --sysroot=%S/Inputs/os2_tree \
+// RUN:   -stdlib=libstdc++ -fuse-ld=wlink -### -x c++ %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=LIBSTDCXX
+// LIBSTDCXX:      "-cc1"
+// LIBSTDCXX-NOT:  "{{.*}}c++{{/|\\\\}}v1"
+// LIBSTDCXX-SAME: "-internal-isystem" "{{.*}}os2_tree{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}15.2.0"
+// LIBSTDCXX-SAME: "-internal-isystem" "{{.*}}os2_tree{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}15.2.0{{/|\\\\}}i386-os2"
+// LIBSTDCXX-SAME: "-internal-isystem" "{{.*}}os2_tree{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}15.2.0{{/|\\\\}}backward"
+// LIBSTDCXX:      "{{.*}}wlink"
+// LIBSTDCXX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}gcc{{/|\\\\}}i386-os2{{/|\\\\}}15.2.0{{/|\\\\}}libstdc++.a"
+// LIBSTDCXX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libunwind.a"
+// LIBSTDCXX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libos2.a"
+
+// libc++ stays the default.
+// RUN: %clangxx --target=i386-pc-os2 --sysroot=%S/Inputs/os2_tree \
+// RUN:   -fuse-ld=wlink -### -x c++ %s 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=LIBCXX
+// LIBCXX:     "-internal-isystem" "{{.*}}os2_tree{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}v1"
+// LIBCXX:     "{{.*}}wlink"
+// LIBCXX-NOT: libstdc++.a
+// LIBCXX-SAME: "library" "{{.*}}os2_tree{{/|\\\\}}lib{{/|\\\\}}libunwind.a"
