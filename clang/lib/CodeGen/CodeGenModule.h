@@ -1551,6 +1551,11 @@ public:
   /// Appends a detect mismatch command to the linker options.
   void AddDetectMismatch(StringRef Name, StringRef Value);
 
+  /// Links the function template specializations that the module uses but
+  /// does not define to their Visual C++ 6.0 names (/alternatename), as
+  /// Visual C++ 2002 and 2003 do.
+  void emitVC6FunctionTemplateAliases();
+
   /// Appends a dependent lib to the appropriate metadata value.
   void AddDependentLib(StringRef Lib);
 

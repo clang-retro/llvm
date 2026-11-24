@@ -145,6 +145,8 @@ class MicrosoftMangleContextImpl : public MicrosoftMangleContext {
   llvm::DenseMap<GlobalDecl, unsigned> SEHFilterIds;
   llvm::DenseMap<GlobalDecl, unsigned> SEHFinallyIds;
   SmallString<16> AnonymousNamespaceHash;
+  // True while mangleCXXNameAsVC6 mangles a name.
+  bool VC6FunctionTemplateNames = false;
 
 public:
   MicrosoftMangleContextImpl(ASTContext &Context, DiagnosticsEngine &Diags,
@@ -152,6 +154,10 @@ public:
   bool shouldMangleCXXName(const NamedDecl *D) override;
   bool shouldMangleStringLiteral(const StringLiteral *SL) override;
   void mangleCXXName(GlobalDecl GD, raw_ostream &Out) override;
+  void mangleCXXNameAsVC6(GlobalDecl GD, raw_ostream &Out) override;
+  /// Returns true if function template specializations get the names of
+  /// Visual C++ 6.0 and before, without their template arguments.
+  bool usesVC6FunctionTemplateNames() const;
   void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
                                 const MethodVFTableLocation &ML,
                                 raw_ostream &Out) override;
@@ -1047,11 +1053,30 @@ void MicrosoftCXXNameMangler::mangleBits(llvm::APInt Value) {
   }
 }
 
+/// Returns true if function template specializations are mangled as plain
+/// functions, without their template arguments, as Visual C++ 6.0 and
+/// before mangled them (-fms-compatibility-version below 13.00). The C++
+/// library of those compilers, msvcp50.dll and msvcp60.dll, exports its
+/// function templates (operator<< and the like) by these names. Two
+/// specializations with the same parameter and return types then have one
+/// name, as with those compilers.
+static bool manglesFunctionTemplatesAsPlainFunctions(const ASTContext &Ctx) {
+  const LangOptions &LO = Ctx.getLangOpts();
+  return LO.MSCompatibilityVersion != 0 &&
+         !LO.isCompatibleWithMSVC(LangOptions::MSVC2002);
+}
+
+/// Returns the template of GD and sets TemplateArgs to its arguments if GD
+/// is a template specialization. A function template specialization is a
+/// plain function if PlainFunctionTemplates is true.
 static GlobalDecl isTemplate(GlobalDecl GD,
-                             const TemplateArgumentList *&TemplateArgs) {
+                             const TemplateArgumentList *&TemplateArgs,
+                             bool PlainFunctionTemplates) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
   // Check if we have a function template.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
+    if (PlainFunctionTemplates)
+      return GlobalDecl();
     if (const TemplateDecl *TD = FD->getPrimaryTemplate()) {
       TemplateArgs = FD->getTemplateSpecializationArgs();
       return GD.getWithDecl(TD);
@@ -1085,7 +1110,8 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(GlobalDecl GD,
 
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = nullptr;
-  if (GlobalDecl TD = isTemplate(GD, TemplateArgs)) {
+  if (GlobalDecl TD = isTemplate(GD, TemplateArgs,
+                                 Context.usesVC6FunctionTemplateNames())) {
     // Function templates aren't considered for name back referencing.  This
     // makes sense since function templates aren't likely to occur multiple
     // times in a symbol.
@@ -3968,6 +3994,23 @@ void MicrosoftCXXNameMangler::mangleType(const PipeType *T, Qualifiers,
   Extra.mangleIntegerLiteral(llvm::APSInt::get(T->isReadOnly()));
 
   mangleArtificialTagType(TagTypeKind::Struct, TemplateMangling, {"__clang"});
+}
+
+bool MicrosoftMangleContextImpl::usesVC6FunctionTemplateNames() const {
+  return VC6FunctionTemplateNames ||
+         manglesFunctionTemplatesAsPlainFunctions(getASTContext());
+}
+
+/// Mangles GD as Visual C++ 6.0 did. Visual C++ 2002 and 2003 link a
+/// function template specialization that they do not define to this name
+/// too (/alternatename), so that they can call the C++ library and MFC DLLs
+/// of Visual C++ 6.0.
+void MicrosoftMangleContextImpl::mangleCXXNameAsVC6(GlobalDecl GD,
+                                                    raw_ostream &Out) {
+  bool Old = VC6FunctionTemplateNames;
+  VC6FunctionTemplateNames = true;
+  mangleCXXName(GD, Out);
+  VC6FunctionTemplateNames = Old;
 }
 
 void MicrosoftMangleContextImpl::mangleCXXName(GlobalDecl GD,

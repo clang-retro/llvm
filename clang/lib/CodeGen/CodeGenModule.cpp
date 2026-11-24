@@ -1389,6 +1389,8 @@ void CodeGenModule::Release() {
   if (SanStats)
     SanStats->finish();
 
+  emitVC6FunctionTemplateAliases();
+
   if (CodeGenOpts.Autolink &&
       (Context.getLangOpts().Modules || !LinkerOptionsMetadata.empty())) {
     EmitModuleLinkOptions();
@@ -4007,6 +4009,36 @@ static void emitUsed(CodeGenModule &CGM, StringRef Name,
 void CodeGenModule::emitLLVMUsed() {
   emitUsed(*this, "llvm.used", LLVMUsed);
   emitUsed(*this, "llvm.compiler.used", LLVMCompilerUsed);
+}
+
+/// Links each function template specialization that the module uses but
+/// does not define to its Visual C++ 6.0 name, as Visual C++ 2002 and 2003
+/// do with /alternatename: the C++ library and MFC DLLs of Visual C++ 6.0
+/// (msvcp60.dll, mfc42.dll) export function templates by those names. This
+/// is for -fms-compatibility-version 13.00 to 13.10.
+void CodeGenModule::emitVC6FunctionTemplateAliases() {
+  const LangOptions &LO = getLangOpts();
+  if (!getTarget().getCXXABI().isMicrosoft() ||
+      !LO.isCompatibleWithMSVC(LangOptions::MSVC2002) ||
+      LO.isCompatibleWithMSVC(LangOptions::MSVC2005))
+    return;
+  auto &MC = cast<MicrosoftMangleContext>(getCXXABI().getMangleContext());
+  for (const auto &[GD, Name] : MangledDeclNames) {
+    const auto *FD = dyn_cast<FunctionDecl>(GD.getDecl());
+    if (!FD || !FD->getPrimaryTemplate())
+      continue;
+    llvm::GlobalValue *GV = GetGlobalValue(Name);
+    if (!GV || !GV->isDeclarationForLinker() || GV->use_empty())
+      continue;
+    SmallString<256> Old;
+    llvm::raw_svector_ostream OS(Old);
+    MC.mangleCXXNameAsVC6(GD, OS);
+    if (Old == Name)
+      continue;
+    StringRef Imp = GV->hasDLLImportStorageClass() ? "__imp_" : "";
+    AppendLinkerOptions(
+        ("/alternatename:" + Imp + Name + "=" + Imp + Old).str());
+  }
 }
 
 void CodeGenModule::AppendLinkerOptions(StringRef Opts) {
