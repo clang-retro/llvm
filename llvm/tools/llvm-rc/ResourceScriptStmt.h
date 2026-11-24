@@ -209,6 +209,7 @@ enum ResourceKind {
   RkIconGroup = 14,
   RkVersionInfo = 16,
   RkHTML = 23,
+  RkToolbar = 241,
 
   // These kinds don't have assigned type IDs (they might be the resources
   // of invalid kind, expand to many resource structures in .res files,
@@ -485,6 +486,57 @@ public:
   ResourceKind getKind() const override { return RkHTML; }
   static bool classof(const RCResource *Res) {
     return Res->getKind() == RkHTML;
+  }
+};
+
+// TOOLBAR resource. Defines the buttons of an MFC toolbar (RT_TOOLBAR).
+// MFC reads this resource in CToolBar::LoadToolBar. The resource has this
+// format:
+//   name TOOLBAR [memflags] width, height [opt stmts...]
+//   BEGIN
+//     BUTTON id
+//     SEPARATOR
+//   END
+// A SEPARATOR item has the command ID 0.
+class ToolbarResource : public OptStatementsRCResource {
+public:
+  uint32_t ButtonWidth;
+  uint32_t ButtonHeight;
+  // The command ID of each item. A separator has the ID 0.
+  std::vector<uint32_t> Items;
+
+  /// Make a toolbar resource with the given button size and memory flags.
+  ToolbarResource(OptionalStmtList &&List, uint32_t Width, uint32_t Height,
+                  uint16_t Flags)
+      : OptStatementsRCResource(std::move(List), Flags), ButtonWidth(Width),
+        ButtonHeight(Height) {}
+
+  /// Add one button with the command ID \p Id. Use the ID 0 for a separator.
+  void addItem(uint32_t Id) { Items.push_back(Id); }
+
+  /// Write a text description of the resource to \p OS.
+  raw_ostream &log(raw_ostream &OS) const override;
+
+  /// Give the resource type ID (RT_TOOLBAR, 241).
+  IntOrString getResourceType() const override { return RkToolbar; }
+
+  /// Give the default memory flags. Like rc.exe, a toolbar is not DISCARDABLE.
+  static uint16_t getDefaultMemoryFlags() { return MfPure | MfMoveable; }
+
+  /// Give the name of the statement for error messages.
+  Twine getResourceTypeName() const override { return "TOOLBAR"; }
+
+  /// Send the resource to the visitor \p V.
+  Error visit(Visitor *V) const override {
+    return V->visitToolbarResource(this);
+  }
+
+  /// Give the kind of the resource for LLVM-style RTTI.
+  ResourceKind getKind() const override { return RkToolbar; }
+
+  /// Return true if \p Res is a toolbar resource.
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkToolbar;
   }
 };
 

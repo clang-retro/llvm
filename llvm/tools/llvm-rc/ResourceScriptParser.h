@@ -146,6 +146,7 @@ private:
   ParseType parseMenuResource();
   ParseType parseMenuExResource();
   ParseType parseStringTableResource();
+  ParseType parseToolbarResource();
   ParseType parseUserDefinedResource(IntOrString Type);
   ParseType parseVersionInfoResource();
 

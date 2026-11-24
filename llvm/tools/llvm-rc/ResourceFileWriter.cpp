@@ -513,6 +513,11 @@ Error ResourceFileWriter::visitMenuExResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeMenuExBody);
 }
 
+/// Write a TOOLBAR resource to the .res file.
+Error ResourceFileWriter::visitToolbarResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeToolbarBody);
+}
+
 Error ResourceFileWriter::visitStringTableResource(const RCResource *Base) {
   const auto *Res = cast<StringTableResource>(Base);
 
@@ -780,6 +785,32 @@ Error ResourceFileWriter::writeAcceleratorsBody(const RCResource *Base) {
     ++AcceleratorId;
     RETURN_IF_ERROR(
         writeSingleAccelerator(Acc, AcceleratorId == Res->Accelerators.size()));
+  }
+  return Error::success();
+}
+
+// --- ToolbarResource helpers. --- //
+
+/// Write the body of a TOOLBAR resource. The body is the MFC
+/// CToolBarData structure: the version (always 1), the button width, the
+/// button height, the item count, and then one command ID for each item.
+/// All fields are 16-bit words. The format is the same for 16-bit and
+/// 32-bit Windows.
+Error ResourceFileWriter::writeToolbarBody(const RCResource *Base) {
+  auto *Res = cast<ToolbarResource>(Base);
+  RETURN_IF_ERROR(checkNumberFits<uint16_t>(Res->ButtonWidth, "Button width"));
+  RETURN_IF_ERROR(
+      checkNumberFits<uint16_t>(Res->ButtonHeight, "Button height"));
+  RETURN_IF_ERROR(
+      checkNumberFits<uint16_t>(Res->Items.size(), "Number of toolbar items"));
+
+  writeInt<uint16_t>(1); // Version of the CToolBarData structure.
+  writeInt<uint16_t>(Res->ButtonWidth);
+  writeInt<uint16_t>(Res->ButtonHeight);
+  writeInt<uint16_t>(Res->Items.size());
+  for (uint32_t Id : Res->Items) {
+    RETURN_IF_ERROR(checkNumberFits<uint16_t>(Id, "Toolbar button ID"));
+    writeInt<uint16_t>(Id);
   }
   return Error::success();
 }
