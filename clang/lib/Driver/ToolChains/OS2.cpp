@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "OS2.h"
+#include "Gnu.h"
 #include "MSDOS.h"
 #include "clang/Driver/CommonArgs.h"
 #include "clang/Driver/Compilation.h"
@@ -16,6 +17,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
@@ -30,6 +32,31 @@ OS2::OS2(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   SmallString<128> LibDir(computeSysRoot());
   llvm::sys::path::append(LibDir, "lib");
   getFilePaths().push_back(std::string(LibDir));
+  // libstdc++ (-stdlib=libstdc++) is installed as a GCC installation in the
+  // sysroot, in lib/gcc/i386-os2/<version>.
+  std::string GCCLibDir = findLibstdcxxDir();
+  if (!GCCLibDir.empty())
+    getFilePaths().push_back(GCCLibDir);
+}
+
+/// Finds lib/gcc/i386-os2/<version> in the sysroot, with the newest GCC
+/// version. Gives an empty string if the sysroot has no libstdc++.
+std::string OS2::findLibstdcxxDir() const {
+  SmallString<128> Dir(computeSysRoot());
+  llvm::sys::path::append(Dir, "lib", "gcc", "i386-os2");
+  Generic_GCC::GCCVersion Version = {"", -1, -1, -1, "", "", ""};
+  std::error_code EC;
+  for (llvm::vfs::directory_iterator LI = getVFS().dir_begin(Dir, EC), LE;
+       !EC && LI != LE; LI = LI.increment(EC)) {
+    auto Candidate =
+        Generic_GCC::GCCVersion::Parse(llvm::sys::path::filename(LI->path()));
+    if (Candidate.Major != -1 && Version < Candidate)
+      Version = Candidate;
+  }
+  if (Version.Major == -1)
+    return std::string();
+  llvm::sys::path::append(Dir, Version.Text);
+  return std::string(Dir);
 }
 
 /// The sysroot: --sysroot=, or i386-os2 next to bin.
@@ -63,8 +90,28 @@ void OS2::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                         options::OPT_nostdincxx))
     return;
   SmallString<128> Dir(computeSysRoot());
-  llvm::sys::path::append(Dir, "include", "c++", "v1");
-  addSystemInclude(DriverArgs, CC1Args, Dir);
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx:
+    llvm::sys::path::append(Dir, "include", "c++", "v1");
+    addSystemInclude(DriverArgs, CC1Args, Dir);
+    break;
+  case ToolChain::CST_Libstdcxx: {
+    // include/c++/<version>, with the headers for the target in i386-os2.
+    // The version is the one of lib/gcc/i386-os2.
+    std::string GCCLibDir = findLibstdcxxDir();
+    if (GCCLibDir.empty())
+      break;
+    llvm::sys::path::append(Dir, "include", "c++",
+                            llvm::sys::path::filename(GCCLibDir));
+    addSystemInclude(DriverArgs, CC1Args, Dir);
+    for (StringRef Sub : {"i386-os2", "backward"}) {
+      SmallString<128> SubDir(Dir);
+      llvm::sys::path::append(SubDir, Sub);
+      addSystemInclude(DriverArgs, CC1Args, SubDir);
+    }
+    break;
+  }
+  }
 }
 
 Tool *OS2::buildLinker() const { return new tools::os2::Linker(*this); }
@@ -141,8 +188,13 @@ void os2::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     SmallVector<StringRef, 5> Names;
-    if (TC.ShouldLinkCXXStdlib(Args))
-      Names.append({"c++", "c++abi", "unwind"});
+    // C++ programs also get the C++ library and the SjLj unwinder.
+    if (TC.ShouldLinkCXXStdlib(Args)) {
+      if (TC.GetCXXStdlibType(Args) == ToolChain::CST_Libstdcxx)
+        Names.append({"stdc++", "unwind"});
+      else
+        Names.append({"c++", "c++abi", "unwind"});
+    }
     // libos2.a (the OS/2 SDK's): the thunk into the 16-bit Vio, Kbd and Mou
     // calls, and their stubs.
     Names.append({"os2", "c", "clang_rt.builtins"});
