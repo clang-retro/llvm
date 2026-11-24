@@ -72,6 +72,20 @@ raw_ostream &HTMLResource::log(raw_ostream &OS) const {
   return OS << "HTML (" << ResName << "): " << HTMLLoc << "\n";
 }
 
+/// Write the button size and each item of the toolbar to \p OS.
+raw_ostream &ToolbarResource::log(raw_ostream &OS) const {
+  OS << "Toolbar (" << ResName << "): " << ButtonWidth << " x " << ButtonHeight
+     << "\n";
+  OptStatements->log(OS);
+  for (uint32_t Id : Items) {
+    if (Id == 0)
+      OS << "  Separator\n";
+    else
+      OS << "  Button: " << Id << "\n";
+  }
+  return OS;
+}
+
 StringRef MenuDefinition::OptionsStr[MenuDefinition::NumFlags] = {
     "CHECKED", "GRAYED", "HELP", "INACTIVE", "MENUBARBREAK", "MENUBREAK"};
 

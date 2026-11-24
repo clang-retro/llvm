@@ -1,0 +1,23 @@
+// An MFC-style toolbar: two buttons, a separator and a third button.
+IDR_MAINFRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      0xE100
+    BUTTON      0xE101
+    SEPARATOR
+    BUTTON      0xE107
+END
+
+// Memory flags, an expression for the size and optional statements.
+200 TOOLBAR DISCARDABLE 8 + 8, 2 * 8
+LANGUAGE 7, 1
+CHARACTERISTICS 3
+VERSION 4
+{
+    button 1 | 2
+    separator
+}
+
+// A toolbar with no items.
+201 TOOLBAR 24, 22
+BEGIN
+END

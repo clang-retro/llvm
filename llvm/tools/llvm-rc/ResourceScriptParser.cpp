@@ -83,6 +83,8 @@ RCParser::ParseType RCParser::parseSingleResource() {
     Result = parseMenuExResource();
   else if (TypeToken->equalsLower("RCDATA"))
     Result = parseUserDefinedResource(RkRcData);
+  else if (TypeToken->equalsLower("TOOLBAR"))
+    Result = parseToolbarResource();
   else if (TypeToken->equalsLower("VERSIONINFO"))
     Result = parseVersionInfoResource();
   else
@@ -491,6 +493,39 @@ RCParser::ParseType RCParser::parseAcceleratorsResource() {
   }
 
   return std::move(Accels);
+}
+
+/// Parse the body of a TOOLBAR resource. The resource has this format:
+///   name TOOLBAR [memflags] width, height [opt stmts...]
+///   BEGIN
+///     BUTTON id
+///     SEPARATOR
+///   END
+/// A SEPARATOR item gets the command ID 0, as rc.exe does.
+RCParser::ParseType RCParser::parseToolbarResource() {
+  uint16_t MemoryFlags =
+      parseMemoryFlags(ToolbarResource::getDefaultMemoryFlags());
+  ASSIGN_OR_RETURN(SizeResult, readIntsWithCommas(2, 2));
+  ASSIGN_OR_RETURN(OptStatements, parseOptionalStatements());
+  RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
+
+  auto Toolbar = std::make_unique<ToolbarResource>(
+      std::move(*OptStatements), (*SizeResult)[0], (*SizeResult)[1],
+      MemoryFlags);
+
+  while (!consumeOptionalType(Kind::BlockEnd)) {
+    ASSIGN_OR_RETURN(ItemResult, readIdentifier());
+    if (ItemResult->equals_insensitive("BUTTON")) {
+      ASSIGN_OR_RETURN(IDResult, readInt());
+      Toolbar->addItem(*IDResult);
+    } else if (ItemResult->equals_insensitive("SEPARATOR")) {
+      Toolbar->addItem(0);
+    } else {
+      return getExpectedError("BUTTON or SEPARATOR", true);
+    }
+  }
+
+  return std::move(Toolbar);
 }
 
 RCParser::ParseType RCParser::parseCursorResource() {

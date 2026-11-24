@@ -67,6 +67,7 @@ public:
   Error visitMenuExResource(const RCResource *) override;
   Error visitVersionInfoResource(const RCResource *) override;
   Error visitStringTableResource(const RCResource *) override;
+  Error visitToolbarResource(const RCResource *) override;
   Error visitUserDefinedResource(const RCResource *) override;
 
   Error visitCaptionStmt(const CaptionStmt *) override;
@@ -170,6 +171,9 @@ private:
   Error writeMenuExDefinitionList(const MenuDefinitionList &List);
   Error writeMenuBody(const RCResource *);
   Error writeMenuExBody(const RCResource *);
+
+  // ToolbarResource
+  Error writeToolbarBody(const RCResource *);
 
   // StringTableResource
   Error visitStringTableBundle(const RCResource *);

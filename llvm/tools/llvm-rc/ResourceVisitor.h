@@ -42,6 +42,7 @@ public:
   virtual Error visitMenuResource(const RCResource *) = 0;
   virtual Error visitMenuExResource(const RCResource *) = 0;
   virtual Error visitStringTableResource(const RCResource *) = 0;
+  virtual Error visitToolbarResource(const RCResource *) = 0;
   virtual Error visitUserDefinedResource(const RCResource *) = 0;
   virtual Error visitVersionInfoResource(const RCResource *) = 0;
 

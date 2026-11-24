@@ -1,0 +1,81 @@
+; The TOOLBAR statement makes an RT_TOOLBAR (241) resource, as MFC reads it in
+; CToolBar::LoadToolBar. The data is a WORD version (1), the button width, the
+; button height, the item count and one WORD command ID for each item. A
+; SEPARATOR has the ID 0.
+
+; RUN: llvm-rc -no-preprocess /dry-run /V -- %p/Inputs/tag-toolbar.rc | FileCheck %s --check-prefix=LOG
+
+; LOG:      Toolbar (IDR_MAINFRAME): 16 x 15
+; LOG-NEXT:   Button: 57600
+; LOG-NEXT:   Button: 57601
+; LOG-NEXT:   Separator
+; LOG-NEXT:   Button: 57607
+; LOG-NEXT: Toolbar (200): 16 x 16
+; LOG-NEXT:   Option: Language: 7, Sublanguage: 1
+; LOG-NEXT:   Option: Characteristics: 3
+; LOG-NEXT:   Option: Version: 4
+; LOG-NEXT:   Button: 3
+; LOG-NEXT:   Separator
+; LOG-NEXT: Toolbar (201): 24 x 22
+
+; RUN: llvm-rc -no-preprocess /FO %t.res -- %p/Inputs/tag-toolbar.rc
+; RUN: llvm-readobj %t.res | FileCheck %s
+
+; CHECK:      Resource type (int): ID 241
+; CHECK-NEXT: Resource name (string): IDR_MAINFRAME
+; CHECK-NEXT: Data version: 0
+; CHECK-NEXT: Memory flags: 0x30
+; CHECK-NEXT: Language ID: 1033
+; CHECK-NEXT: Version (major): 0
+; CHECK-NEXT: Version (minor): 0
+; CHECK-NEXT: Characteristics: 0
+; CHECK-NEXT: Data size: 16
+; CHECK-NEXT: Data:: (01 00 10 00 0F 00 04 00 00 E1 01 E1 00 00 07 E1)
+
+; CHECK:      Resource type (int): ID 241
+; CHECK-NEXT: Resource name (int): 200
+; CHECK-NEXT: Data version: 0
+; CHECK-NEXT: Memory flags: 0x1030
+; CHECK-NEXT: Language ID: 1031
+; CHECK-NEXT: Version (major): 0
+; CHECK-NEXT: Version (minor): 4
+; CHECK-NEXT: Characteristics: 3
+; CHECK-NEXT: Data size: 12
+; CHECK-NEXT: Data:: (01 00 10 00 10 00 02 00 03 00 00 00)
+
+; CHECK:      Resource type (int): ID 241
+; CHECK-NEXT: Resource name (int): 201
+; CHECK-NEXT: Data version: 0
+; CHECK-NEXT: Memory flags: 0x30
+; CHECK-NEXT: Language ID: 1033
+; CHECK-NEXT: Version (major): 0
+; CHECK-NEXT: Version (minor): 0
+; CHECK-NEXT: Characteristics: 0
+; CHECK-NEXT: Data size: 8
+; CHECK-NEXT: Data:: (01 00 18 00 16 00 00 00)
+
+; The 16-bit Windows format has the same resource data.
+; RUN: llvm-rc -no-preprocess -win16 /FO %t16.res -- %p/Inputs/tag-toolbar.rc
+; RUN: %python -c "import sys; print(open(sys.argv[1], 'rb').read().hex(' '))" %t16.res | FileCheck %s --check-prefix=WIN16
+
+; WIN16: ff f1 00 49 44 52 5f 4d 41 49 4e 46 52 41 4d 45 00 30 00 10 00 00 00
+; WIN16-SAME: 01 00 10 00 0f 00 04 00 00 e1 01 e1 00 00 07 e1
+; WIN16-SAME: ff f1 00 ff c8 00 30 10 0c 00 00 00 01 00 10 00 10 00 02 00 03 00 00 00
+; WIN16-SAME: ff f1 00 ff c9 00 30 00 08 00 00 00 01 00 18 00 16 00 00 00{{$}}
+
+; RUN: not llvm-rc -no-preprocess /dry-run -- %p/Inputs/parser-toolbar-bad-item.rc 2>&1 | FileCheck %s --check-prefix=BADITEM
+; BADITEM: llvm-rc: Error parsing file: expected BUTTON or SEPARATOR, got MENUITEM
+
+; RUN: not llvm-rc -no-preprocess /dry-run -- %p/Inputs/parser-toolbar-too-few-args.rc 2>&1 | FileCheck %s --check-prefix=FEWARGS
+; FEWARGS: llvm-rc: Error parsing file: expected ',', got BEGIN
+
+; RUN: not llvm-rc -no-preprocess /dry-run -- %p/Inputs/parser-toolbar-no-id.rc 2>&1 | FileCheck %s --check-prefix=NOID
+; NOID: llvm-rc: Error parsing file: expected '-', '~', integer or '(', got END
+
+; RUN: not llvm-rc -no-preprocess /FO %t.bad.res -- %p/Inputs/tag-toolbar-big-id.rc 2>&1 | FileCheck %s --check-prefix=BIGID
+; BIGID: llvm-rc: Error in TOOLBAR statement (ID 100):
+; BIGID-NEXT: Toolbar button ID (65536) does not fit in 16 bits.
+
+; RUN: not llvm-rc -no-preprocess /FO %t.bad.res -- %p/Inputs/tag-toolbar-big-size.rc 2>&1 | FileCheck %s --check-prefix=BIGSIZE
+; BIGSIZE: llvm-rc: Error in TOOLBAR statement (ID 100):
+; BIGSIZE-NEXT: Button width (70000) does not fit in 16 bits.
