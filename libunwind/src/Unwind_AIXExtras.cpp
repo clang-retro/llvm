@@ -7,13 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-// This file is only used for AIX.
-#if defined(_AIX)
+// This file is only used for XCOFF (AIX, and classic Mac OS on PowerPC).
+#include <__libunwind_config.h>
+
+#if defined(_LIBUNWIND_XCOFF)
 
 #include "AddressSpace.hpp"
 #include "config.h"
 #include "libunwind_ext.h"
-#include <sys/debug.h>
+#include "xcoff_tbtable.h"
 
 namespace libunwind {
 // getFuncNameFromTBTable
@@ -61,4 +63,4 @@ char *getFuncNameFromTBTable(uintptr_t Pc, uint16_t &NameLen,
   return reinterpret_cast<char *>(p) + sizeof(uint16_t);
 }
 } // namespace libunwind
-#endif // defined(_AIX)
+#endif // defined(_LIBUNWIND_XCOFF)

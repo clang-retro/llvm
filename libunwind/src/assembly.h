@@ -15,6 +15,12 @@
 #ifndef UNWIND_ASSEMBLY_H
 #define UNWIND_ASSEMBLY_H
 
+// XCOFF objects (AIX, and classic Mac OS on PowerPC) describe their frames
+// with the traceback table at the end of each function.
+#if defined(_AIX) || (defined(__powerpc__) && defined(macintosh))
+#define _LIBUNWIND_XCOFF 1
+#endif
+
 #if defined(__x86_64__) && defined(__FreeBSD__) &&                             \
     !defined(_LIBUNWIND_IS_BAREMETAL)
 #include <sys/syscall.h>
@@ -80,7 +86,7 @@
 #endif
 
 #if defined(__powerpc64__) && (!defined(_CALL_ELF) || _CALL_ELF == 1) &&       \
-    !defined(_AIX)
+    !defined(_LIBUNWIND_XCOFF)
 #define PPC64_OPD1 .section .opd,"aw",@progbits SEPARATOR
 #define PPC64_OPD2 SEPARATOR \
   .p2align 3 SEPARATOR \
@@ -235,7 +241,7 @@
 
 #elif defined(__sparc__)
 
-#elif defined(_AIX)
+#elif defined(_LIBUNWIND_XCOFF)
 
 #if defined(__powerpc64__)
 #define VBYTE_LEN 8
@@ -272,7 +278,7 @@ aliasname:                                                                     \
 
 #endif
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // clang-format off
 #define DEFINE_LIBUNWIND_FUNCTION(name)                                        \
   .globl name[DS] SEPARATOR                                                    \

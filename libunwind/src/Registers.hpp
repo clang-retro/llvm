@@ -41,6 +41,7 @@ enum {
   REGISTERS_ARM64,
   REGISTERS_ARM,
   REGISTERS_OR1K,
+  REGISTERS_M68K,
   REGISTERS_MIPS_O32,
   REGISTERS_MIPS_NEWABI,
   REGISTERS_SPARC,
@@ -2890,6 +2891,152 @@ inline void Registers_arm::setVectorRegister(int, v128) {
 }
 #endif // _LIBUNWIND_TARGET_ARM
 
+
+#if defined(_LIBUNWIND_TARGET_M68K)
+class _LIBUNWIND_HIDDEN Registers_m68k;
+extern "C" void __libunwind_Registers_m68k_jumpto(Registers_m68k *);
+
+/// Registers_m68k holds the register state of a thread on a Motorola 68000
+/// family processor: the data registers D0 to D7, the address registers A0
+/// to A7 (A7 is the stack pointer) and the program counter. The
+/// floating-point registers are not kept: the code that this unwinder
+/// supports uses software floating point.
+class _LIBUNWIND_HIDDEN Registers_m68k {
+public:
+  Registers_m68k();
+  Registers_m68k(const void *registers);
+
+  typedef uint32_t reg_t;
+  typedef uint32_t link_reg_t;
+  typedef const link_reg_t &link_hardened_reg_arg_t;
+
+  bool        validRegister(int num) const;
+  uint32_t    getRegister(int num) const;
+  void        setRegister(int num, uint32_t value);
+  bool        validFloatRegister(int) const { return false; }
+  double      getFloatRegister(int num) const;
+  void        setFloatRegister(int num, double value);
+  bool        validVectorRegister(int) const { return false; }
+  v128        getVectorRegister(int num) const;
+  void        setVectorRegister(int num, v128 value);
+  static const char *getRegisterName(int num);
+  /// Restore all the registers and continue at the program counter.
+  void        jumpto() { __libunwind_Registers_m68k_jumpto(this); }
+  static constexpr int lastDwarfRegNum() {
+    return _LIBUNWIND_HIGHEST_DWARF_REGISTER_M68K;
+  }
+  static int  getArch() { return REGISTERS_M68K; }
+
+  uint32_t  getSP() const         { return _registers.__a[7]; }
+  void      setSP(uint32_t value) { _registers.__a[7] = value; }
+  uint32_t  getIP() const         { return _registers.__pc; }
+  void      setIP(uint32_t value) { _registers.__pc = value; }
+
+private:
+  // The layout is known to __unw_getcontext and to
+  // __libunwind_Registers_m68k_jumpto.
+  struct m68k_thread_state_t {
+    uint32_t __d[8]; // D0 to D7, at offset 0
+    uint32_t __a[8]; // A0 to A7, at offset 32
+    uint32_t __pc;   // program counter, at offset 64
+  };
+
+  m68k_thread_state_t _registers;
+};
+
+/// Make the register state from a context that __unw_getcontext filled.
+inline Registers_m68k::Registers_m68k(const void *registers) {
+  static_assert((check_fit<Registers_m68k, unw_context_t>::does_fit),
+                "m68k registers do not fit into unw_context_t");
+  memcpy(&_registers, static_cast<const uint8_t *>(registers),
+         sizeof(_registers));
+}
+
+/// Make an empty register state.
+inline Registers_m68k::Registers_m68k() {
+  memset(&_registers, 0, sizeof(_registers));
+}
+
+/// Tell if the register number is a register that this state holds.
+inline bool Registers_m68k::validRegister(int regNum) const {
+  if (regNum == UNW_REG_IP || regNum == UNW_REG_SP)
+    return true;
+  return (regNum >= UNW_M68K_D0 && regNum <= UNW_M68K_A7) ||
+         regNum == UNW_M68K_PC;
+}
+
+/// Get the value of a register.
+inline uint32_t Registers_m68k::getRegister(int regNum) const {
+  if (regNum >= UNW_M68K_D0 && regNum <= UNW_M68K_D7)
+    return _registers.__d[regNum - UNW_M68K_D0];
+  if (regNum >= UNW_M68K_A0 && regNum <= UNW_M68K_A7)
+    return _registers.__a[regNum - UNW_M68K_A0];
+  switch (regNum) {
+  case UNW_REG_IP:
+  case UNW_M68K_PC:
+    return _registers.__pc;
+  case UNW_REG_SP:
+    return _registers.__a[7];
+  }
+  _LIBUNWIND_ABORT("unsupported m68k register");
+}
+
+/// Set the value of a register.
+inline void Registers_m68k::setRegister(int regNum, uint32_t value) {
+  if (regNum >= UNW_M68K_D0 && regNum <= UNW_M68K_D7) {
+    _registers.__d[regNum - UNW_M68K_D0] = value;
+    return;
+  }
+  if (regNum >= UNW_M68K_A0 && regNum <= UNW_M68K_A7) {
+    _registers.__a[regNum - UNW_M68K_A0] = value;
+    return;
+  }
+  switch (regNum) {
+  case UNW_REG_IP:
+  case UNW_M68K_PC:
+    _registers.__pc = value;
+    return;
+  case UNW_REG_SP:
+    _registers.__a[7] = value;
+    return;
+  }
+  _LIBUNWIND_ABORT("unsupported m68k register");
+}
+
+/// Stop: the floating-point registers are not kept.
+inline double Registers_m68k::getFloatRegister(int) const {
+  _LIBUNWIND_ABORT("m68k float support not implemented");
+}
+
+/// Stop: the floating-point registers are not kept.
+inline void Registers_m68k::setFloatRegister(int, double) {
+  _LIBUNWIND_ABORT("m68k float support not implemented");
+}
+
+/// Stop: the processor has no vector registers.
+inline v128 Registers_m68k::getVectorRegister(int) const {
+  _LIBUNWIND_ABORT("m68k vector support not implemented");
+}
+
+/// Stop: the processor has no vector registers.
+inline void Registers_m68k::setVectorRegister(int, v128) {
+  _LIBUNWIND_ABORT("m68k vector support not implemented");
+}
+
+/// Get the assembler name of a register.
+inline const char *Registers_m68k::getRegisterName(int regNum) {
+  static const char *const names[] = {"d0", "d1", "d2", "d3", "d4", "d5",
+                                      "d6", "d7", "a0", "a1", "a2", "a3",
+                                      "a4", "a5", "a6", "sp"};
+  if (regNum >= UNW_M68K_D0 && regNum <= UNW_M68K_A7)
+    return names[regNum];
+  if (regNum == UNW_REG_IP || regNum == UNW_M68K_PC)
+    return "pc";
+  if (regNum == UNW_REG_SP)
+    return "sp";
+  return "unknown register";
+}
+#endif // _LIBUNWIND_TARGET_M68K
 
 #if defined(_LIBUNWIND_TARGET_OR1K)
 /// Registers_or1k holds the register state of a thread in an OpenRISC1000

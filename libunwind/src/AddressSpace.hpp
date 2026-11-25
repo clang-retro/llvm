@@ -25,7 +25,7 @@
 
 #ifndef _LIBUNWIND_USE_DLADDR
   // 32-bit PowerPC Mac OS X has dladdr only from 10.3.
-  #if !(defined(_LIBUNWIND_IS_BAREMETAL) || defined(_WIN32) || defined(_AIX) ||  \
+  #if !(defined(_LIBUNWIND_IS_BAREMETAL) || defined(_WIN32) || defined(_LIBUNWIND_XCOFF) ||  \
         (defined(__APPLE__) && defined(__ppc__)))
     #define _LIBUNWIND_USE_DLADDR 1
   #else
@@ -47,7 +47,7 @@ struct EHABIIndexEntry {
 };
 #endif
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
 namespace libunwind {
 char *getFuncNameFromTBTable(uintptr_t pc, uint16_t &NameLen,
                              unw_word_t *offset);
@@ -763,7 +763,7 @@ LocalAddressSpace::findFunctionName(typename R::link_hardened_reg_arg_t addr,
       return true;
     }
   }
-#elif defined(_AIX)
+#elif defined(_LIBUNWIND_XCOFF)
   uint16_t nameLen;
   char *funcName = getFuncNameFromTBTable(addr, nameLen, offset);
   if (funcName != NULL) {

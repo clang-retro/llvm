@@ -48,6 +48,7 @@ set(LIBUNWIND_HEADERS
     shadow_stack_unwind.h
     Unwind-EHABI.h
     UnwindCursor.hpp
+    xcoff_tbtable.h
     ../include/libunwind.h
     ../include/unwind.h
     ../include/unwind_itanium.h

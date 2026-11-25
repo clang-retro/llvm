@@ -11,6 +11,12 @@
 
 #define _LIBUNWIND_VERSION 240000
 
+// XCOFF objects (AIX, and classic Mac OS on PowerPC) describe their frames
+// with the traceback table at the end of each function.
+#if defined(_AIX) || (defined(__powerpc__) && defined(macintosh))
+#define _LIBUNWIND_XCOFF 1
+#endif
+
 #if defined(__arm__) && !defined(__USING_SJLJ_EXCEPTIONS__) && \
     !defined(__ARM_DWARF_EH__) && !defined(__SEH__)
 #define _LIBUNWIND_ARM_EHABI
@@ -23,6 +29,7 @@
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_ARM64     95
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_ARM       287
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_OR1K      32
+#define _LIBUNWIND_HIGHEST_DWARF_REGISTER_M68K      25
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_MIPS      65
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_SPARC     31
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_SPARC64   31
@@ -101,6 +108,11 @@
 #  define _LIBUNWIND_CONTEXT_SIZE 16
 #  define _LIBUNWIND_CURSOR_SIZE 24
 #  define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_OR1K
+# elif defined(__m68k__)
+#  define _LIBUNWIND_TARGET_M68K 1
+#  define _LIBUNWIND_CONTEXT_SIZE 9
+#  define _LIBUNWIND_CURSOR_SIZE 15
+#  define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_M68K
 # elif defined(__hexagon__)
 #  define _LIBUNWIND_TARGET_HEXAGON 1
 // Values here change when : Registers.hpp - hexagon_thread_state_t change
@@ -201,6 +213,7 @@
 # define _LIBUNWIND_TARGET_AARCH64 1
 # define _LIBUNWIND_TARGET_ARM 1
 # define _LIBUNWIND_TARGET_OR1K 1
+# define _LIBUNWIND_TARGET_M68K 1
 # define _LIBUNWIND_TARGET_MIPS_O32 1
 # define _LIBUNWIND_TARGET_MIPS_NEWABI 1
 # define _LIBUNWIND_TARGET_SPARC 1

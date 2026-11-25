@@ -24,9 +24,11 @@
 #ifdef __APPLE__
   #include <mach-o/dyld.h>
 #endif
+#ifdef _LIBUNWIND_XCOFF
+#include "xcoff_tbtable.h"
+#endif
 #ifdef _AIX
 #include <dlfcn.h>
-#include <sys/debug.h>
 #include <sys/pseg.h>
 #endif
 
@@ -532,7 +534,7 @@ public:
   }
 #endif
 
-#ifdef _AIX
+#ifdef _LIBUNWIND_XCOFF
   virtual uintptr_t getDataRelBase() {
     _LIBUNWIND_ABORT("getDataRelBase not implemented");
   }
@@ -1022,7 +1024,7 @@ public:
   virtual void setWalkedFrames(unsigned);
 #endif
 
-#ifdef _AIX
+#ifdef _LIBUNWIND_XCOFF
   virtual uintptr_t getDataRelBase();
 #endif
 
@@ -1326,6 +1328,12 @@ private:
   }
 #endif
 
+#if defined(_LIBUNWIND_TARGET_M68K)
+  compact_unwind_encoding_t dwarfEncoding(Registers_m68k &) const {
+    return 0;
+  }
+#endif
+
 #if defined (_LIBUNWIND_TARGET_HEXAGON)
   compact_unwind_encoding_t dwarfEncoding(Registers_hexagon &) const {
     return 0;
@@ -1563,7 +1571,7 @@ void UnwindCursor<A, R>::setWalkedFrames(unsigned walkedFrames) {
 }
 #endif
 
-#ifdef _AIX
+#ifdef _LIBUNWIND_XCOFF
 template <typename A, typename R>
 uintptr_t UnwindCursor<A, R>::getDataRelBase() {
   return reinterpret_cast<uintptr_t>(_info.extra);
@@ -2338,8 +2346,10 @@ typedef _Unwind_Reason_Code __xlcxx_personality_v0_t(int, _Unwind_Action,
                                                      struct _Unwind_Context *);
 }
 
+#if defined(_AIX)
 static __xlcxx_personality_v0_t *xlcPersonalityV0;
 static RWMutex xlcPersonalityV0InitLock;
+#endif
 
 template <typename A, typename R>
 bool UnwindCursor<A, R>::getInfoFromTBTable(pint_t pc, R &registers) {
@@ -2431,6 +2441,7 @@ bool UnwindCursor<A, R>::getInfoFromTBTable(pint_t pc, R &registers) {
     // is resolved dynamically using dlopen() to avoid a hard dependency of
     // libunwind on libc++abi in cases such as non-C++ applications.
 
+#if defined(_AIX)
     // Resolve the function pointer to the state table personality if it has
     // not already been done.
     if (xlcPersonalityV0 == NULL) {
@@ -2461,6 +2472,10 @@ bool UnwindCursor<A, R>::getInfoFromTBTable(pint_t pc, R &registers) {
       xlcPersonalityV0InitLock.unlock();
     }
     handler = reinterpret_cast<unw_word_t>(xlcPersonalityV0);
+#else
+    // Only the XL C++ compiler for AIX makes state tables.
+    handler = 0;
+#endif
     _LIBUNWIND_TRACE_UNWINDING("State table: LSDA=%p, Personality=%p\n",
                                reinterpret_cast<void *>(lsda),
                                reinterpret_cast<void *>(handler));
@@ -2674,6 +2689,7 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
   // Return address is the address after call site instruction.
   pint_t returnAddress;
 
+#if defined(_AIX)
   if (isSignalFrame) {
     _LIBUNWIND_TRACE_UNWINDING("Possible signal handler frame: lastStack=%p",
                                reinterpret_cast<void *>(lastStack));
@@ -2744,7 +2760,9 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
                                      &(uContext->__extctx->__vmx.__vr[i]))));
       }
     }
-  } else {
+  } else
+#endif // defined(_AIX)
+  {
     // Step up a normal frame.
 
     if (!TBTable->tb.saves_lr && registers.getLR()) {
@@ -2757,6 +2775,7 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
       // Otherwise, use the LR value in the stack link area.
       returnAddress = reinterpret_cast<pint_t *>(lastStack)[2];
 
+#if defined(_AIX)
       if (vapi_glue_addr_begin <= returnAddress &&
           returnAddress < vapi_glue_addr_end) {
         _LIBUNWIND_TRACE_UNWINDING(
@@ -2767,6 +2786,7 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
         _LIBUNWIND_TRACE_UNWINDING("return address=%p from VAPI\n",
                                    reinterpret_cast<void *>(returnAddress));
       }
+#endif // defined(_AIX)
     }
 
     // Reset LR in the current context.
@@ -2891,6 +2911,7 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
   // Simulate the step by replacing the register set with the new ones.
   registers = newRegisters;
 
+#if defined(_AIX)
   // Check if the next frame is a signal frame.
   pint_t nextStack = *(reinterpret_cast<pint_t *>(registers.getSP()));
 
@@ -2916,6 +2937,10 @@ int UnwindCursor<A, R>::stepWithTBTable(pint_t pc, tbtable *TBTable,
   } else {
     isSignalFrame = false;
   }
+#else
+  // Only AIX has signal handler frames.
+  isSignalFrame = false;
+#endif // defined(_AIX)
   return UNW_STEP_SUCCESS;
 }
 #endif // defined(_LIBUNWIND_SUPPORT_TBTAB_UNWIND)
@@ -2955,7 +2980,7 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
   // To disambiguate this, back up the pc when we know it is a return
   // address.
   if (isReturnAddress)
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
     // PC needs to be a 4-byte aligned address to be able to look for a
     // word of 0 that indicates the start of the traceback table at the end
     // of a function on AIX.

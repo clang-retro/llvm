@@ -22,8 +22,8 @@
 #include "Unwind-EHABI.h"
 #include "unwind.h"
 
-#if defined(_AIX)
-#include <sys/debug.h>
+#if defined(_LIBUNWIND_XCOFF)
+#include "xcoff_tbtable.h"
 #endif
 
 #if defined(_LIBUNWIND_BUILD_ZERO_COST_APIS)
@@ -64,7 +64,7 @@ _Unwind_Resume_or_Rethrow(_Unwind_Exception *exception_object) {
 _LIBUNWIND_EXPORT uintptr_t
 _Unwind_GetDataRelBase(struct _Unwind_Context *context) {
   _LIBUNWIND_TRACE_API("_Unwind_GetDataRelBase(context=%p)", (void *)context);
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   return unw_get_data_rel_base((unw_cursor_t *)context);
 #else
   (void)context;
@@ -86,7 +86,7 @@ _Unwind_GetTextRelBase(struct _Unwind_Context *context) {
 /// specified code address "pc".
 _LIBUNWIND_EXPORT void *_Unwind_FindEnclosingFunction(void *pc) {
   _LIBUNWIND_TRACE_API("_Unwind_FindEnclosingFunction(pc=%p)", pc);
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   if (pc == NULL)
     return NULL;
 

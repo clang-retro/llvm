@@ -540,7 +540,7 @@ _Unwind_ForcedUnwind(_Unwind_Exception *exception_object,
 
 
 /// Called by personality handler during phase 2 to get LSDA for current frame.
-_LIBUNWIND_EXPORT uintptr_t
+_LIBUNWIND_EXPORT _LIBUNWIND_LSDA_TYPE
 _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_proc_info_t frameInfo;
@@ -557,7 +557,7 @@ _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
                            result);
   }
 #endif
-  return result;
+  return (_LIBUNWIND_LSDA_TYPE)result;
 }
 
 
