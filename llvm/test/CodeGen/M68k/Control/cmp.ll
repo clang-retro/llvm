@@ -285,8 +285,9 @@ define void @test20(i32 %bf.load, i8 %x1, ptr %b_addr) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -8
 ; CHECK-NEXT:    move.l #16777215, %d0
 ; CHECK-NEXT:    and.l (8,%sp), %d0
 ; CHECK-NEXT:    sne %d1

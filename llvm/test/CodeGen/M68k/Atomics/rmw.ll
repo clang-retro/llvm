@@ -10,7 +10,7 @@ define i8 @atomicrmw_add_i8(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -24,7 +24,7 @@ define i8 @atomicrmw_add_i8(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -38,8 +38,10 @@ define i8 @atomicrmw_add_i8(i8 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.b (15,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.b (%a0), %d2
@@ -70,7 +72,7 @@ define i16 @atomicrmw_sub_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -84,7 +86,7 @@ define i16 @atomicrmw_sub_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -98,8 +100,10 @@ define i16 @atomicrmw_sub_i16(i16 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.w (14,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.w (%a0), %d2
@@ -130,7 +134,7 @@ define i32 @atomicrmw_and_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-000-NEXT:    move.l (20,%sp), %d0
@@ -143,7 +147,7 @@ define i32 @atomicrmw_and_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-010-NEXT:    move.l (20,%sp), %d0
@@ -156,8 +160,10 @@ define i32 @atomicrmw_and_i32(i32 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.l (12,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %d2
@@ -188,7 +194,7 @@ define i64 @atomicrmw_xor_i64(i64 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #20, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -24
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 24
 ; NO-ATOMIC-000-NEXT:    move.l (28,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (8,%sp)
 ; NO-ATOMIC-000-NEXT:    move.l (24,%sp), %d0
@@ -204,7 +210,7 @@ define i64 @atomicrmw_xor_i64(i64 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #20, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -24
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 24
 ; NO-ATOMIC-010-NEXT:    move.l (28,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (8,%sp)
 ; NO-ATOMIC-010-NEXT:    move.l (24,%sp), %d0
@@ -220,7 +226,7 @@ define i64 @atomicrmw_xor_i64(i64 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #20, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -24
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 24
 ; ATOMIC-NEXT:    move.l (28,%sp), %d0
 ; ATOMIC-NEXT:    move.l %d0, (8,%sp)
 ; ATOMIC-NEXT:    move.l (24,%sp), %d0
@@ -240,7 +246,7 @@ define i8 @atomicrmw_or_i8(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -254,7 +260,7 @@ define i8 @atomicrmw_or_i8(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -268,8 +274,10 @@ define i8 @atomicrmw_or_i8(i8 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.b (15,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.b (%a0), %d2
@@ -300,8 +308,9 @@ define i16 @atmoicrmw_nand_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    movem.l %d2, (8,%sp) ; 8-byte Folded Spill
+; NO-ATOMIC-000-NEXT:    .cfi_offset %d2, -8
 ; NO-ATOMIC-000-NEXT:    move.w (18,%sp), %d2
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.w %d2, %d0
@@ -318,8 +327,9 @@ define i16 @atmoicrmw_nand_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    movem.l %d2, (8,%sp) ; 8-byte Folded Spill
+; NO-ATOMIC-010-NEXT:    .cfi_offset %d2, -8
 ; NO-ATOMIC-010-NEXT:    move.w (18,%sp), %d2
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.w %d2, %d0
@@ -336,8 +346,10 @@ define i16 @atmoicrmw_nand_i16(i16 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.w (14,%sp), %d0
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.w (%a0), %d2
@@ -369,7 +381,7 @@ define i32 @atomicrmw_min_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-000-NEXT:    move.l (20,%sp), %d0
@@ -382,7 +394,7 @@ define i32 @atomicrmw_min_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-010-NEXT:    move.l (20,%sp), %d0
@@ -395,8 +407,10 @@ define i32 @atomicrmw_min_i32(i32 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.l (12,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %d2
@@ -437,8 +451,13 @@ define i64 @atomicrmw_max_i64(i64 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #52, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -56
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 56
 ; NO-ATOMIC-000-NEXT:    movem.l %d2-%d5/%a2, (32,%sp) ; 24-byte Folded Spill
+; NO-ATOMIC-000-NEXT:    .cfi_offset %d2, -24
+; NO-ATOMIC-000-NEXT:    .cfi_offset %d3, -20
+; NO-ATOMIC-000-NEXT:    .cfi_offset %d4, -16
+; NO-ATOMIC-000-NEXT:    .cfi_offset %d5, -12
+; NO-ATOMIC-000-NEXT:    .cfi_offset %a2, -8
 ; NO-ATOMIC-000-NEXT:    move.l (64,%sp), %d3
 ; NO-ATOMIC-000-NEXT:    move.l %d3, (%sp)
 ; NO-ATOMIC-000-NEXT:    clr.l (4,%sp)
@@ -489,8 +508,13 @@ define i64 @atomicrmw_max_i64(i64 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #52, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -56
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 56
 ; NO-ATOMIC-010-NEXT:    movem.l %d2-%d5/%a2, (32,%sp) ; 24-byte Folded Spill
+; NO-ATOMIC-010-NEXT:    .cfi_offset %d2, -24
+; NO-ATOMIC-010-NEXT:    .cfi_offset %d3, -20
+; NO-ATOMIC-010-NEXT:    .cfi_offset %d4, -16
+; NO-ATOMIC-010-NEXT:    .cfi_offset %d5, -12
+; NO-ATOMIC-010-NEXT:    .cfi_offset %a2, -8
 ; NO-ATOMIC-010-NEXT:    move.l (64,%sp), %d3
 ; NO-ATOMIC-010-NEXT:    move.l %d3, (%sp)
 ; NO-ATOMIC-010-NEXT:    clr.l (4,%sp)
@@ -540,8 +564,13 @@ define i64 @atomicrmw_max_i64(i64 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #52, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -56
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 56
 ; ATOMIC-NEXT:    movem.l %d2-%d5/%a2, (32,%sp) ; 24-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -24
+; ATOMIC-NEXT:    .cfi_offset %d3, -20
+; ATOMIC-NEXT:    .cfi_offset %d4, -16
+; ATOMIC-NEXT:    .cfi_offset %d5, -12
+; ATOMIC-NEXT:    .cfi_offset %a2, -8
 ; ATOMIC-NEXT:    move.l (64,%sp), %d3
 ; ATOMIC-NEXT:    move.l %d3, (%sp)
 ; ATOMIC-NEXT:    clr.l (4,%sp)
@@ -595,7 +624,7 @@ define i8 @atomicrmw_i8_umin(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -609,7 +638,7 @@ define i8 @atomicrmw_i8_umin(i8 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.b (19,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -623,8 +652,10 @@ define i8 @atomicrmw_i8_umin(i8 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.b (15,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.b (%a0), %d2
@@ -665,7 +696,7 @@ define i16 @atomicrmw_umax_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0:
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -679,7 +710,7 @@ define i16 @atomicrmw_umax_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0:
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -693,8 +724,10 @@ define i16 @atomicrmw_umax_i16(i16 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0:
 ; ATOMIC-NEXT:    suba.l #8, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -12
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 12
 ; ATOMIC-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -12
+; ATOMIC-NEXT:    .cfi_offset %d3, -8
 ; ATOMIC-NEXT:    move.w (14,%sp), %d1
 ; ATOMIC-NEXT:    move.l (16,%sp), %a0
 ; ATOMIC-NEXT:    move.w (%a0), %d2
@@ -735,7 +768,7 @@ define i16 @atomicrmw_xchg_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0: ; %entry
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-000-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
@@ -749,7 +782,7 @@ define i16 @atomicrmw_xchg_i16(i16 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0: ; %entry
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    moveq #0, %d0
 ; NO-ATOMIC-010-NEXT:    move.w (18,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
@@ -763,8 +796,9 @@ define i16 @atomicrmw_xchg_i16(i16 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0: ; %entry
 ; ATOMIC-NEXT:    suba.l #4, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-NEXT:    move.w (10,%sp), %d1
 ; ATOMIC-NEXT:    move.l (12,%sp), %a0
 ; ATOMIC-NEXT:    move.w (%a0), %d2
@@ -794,7 +828,7 @@ define i32 @atomicrmw_xchg_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0: ; %entry
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-000-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-000-NEXT:    move.l (20,%sp), %d0
@@ -807,7 +841,7 @@ define i32 @atomicrmw_xchg_i32(i32 %val, ptr %ptr) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0: ; %entry
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %d0
 ; NO-ATOMIC-010-NEXT:    move.l %d0, (4,%sp)
 ; NO-ATOMIC-010-NEXT:    move.l (20,%sp), %d0
@@ -820,8 +854,9 @@ define i32 @atomicrmw_xchg_i32(i32 %val, ptr %ptr) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0: ; %entry
 ; ATOMIC-NEXT:    suba.l #4, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-NEXT:    move.l (8,%sp), %d1
 ; ATOMIC-NEXT:    move.l (12,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %d2
@@ -851,7 +886,7 @@ define i8 @atomicrmw_sub_i8_arid(ptr align 2 %self) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-000-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-000-NEXT:    add.l #4, %d0
@@ -865,7 +900,7 @@ define i8 @atomicrmw_sub_i8_arid(ptr align 2 %self) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-010-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-010-NEXT:    add.l #4, %d0
@@ -879,8 +914,9 @@ define i8 @atomicrmw_sub_i8_arid(ptr align 2 %self) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0: ; %start
 ; ATOMIC-NEXT:    suba.l #4, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-NEXT:    move.l (8,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %a0
 ; ATOMIC-NEXT:    move.b (4,%a0), %d1
@@ -914,7 +950,7 @@ define i16 @atomicrmw_sub_i16_arid(ptr align 2 %self) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-000-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-000-NEXT:    add.l #4, %d0
@@ -928,7 +964,7 @@ define i16 @atomicrmw_sub_i16_arid(ptr align 2 %self) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-010-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-010-NEXT:    add.l #4, %d0
@@ -942,8 +978,9 @@ define i16 @atomicrmw_sub_i16_arid(ptr align 2 %self) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0: ; %start
 ; ATOMIC-NEXT:    suba.l #4, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-NEXT:    move.l (8,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %a0
 ; ATOMIC-NEXT:    move.w (4,%a0), %d1
@@ -977,7 +1014,7 @@ define i32 @atomicrmw_sub_i32_arid(ptr align 2 %self) {
 ; NO-ATOMIC-000:         .cfi_startproc
 ; NO-ATOMIC-000-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-000-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-000-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-000-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-000-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-000-NEXT:    add.l #4, %d0
@@ -991,7 +1028,7 @@ define i32 @atomicrmw_sub_i32_arid(ptr align 2 %self) {
 ; NO-ATOMIC-010:         .cfi_startproc
 ; NO-ATOMIC-010-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-010-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-010-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-010-NEXT:    move.l (16,%sp), %a0
 ; NO-ATOMIC-010-NEXT:    move.l (%a0), %d0
 ; NO-ATOMIC-010-NEXT:    add.l #4, %d0
@@ -1005,8 +1042,9 @@ define i32 @atomicrmw_sub_i32_arid(ptr align 2 %self) {
 ; ATOMIC:         .cfi_startproc
 ; ATOMIC-NEXT:  ; %bb.0: ; %start
 ; ATOMIC-NEXT:    suba.l #4, %sp
-; ATOMIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-NEXT:    move.l (8,%sp), %a0
 ; ATOMIC-NEXT:    move.l (%a0), %a0
 ; ATOMIC-NEXT:    move.l (4,%a0), %d1

@@ -91,7 +91,7 @@ define i32 @my_access_fp_foo() #0 {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    lea (_GLOBAL_OFFSET_TABLE_@GOTPCREL,%pc), %a0
 ; CHECK-NEXT:    adda.l #foo@GOTOFF, %a0
 ; CHECK-NEXT:    move.l %a0, (%sp)
@@ -122,7 +122,7 @@ define i32 @my_access_fp_bar() #0 {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    lea (_GLOBAL_OFFSET_TABLE_@GOTPCREL,%pc), %a0
 ; CHECK-NEXT:    adda.l #bar@GOTOFF, %a0
 ; CHECK-NEXT:    move.l %a0, (%sp)

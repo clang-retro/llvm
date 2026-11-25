@@ -24,7 +24,7 @@ define void @call_test0() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    lea (4,%sp), %a0
 ; CHECK-NEXT:    move.l %a0, (%sp)
 ; CHECK-NEXT:    jsr test0
@@ -53,7 +53,7 @@ define void @call_test1() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    lea (4,%sp), %a0
 ; CHECK-NEXT:    move.l %a0, (%sp)
 ; CHECK-NEXT:    jsr test1
@@ -80,7 +80,7 @@ define void @call_test2() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    jsr test2
 ; CHECK-NEXT:    adda.l #4, %sp
 ; CHECK-NEXT:    rts

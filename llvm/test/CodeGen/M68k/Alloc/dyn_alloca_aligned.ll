@@ -5,7 +5,7 @@ define i32 @A(i32 %Size) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    link.w %a6, #-128
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    .cfi_def_cfa_register %a6
 ; CHECK-NEXT:    move.l %sp, %d0
@@ -13,6 +13,7 @@ define i32 @A(i32 %Size) {
 ; CHECK-NEXT:    move.l %d0, %sp
 ; CHECK-NEXT:    move.l %sp, %a4
 ; CHECK-NEXT:    movem.l %a4, (116,%a4) ; 8-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %a4, -12
 ; CHECK-NEXT:    move.l (8,%a6), %d1
 ; CHECK-NEXT:    add.l #7, %d1
 ; CHECK-NEXT:    and.l #-8, %d1

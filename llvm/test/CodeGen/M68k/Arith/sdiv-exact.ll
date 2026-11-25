@@ -6,7 +6,7 @@ define i32 @test1(i32 %x) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #12, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -16
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    move.l (16,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)
 ; CHECK-NEXT:    move.l #-1030792151, (4,%sp)
@@ -22,7 +22,7 @@ define i32 @test2(i32 %x) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #12, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -16
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    move.l (16,%sp), %d0
 ; CHECK-NEXT:    asr.l #3, %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)

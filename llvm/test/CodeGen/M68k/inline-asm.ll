@@ -96,7 +96,7 @@ define void @register_constraints() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    ;APP
 ; CHECK-NEXT:    move.l #94, %d0
 ; CHECK-NEXT:    ;NO_APP
@@ -127,7 +127,7 @@ define void @memory_constraints() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    ;APP
 ; CHECK-NEXT:    move.l (0,%sp), %d1
 ; CHECK-NEXT:    ;NO_APP
@@ -172,12 +172,15 @@ entry:
 ; A symbol passed for an immediate operand is printed as an immediate.
 define void @symbol_immediate() {
 ; CHECK-LABEL: symbol_immediate:
-; CHECK:         ;APP
+; CHECK:         .cfi_startproc
+; CHECK-NEXT:  ; %bb.0: ; %entry
+; CHECK-NEXT:    ;APP
 ; CHECK-NEXT:    move.l #g, -(%sp)
 ; CHECK-NEXT:    ;NO_APP
 ; CHECK-NEXT:    ;APP
 ; CHECK-NEXT:    move.l #g+4, %d0
 ; CHECK-NEXT:    ;NO_APP
+; CHECK-NEXT:    rts
 entry:
   call void asm sideeffect "move.l $0, -(%sp)", "i"(ptr @g)
   call void asm sideeffect "move.l $0, %d0", "i"(ptr getelementptr (i8, ptr @g, i32 4))

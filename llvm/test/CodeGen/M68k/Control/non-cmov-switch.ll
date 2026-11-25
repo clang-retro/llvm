@@ -7,8 +7,9 @@ define internal void @select_i32(i32 %self, ptr nonnull %value) {
 ; M68000:         .cfi_startproc
 ; M68000-NEXT:  ; %bb.0: ; %start
 ; M68000-NEXT:    suba.l #4, %sp
-; M68000-NEXT:    .cfi_def_cfa_offset -8
+; M68000-NEXT:    .cfi_def_cfa_offset 8
 ; M68000-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68000-NEXT:    .cfi_offset %d2, -8
 ; M68000-NEXT:    cmpi.l #0, (8,%sp)
 ; M68000-NEXT:    move.w %sr, %d2
 ; M68000-NEXT:    sne %d1
@@ -31,8 +32,9 @@ define internal void @select_i32(i32 %self, ptr nonnull %value) {
 ; M68020:         .cfi_startproc
 ; M68020-NEXT:  ; %bb.0: ; %start
 ; M68020-NEXT:    suba.l #4, %sp
-; M68020-NEXT:    .cfi_def_cfa_offset -8
+; M68020-NEXT:    .cfi_def_cfa_offset 8
 ; M68020-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68020-NEXT:    .cfi_offset %d2, -8
 ; M68020-NEXT:    cmpi.l #0, (8,%sp)
 ; M68020-NEXT:    move.w %ccr, %d2
 ; M68020-NEXT:    sne %d1
@@ -75,8 +77,9 @@ define internal void @select_i16(i16 %self, ptr nonnull %value) {
 ; M68000:         .cfi_startproc
 ; M68000-NEXT:  ; %bb.0: ; %start
 ; M68000-NEXT:    suba.l #4, %sp
-; M68000-NEXT:    .cfi_def_cfa_offset -8
+; M68000-NEXT:    .cfi_def_cfa_offset 8
 ; M68000-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68000-NEXT:    .cfi_offset %d2, -8
 ; M68000-NEXT:    cmpi.w #0, (10,%sp)
 ; M68000-NEXT:    move.w %sr, %d2
 ; M68000-NEXT:    sne %d1
@@ -99,8 +102,9 @@ define internal void @select_i16(i16 %self, ptr nonnull %value) {
 ; M68020:         .cfi_startproc
 ; M68020-NEXT:  ; %bb.0: ; %start
 ; M68020-NEXT:    suba.l #4, %sp
-; M68020-NEXT:    .cfi_def_cfa_offset -8
+; M68020-NEXT:    .cfi_def_cfa_offset 8
 ; M68020-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68020-NEXT:    .cfi_offset %d2, -8
 ; M68020-NEXT:    cmpi.w #0, (10,%sp)
 ; M68020-NEXT:    move.w %ccr, %d2
 ; M68020-NEXT:    sne %d1
@@ -143,8 +147,9 @@ define internal void @select_i8(i8 %self, ptr nonnull %value) {
 ; M68000:         .cfi_startproc
 ; M68000-NEXT:  ; %bb.0: ; %start
 ; M68000-NEXT:    suba.l #4, %sp
-; M68000-NEXT:    .cfi_def_cfa_offset -8
+; M68000-NEXT:    .cfi_def_cfa_offset 8
 ; M68000-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68000-NEXT:    .cfi_offset %d2, -8
 ; M68000-NEXT:    cmpi.b #0, (11,%sp)
 ; M68000-NEXT:    move.w %sr, %d2
 ; M68000-NEXT:    sne %d1
@@ -167,8 +172,9 @@ define internal void @select_i8(i8 %self, ptr nonnull %value) {
 ; M68020:         .cfi_startproc
 ; M68020-NEXT:  ; %bb.0: ; %start
 ; M68020-NEXT:    suba.l #4, %sp
-; M68020-NEXT:    .cfi_def_cfa_offset -8
+; M68020-NEXT:    .cfi_def_cfa_offset 8
 ; M68020-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; M68020-NEXT:    .cfi_offset %d2, -8
 ; M68020-NEXT:    cmpi.b #0, (11,%sp)
 ; M68020-NEXT:    move.w %ccr, %d2
 ; M68020-NEXT:    sne %d1

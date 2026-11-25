@@ -43,9 +43,9 @@ static cl::opt<bool> EnableBasePointer(
 void M68kRegisterInfo::anchor() {}
 
 M68kRegisterInfo::M68kRegisterInfo(const M68kSubtarget &ST)
-    // FIXME x26 not sure it this the correct value, it expects RA, but M68k
-    // passes IP anyway, how this works?
-    : M68kGenRegisterInfo(M68k::A0, 0, 0, M68k::PC), Subtarget(ST) {
+    // The return address column of the call frame information is the
+    // program counter (DWARF register 24), as in GCC.
+    : M68kGenRegisterInfo(M68k::PC, 0, 0, M68k::PC), Subtarget(ST) {
   StackPtr = M68k::SP;
   if (ST.getTargetTriple().isOSAmigaOS()) {
     // AmigaOS passes the library base in A6 to every OS call, so A6 can't

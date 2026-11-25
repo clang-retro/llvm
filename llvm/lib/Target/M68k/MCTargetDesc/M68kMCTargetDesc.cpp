@@ -53,7 +53,7 @@ static MCInstrInfo *createM68kMCInstrInfo() {
 
 static MCRegisterInfo *createM68kMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitM68kMCRegisterInfo(X, llvm::M68k::A0, 0, 0, llvm::M68k::PC);
+  InitM68kMCRegisterInfo(X, llvm::M68k::PC, 0, 0, llvm::M68k::PC);
   return X;
 }
 

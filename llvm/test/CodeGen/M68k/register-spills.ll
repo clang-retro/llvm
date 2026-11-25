@@ -11,7 +11,7 @@ define void @test_edge_detection_conditional_branch() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    bra .LBB0_1
 ; CHECK-NEXT:  .LBB0_1: ; %condition_check
 ; CHECK-NEXT:    ; =>This Inner Loop Header: Depth=1
@@ -49,8 +49,14 @@ define void @test_force_spill_8() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #108, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -112
+; CHECK-NEXT:    .cfi_def_cfa_offset 112
 ; CHECK-NEXT:    movem.l %d2-%d7, (84,%sp) ; 28-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -28
+; CHECK-NEXT:    .cfi_offset %d3, -24
+; CHECK-NEXT:    .cfi_offset %d4, -20
+; CHECK-NEXT:    .cfi_offset %d5, -16
+; CHECK-NEXT:    .cfi_offset %d6, -12
+; CHECK-NEXT:    .cfi_offset %d7, -8
 ; CHECK-NEXT:    jsr get8
 ; CHECK-NEXT:    movem.w %d0, (82,%sp)
 ; CHECK-NEXT:    jsr get8
@@ -140,8 +146,19 @@ define void @test_force_spill_16() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #116, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -120
+; CHECK-NEXT:    .cfi_def_cfa_offset 120
 ; CHECK-NEXT:    movem.l %d2-%d7/%a2-%a6, (72,%sp) ; 48-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -48
+; CHECK-NEXT:    .cfi_offset %d3, -44
+; CHECK-NEXT:    .cfi_offset %d4, -40
+; CHECK-NEXT:    .cfi_offset %d5, -36
+; CHECK-NEXT:    .cfi_offset %d6, -32
+; CHECK-NEXT:    .cfi_offset %d7, -28
+; CHECK-NEXT:    .cfi_offset %a2, -24
+; CHECK-NEXT:    .cfi_offset %a3, -20
+; CHECK-NEXT:    .cfi_offset %a4, -16
+; CHECK-NEXT:    .cfi_offset %a5, -12
+; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    jsr get16
 ; CHECK-NEXT:    movem.w %d0, (70,%sp)
 ; CHECK-NEXT:    jsr get16
@@ -226,8 +243,19 @@ define void @test_force_spill_32() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #124, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -128
+; CHECK-NEXT:    .cfi_def_cfa_offset 128
 ; CHECK-NEXT:    movem.l %d2-%d7/%a2-%a6, (80,%sp) ; 48-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -48
+; CHECK-NEXT:    .cfi_offset %d3, -44
+; CHECK-NEXT:    .cfi_offset %d4, -40
+; CHECK-NEXT:    .cfi_offset %d5, -36
+; CHECK-NEXT:    .cfi_offset %d6, -32
+; CHECK-NEXT:    .cfi_offset %d7, -28
+; CHECK-NEXT:    .cfi_offset %a2, -24
+; CHECK-NEXT:    .cfi_offset %a3, -20
+; CHECK-NEXT:    .cfi_offset %a4, -16
+; CHECK-NEXT:    .cfi_offset %a5, -12
+; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    jsr get32
 ; CHECK-NEXT:    movem.l %d0, (76,%sp)
 ; CHECK-NEXT:    jsr get32
@@ -312,8 +340,19 @@ define void @test_force_spill_mixed() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #148, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -152
+; CHECK-NEXT:    .cfi_def_cfa_offset 152
 ; CHECK-NEXT:    movem.l %d2-%d7/%a2-%a6, (104,%sp) ; 48-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -48
+; CHECK-NEXT:    .cfi_offset %d3, -44
+; CHECK-NEXT:    .cfi_offset %d4, -40
+; CHECK-NEXT:    .cfi_offset %d5, -36
+; CHECK-NEXT:    .cfi_offset %d6, -32
+; CHECK-NEXT:    .cfi_offset %d7, -28
+; CHECK-NEXT:    .cfi_offset %a2, -24
+; CHECK-NEXT:    .cfi_offset %a3, -20
+; CHECK-NEXT:    .cfi_offset %a4, -16
+; CHECK-NEXT:    .cfi_offset %a5, -12
+; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    jsr get8
 ; CHECK-NEXT:    movem.w %d0, (102,%sp)
 ; CHECK-NEXT:    jsr get16

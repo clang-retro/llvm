@@ -42,7 +42,7 @@ define void @bar() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    jsr (foo@PLT,%pc)
 ; CHECK-NEXT:    jsr (weak_odr_foo@PLT,%pc)
 ; CHECK-NEXT:    jsr (weak_foo@PLT,%pc)

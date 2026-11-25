@@ -69,18 +69,21 @@ defm A6 : MxAddressRegister<6, "a6", ["fp"]>;
 defm SP : MxAddressRegister<7, "sp", ["usp", "ssp", "isp", "a7"]>;
 
 // Floating Point Registers
-class MxFPRegister<int INDEX, string REG_NAME, list<string> ALTNAMES = []>
+// The DWARF numbers are those of GCC and GDB: FP0 to FP7 are 16 to 23 and
+// the return address column (PC) is 24.
+class MxFPRegister<int INDEX, string REG_NAME, list<string> ALTNAMES = [],
+                   int DWARF = !add(16, INDEX)>
     : MxReg<REG_NAME, INDEX, /*SUBREGS=*/[], /*SUBIDX=*/[],
-            /*DWREGS=*/[!add(18,INDEX)], ALTNAMES>;
+            /*DWREGS=*/[DWARF], ALTNAMES>;
 
 foreach i = {0-7} in
   def FP#i : MxFPRegister<i, "fp"#i>;
 
 // Unlike their counterparts in integer registers, these
 // control registers can be accessed and modified by instructions.
-def FPC   : MxFPRegister<8,  "fpcr",  ["fpc"]>;
-def FPS   : MxFPRegister<9,  "fpsr",  ["fps"]>;
-def FPIAR : MxFPRegister<10, "fpiar", ["fpi"]>;
+def FPC   : MxFPRegister<8,  "fpcr",  ["fpc"], 26>;
+def FPS   : MxFPRegister<9,  "fpsr",  ["fps"], 27>;
+def FPIAR : MxFPRegister<10, "fpiar", ["fpi"], 28>;
 
 // Pseudo Registers
 class MxPseudoReg<string N, list<Register> SUBREGS = [], list<SubRegIndex> SUBIDX = []>
@@ -89,7 +92,8 @@ class MxPseudoReg<string N, list<Register> SUBREGS = [], list<SubRegIndex> SUBID
 def CCR : MxPseudoReg<"ccr">;
 def SR  : MxPseudoReg<"sr", [CCR], [MxSubRegIndex8Lo]>;
 
-def PC  : MxPseudoReg<"pc">;
+// The return address column of the call frame information.
+def PC  : MxReg<"pc", 0, [], [], [24]>;
 
 //===----------------------------------------------------------------------===//
 // Register Classes
