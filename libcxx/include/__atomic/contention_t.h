@@ -27,6 +27,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 #  if defined(__linux__) || defined(__Fuchsia__)
 using __cxx_contention_t _LIBCPP_NODEBUG = int32_t;
+#  elif defined(__APPLE__) && defined(__ppc__)
+// 32-bit PowerPC has no 64-bit atomic instructions.
+using __cxx_contention_t _LIBCPP_NODEBUG = int32_t;
 #  elif defined(__APPLE__)
 using __cxx_contention_t _LIBCPP_NODEBUG = int64_t;
 #  elif defined(__FreeBSD__) && __SIZEOF_LONG__ == 8
@@ -41,7 +44,8 @@ using __cxx_contention_t _LIBCPP_NODEBUG = int64_t;
 
 #else // _LIBCPP_ABI_ATOMIC_WAIT_NATIVE_BY_SIZE
 
-#  if defined(__linux__) || defined(__Fuchsia__) || (defined(_AIX) && !defined(__64BIT__))
+#  if defined(__linux__) || defined(__Fuchsia__) || (defined(_AIX) && !defined(__64BIT__)) ||                         \
+      (defined(__APPLE__) && defined(__ppc__))
 using __cxx_contention_t _LIBCPP_NODEBUG = int32_t;
 #  else
 using __cxx_contention_t _LIBCPP_NODEBUG = int64_t;

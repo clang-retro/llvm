@@ -88,8 +88,12 @@ public:
     // combinations.
     this->TLSSupported = false;
 
+    // On PowerPC, thread-local variables are emulated
+    // (Triple::hasDefaultEmulatedTLS): __emutls_get_address in the
+    // compiler's helper library keeps them.
     if (Triple.isMacOSX())
-      this->TLSSupported = !Triple.isMacOSXVersionLT(10, 7);
+      this->TLSSupported =
+          !Triple.isMacOSXVersionLT(10, 7) || Triple.hasDefaultEmulatedTLS();
     else if (Triple.isiOS()) {
       // 64-bit iOS supported it from 8 onwards, 32-bit device from 9 onwards,
       // 32-bit simulator from 10 onwards.
