@@ -38,10 +38,10 @@
 #  define _LIBCPP_HAS_TIMESPEC_GET
 #endif
 
-// 32-bit PowerPC Mac OS X (10.0 to 10.5) has no clock_gettime; it uses
-// gettimeofday.
-#if (defined(__APPLE__) && !defined(__ppc__)) || defined(__gnu_hurd__) || defined(__AMDGPU__) || defined(__NVPTX__) ||  \
-    (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
+// 32-bit Mac OS X (PowerPC, and Intel before 10.12) has no clock_gettime;
+// it uses gettimeofday.
+#if (defined(__APPLE__) && !defined(__ppc__) && !defined(__i386__)) || defined(__gnu_hurd__) || defined(__AMDGPU__) ||  \
+    defined(__NVPTX__) || (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
 #  define _LIBCPP_HAS_CLOCK_GETTIME
 #endif
 
