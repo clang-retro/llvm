@@ -82,10 +82,11 @@ private:
   SRWLOCK _lock = SRWLOCK_INIT;
 };
 
-#elif defined(__APPLE__) && defined(__ppc__)
+#elif defined(__APPLE__) && (defined(__ppc__) || defined(__i386__))
 
-// 32-bit PowerPC Mac OS X has read-write locks only from 10.2 or so; a mutex
-// works on every release from 10.0.
+// 32-bit PowerPC Mac OS X has read-write locks only from 10.2 or so, and the
+// 10.4 SDK has no PTHREAD_RWLOCK_INITIALIZER (also for Intel). A mutex works
+// on every release from 10.0.
 class _LIBUNWIND_HIDDEN RWMutex {
 public:
   bool lock_shared() { return pthread_mutex_lock(&_lock) == 0; }

@@ -88,7 +88,7 @@ public:
     // combinations.
     this->TLSSupported = false;
 
-    // On PowerPC, thread-local variables are emulated
+    // On 32-bit Mac OS X before 10.7, thread-local variables are emulated
     // (Triple::hasDefaultEmulatedTLS): __emutls_get_address in the
     // compiler's helper library keeps them.
     if (Triple.isMacOSX())
