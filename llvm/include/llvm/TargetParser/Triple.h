@@ -1390,8 +1390,11 @@ public:
   bool hasDefaultEmulatedTLS() const {
     // OS/2 has no TLS of its own for ELF objects: the C library keeps
     // __thread variables in per-thread memory (__emutls_get_address).
+    // Neither has classic Mac OS, whose Thread Manager threads have no
+    // thread pointer.
     return (isAndroid() && isAndroidVersionLT(29)) || isOSOpenBSD() ||
            isWindowsCygwinEnvironment() || isOHOSFamily() || isOSOS2() ||
+           isOSMacOSClassic() ||
            (isWindowsGNUEnvironment() && getOSMajorVersion() != 0 &&
             getOSMajorVersion() < 6);
   }

@@ -235,7 +235,8 @@ static CallSeqChainInfo getCallSeqChainInfo(SDValue Chain) {
   return CallSeqChainInfo{Found, false};
 }
 
-// Helper for use in TableGen. We can't safely use a combined load/store in the
+// Helper for use in TableGen. A combined load/store must move a value of
+// one size, unchanged. We also can't safely use a combined load/store in the
 // case where a token factor can cause a chain dep on a different call sequence.
 // Look for that case and return false if we can't confirm it's safe. This is
 // necessary due to the nesting level tracking in
@@ -246,6 +247,11 @@ static bool isSafeStoreLoad(SDNode *N) {
     return false;
   auto *LD = dyn_cast<LoadSDNode>(ST->getValue());
   if (!LD)
+    return false;
+  // A memory-to-memory MOVE copies the bytes as they are: it cannot
+  // extend a narrower load (zextload i16 into an i32 store would copy
+  // the two bytes after the field too) or truncate the stored value.
+  if (LD->getExtensionType() != ISD::NON_EXTLOAD || ST->isTruncatingStore())
     return false;
   // Load and store chains can be unrelated; guard against either side
   // depending on a different call sequence boundary.

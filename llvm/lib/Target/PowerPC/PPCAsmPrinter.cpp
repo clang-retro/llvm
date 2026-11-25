@@ -2813,6 +2813,12 @@ void PPCAIXAsmPrinter::emitGlobalVariable(const GlobalVariable *GV) {
   if (GV->getSection() == "llvm.metadata")
     return;
 
+  // With emulated TLS (the classic Mac OS), the variable's initial value
+  // is in __emutls_t.NAME and its control record in __emutls_v.NAME; the
+  // variable itself is never emitted.
+  if (TM.useEmulatedTLS() && GV->isThreadLocal())
+    return;
+
   // If the Global Variable has the toc-data attribute, it needs to be emitted
   // when we emit the .toc section.
   if (GV->hasAttribute("toc-data")) {
