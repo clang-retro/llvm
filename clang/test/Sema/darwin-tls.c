@@ -1,5 +1,7 @@
 // RUN: not %clang_cc1 -fsyntax-only -triple x86_64-apple-macosx10.6 %s 2>&1 | FileCheck %s --check-prefix NO-TLS
 // RUN: %clang_cc1 -fsyntax-only -Wno-error=implicit-int -triple x86_64-apple-macosx10.7 %s 2>&1 | FileCheck %s --check-prefix TLS
+// PowerPC Mac OS X emulates thread-local storage.
+// RUN: %clang_cc1 -fsyntax-only -Wno-error=implicit-int -triple powerpc-apple-macosx10.4 %s 2>&1 | FileCheck %s --check-prefix TLS
 
 // RUN: not %clang_cc1 -fsyntax-only -triple arm64-apple-ios7.1 %s 2>&1 | FileCheck %s --check-prefix NO-TLS
 // RUN: %clang_cc1 -fsyntax-only -Wno-error=implicit-int -triple arm64-apple-ios8.0 %s 2>&1 | FileCheck %s --check-prefix TLS

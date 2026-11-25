@@ -142,8 +142,13 @@
 // On Windows, Clang either doesn't use __cxa_thread_atexit at all (in the MSVC ABI),
 // or (on MinGW) the function is already provided by C runtime.
 //
+// 32-bit PowerPC Mac OS X (10.4 and 10.5) has no _tlv_atexit. Clang uses
+// emulated TLS there and calls __cxa_thread_atexit, which libc++abi provides.
+//
 // On other platforms, libc++abi provides __cxa_thread_atexit.
-#if defined(__APPLE__) || defined(_AIX) || defined(_WIN32)
+#if defined(__APPLE__) && defined(__ppc__) && !defined(__ppc64__)
+#  define _LIBCXXABI_DEFINE_THREAD_ATEXIT 1
+#elif defined(__APPLE__) || defined(_AIX) || defined(_WIN32)
 #  define _LIBCXXABI_DEFINE_THREAD_ATEXIT 0
 #else
 #  define _LIBCXXABI_DEFINE_THREAD_ATEXIT 1

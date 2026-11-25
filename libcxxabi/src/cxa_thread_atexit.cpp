@@ -23,6 +23,11 @@ namespace __cxxabiv1 {
 
   using Dtor = void(*)(void*);
 
+#if defined(__APPLE__) && !defined(HAVE___CXA_THREAD_ATEXIT_IMPL)
+  // The Mac OS X C library has no __cxa_thread_atexit_impl, and ld64 does not
+  // accept a weak reference that no library defines. Always use the fallback.
+  static constexpr int (*__cxa_thread_atexit_impl)(Dtor, void*, void*) = nullptr;
+#else
   extern "C"
 #ifndef HAVE___CXA_THREAD_ATEXIT_IMPL
   // A weak symbol is used to detect this function's presence in the C library
@@ -30,6 +35,7 @@ namespace __cxxabiv1 {
   _LIBCXXABI_WEAK
 #endif
   int __cxa_thread_atexit_impl(Dtor, void*, void*);
+#endif
 
 #ifndef HAVE___CXA_THREAD_ATEXIT_IMPL
 

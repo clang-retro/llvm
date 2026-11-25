@@ -1392,7 +1392,10 @@ public:
     // __thread variables in per-thread memory (__emutls_get_address).
     // Neither has classic Mac OS, whose Thread Manager threads have no
     // thread pointer.
+    // PowerPC Mac OS X (10.0 to 10.5) has no thread-local variables in
+    // dyld; they came with 10.7.
     return (isAndroid() && isAndroidVersionLT(29)) || isOSOpenBSD() ||
+           (isMacOSX() && getArch() == ppc && isMacOSXVersionLT(10, 7)) ||
            isWindowsCygwinEnvironment() || isOHOSFamily() || isOSOS2() ||
            isOSMacOSClassic() ||
            (isWindowsGNUEnvironment() && getOSMajorVersion() != 0 &&
