@@ -65,7 +65,9 @@ char *getFuncNameFromTBTable(uintptr_t pc, uint16_t &NameLen,
     uintptr_t                   compact_unwind_section_length;
   };
 
-#if defined(__ppc__)
+#if defined(__ppc__) ||                                                         \
+    (defined(__i386__) &&                                                      \
+     __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1060)
 // Older Mac OS X headers don't declare these extern "C" for C++.
 extern "C" {
 #include <mach-o/dyld.h>
@@ -74,8 +76,8 @@ extern "C" {
 }
 #include <string.h>
 
-  // 32-bit PowerPC Mac OS X (10.0 to 10.5) predates
-  // _dyld_find_unwind_sections, so find the image whose __TEXT segment holds
+  // 32-bit PowerPC Mac OS X (10.0 to 10.5) and Intel Mac OS X before 10.6
+  // predate _dyld_find_unwind_sections, so find the image whose __TEXT segment holds
   // the address, and its __eh_frame, with the dyld calls 10.0 already has.
   // These images have no compact unwind section.
   static bool _dyld_find_unwind_sections(void *addr,
