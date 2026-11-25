@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 %s -triple=powerpc-apple-macosx10.4 -verify
+// RUN: %clang_cc1 %s -triple=i386-apple-macosx10.4 -verify
 // expected-no-diagnostics
 
-// On 32-bit PowerPC Mac OS X, the compiler-rt builtins (atomic.c) supply
+// On 32-bit Mac OS X (PowerPC and Intel), the compiler-rt builtins (atomic.c) supply
 // the atomic library functions, so a large atomic load or store is not an
 // error.
 

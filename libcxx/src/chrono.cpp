@@ -44,7 +44,7 @@
 #  define _LIBCPP_HAS_CLOCK_GETTIME
 #endif
 
-#if defined(__APPLE__) && defined(__ppc__)
+#if defined(__APPLE__) && (defined(__ppc__) || defined(__i386__))
 #  include <mach/mach_time.h> // mach_absolute_time for steady_clock
 #endif
 
@@ -179,9 +179,9 @@ system_clock::time_point system_clock::from_time_t(time_t t) noexcept { return s
 
 #if _LIBCPP_HAS_MONOTONIC_CLOCK
 
-#  if defined(__APPLE__) && defined(__ppc__)
+#  if defined(__APPLE__) && (defined(__ppc__) || defined(__i386__))
 
-// 32-bit PowerPC Mac OS X (10.0 to 10.5) has no clock_gettime. The
+// 32-bit Mac OS X before 10.12 (PowerPC and Intel) has no clock_gettime. The
 // function uses mach_absolute_time, which counts from boot and does not
 // go back, and converts its ticks with mach_timebase_info.
 static steady_clock::time_point __libcpp_steady_clock_now() {

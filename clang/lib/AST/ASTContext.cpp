@@ -14073,9 +14073,10 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
   if (!T.isOSDarwin())
     return false;
 
-  // For 32-bit PowerPC Mac OS X, the compiler-rt builtins supply the atomic
-  // library functions (atomic.c), because libSystem does not.
-  if (T.isMacOSX() && T.getArch() == llvm::Triple::ppc)
+  // For 32-bit Mac OS X (PowerPC and Intel), the compiler-rt builtins
+  // supply the atomic library functions (atomic.c), because libSystem does
+  // not.
+  if (T.isMacOSX() && (T.getArch() == llvm::Triple::ppc || T.getArch() == llvm::Triple::x86))
     return false;
 
   if (!(T.isiOS() && T.isOSVersionLT(7)) &&
