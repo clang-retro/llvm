@@ -21,7 +21,7 @@ define i32 @use_ptr(ptr %name) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #12, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -16
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    move.l (16,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)
 ; CHECK-NEXT:    clr.l (4,%sp)
@@ -54,7 +54,7 @@ define i32 @call_make() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    move.l #7, (%sp)
 ; CHECK-NEXT:    lea (8,%sp), %a1
 ; CHECK-NEXT:    jsr make

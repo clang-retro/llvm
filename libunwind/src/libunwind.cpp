@@ -111,6 +111,8 @@ _LIBUNWIND_HIDDEN int __unw_init_local(unw_cursor_t *cursor,
 # define REGISTER_KIND Registers_arm
 #elif defined(__or1k__)
 # define REGISTER_KIND Registers_or1k
+#elif defined(__m68k__)
+# define REGISTER_KIND Registers_m68k
 #elif defined(__hexagon__)
 # define REGISTER_KIND Registers_hexagon
 #elif defined(__mips__) && defined(_ABIO32) && _MIPS_SIM == _ABIO32
@@ -373,7 +375,7 @@ _LIBUNWIND_HIDDEN int __unw_is_signal_frame(unw_cursor_t *cursor) {
 }
 _LIBUNWIND_WEAK_ALIAS(__unw_is_signal_frame, unw_is_signal_frame)
 
-#ifdef _AIX
+#ifdef _LIBUNWIND_XCOFF
 _LIBUNWIND_EXPORT uintptr_t __unw_get_data_rel_base(unw_cursor_t *cursor) {
   _LIBUNWIND_TRACE_API("unw_get_data_rel_base(cursor=%p)",
                        static_cast<void *>(cursor));

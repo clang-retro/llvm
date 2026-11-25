@@ -17,7 +17,7 @@ define { i32, i1 } @std_thread_new() {
 ; NO-ATOMIC:         .cfi_startproc
 ; NO-ATOMIC-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-NEXT:    move.l #1, (8,%sp)
 ; NO-ATOMIC-NEXT:    clr.l (4,%sp)
 ; NO-ATOMIC-NEXT:    move.l #thread_id, (%sp)
@@ -31,7 +31,7 @@ define { i32, i1 } @std_thread_new() {
 ; NO-ATOMIC-PIC:         .cfi_startproc
 ; NO-ATOMIC-PIC-NEXT:  ; %bb.0: ; %start
 ; NO-ATOMIC-PIC-NEXT:    suba.l #12, %sp
-; NO-ATOMIC-PIC-NEXT:    .cfi_def_cfa_offset -16
+; NO-ATOMIC-PIC-NEXT:    .cfi_def_cfa_offset 16
 ; NO-ATOMIC-PIC-NEXT:    lea (_GLOBAL_OFFSET_TABLE_@GOTPCREL,%pc), %a0
 ; NO-ATOMIC-PIC-NEXT:    adda.l #thread_id@GOTOFF, %a0
 ; NO-ATOMIC-PIC-NEXT:    move.l %a0, (%sp)
@@ -58,8 +58,9 @@ define { i32, i1 } @std_thread_new() {
 ; ATOMIC-PIC:         .cfi_startproc
 ; ATOMIC-PIC-NEXT:  ; %bb.0: ; %start
 ; ATOMIC-PIC-NEXT:    suba.l #4, %sp
-; ATOMIC-PIC-NEXT:    .cfi_def_cfa_offset -8
+; ATOMIC-PIC-NEXT:    .cfi_def_cfa_offset 8
 ; ATOMIC-PIC-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; ATOMIC-PIC-NEXT:    .cfi_offset %d2, -8
 ; ATOMIC-PIC-NEXT:    lea (_GLOBAL_OFFSET_TABLE_@GOTPCREL,%pc), %a0
 ; ATOMIC-PIC-NEXT:    move.l #thread_id@GOTOFF, %d1
 ; ATOMIC-PIC-NEXT:    moveq #1, %d2

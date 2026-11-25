@@ -21,7 +21,7 @@ define i32 @use_ptr(i32 %n) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    move.l (8,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)
 ; CHECK-NEXT:    jsr Malloc
@@ -52,7 +52,7 @@ define i32 @call_make(i32 %x) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    move.l (24,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)
 ; CHECK-NEXT:    lea (8,%sp), %a1
@@ -71,7 +71,7 @@ define i32 @frame(i32 %n) "frame-pointer"="all" {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    link.w %a6, #-24
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    .cfi_def_cfa_register %a6
 ; CHECK-NEXT:    move.l (8,%a6), %d0

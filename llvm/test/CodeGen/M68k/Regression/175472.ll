@@ -6,8 +6,11 @@ define i32 @minimized() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    movem.l %d2-%d3/%a2, (8,%sp) ; 16-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -16
+; CHECK-NEXT:    .cfi_offset %d3, -12
+; CHECK-NEXT:    .cfi_offset %a2, -8
 ; CHECK-NEXT:    suba.l %a2, %a2
 ; CHECK-NEXT:    move.l (%a2), %d0
 ; CHECK-NEXT:    move.l %d0, (%sp)

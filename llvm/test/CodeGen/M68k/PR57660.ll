@@ -6,7 +6,7 @@ define dso_local void @foo1() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #2, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -6
+; CHECK-NEXT:    .cfi_def_cfa_offset 6
 ; CHECK-NEXT:    clr.b %d0
 ; CHECK-NEXT:    movem.w %d0, (0,%sp)
 ; CHECK-NEXT:  .LBB0_1: ; %do.body
@@ -36,7 +36,7 @@ define i32 @foo2(ptr noundef %0) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #8, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -12
+; CHECK-NEXT:    .cfi_def_cfa_offset 12
 ; CHECK-NEXT:    move.l (12,%sp), %a0
 ; CHECK-NEXT:    move.b (%a0), %d0
 ; CHECK-NEXT:    movem.w %d0, (4,%sp)

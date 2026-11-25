@@ -9,7 +9,7 @@ define i32 @foo1() nounwind uwtable {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    move.l #5, (%sp)
 ; CHECK-NEXT:    moveq #1, %d0
 ; CHECK-NEXT:    moveq #2, %d1
@@ -32,7 +32,7 @@ define i32 @foo2() nounwind uwtable {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %entry
 ; CHECK-NEXT:    suba.l #12, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -16
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    lea (8,%sp), %a0
 ; CHECK-NEXT:    moveq #2, %d0
 ; CHECK-NEXT:    lea (4,%sp), %a1

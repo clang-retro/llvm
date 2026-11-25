@@ -226,7 +226,7 @@ extern int unw_resume(unw_cursor_t *) LIBUNWIND_AVAIL;
 extern void unw_save_vfp_as_X(unw_cursor_t *) LIBUNWIND_AVAIL;
 #endif
 
-#ifdef _AIX
+#ifdef _LIBUNWIND_XCOFF
 extern uintptr_t unw_get_data_rel_base(unw_cursor_t *) LIBUNWIND_AVAIL;
 #endif
 
@@ -925,6 +925,27 @@ enum {
   UNW_OR1K_R30 = 30,
   UNW_OR1K_R31 = 31,
   UNW_OR1K_EPCR = 32,
+};
+
+// Motorola 68000 registers. The DWARF numbers are those of GCC and GDB.
+enum {
+  UNW_M68K_D0 = 0,
+  UNW_M68K_D1 = 1,
+  UNW_M68K_D2 = 2,
+  UNW_M68K_D3 = 3,
+  UNW_M68K_D4 = 4,
+  UNW_M68K_D5 = 5,
+  UNW_M68K_D6 = 6,
+  UNW_M68K_D7 = 7,
+  UNW_M68K_A0 = 8,
+  UNW_M68K_A1 = 9,
+  UNW_M68K_A2 = 10,
+  UNW_M68K_A3 = 11,
+  UNW_M68K_A4 = 12,
+  UNW_M68K_A5 = 13,
+  UNW_M68K_A6 = 14,
+  UNW_M68K_A7 = 15, // the stack pointer
+  UNW_M68K_PC = 24, // the return address column
 };
 
 // MIPS registers

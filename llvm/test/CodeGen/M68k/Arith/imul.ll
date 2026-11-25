@@ -17,8 +17,9 @@ define i64 @mul4_64(i64 %A) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    movem.l %d2, (0,%sp) ; 8-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -8
 ; CHECK-NEXT:    moveq #30, %d0
 ; CHECK-NEXT:    move.l (12,%sp), %d1
 ; CHECK-NEXT:    move.l %d1, %d2
@@ -51,8 +52,10 @@ define i64 @mul4096_64(i64 %A) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #8, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -12
+; CHECK-NEXT:    .cfi_def_cfa_offset 12
 ; CHECK-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -12
+; CHECK-NEXT:    .cfi_offset %d3, -8
 ; CHECK-NEXT:    moveq #20, %d0
 ; CHECK-NEXT:    move.l (16,%sp), %d1
 ; CHECK-NEXT:    move.l %d1, %d2
@@ -87,8 +90,10 @@ define i64 @mulmin4096_64(i64 %A) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #8, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -12
+; CHECK-NEXT:    .cfi_def_cfa_offset 12
 ; CHECK-NEXT:    movem.l %d2-%d3, (0,%sp) ; 12-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %d2, -12
+; CHECK-NEXT:    .cfi_offset %d3, -8
 ; CHECK-NEXT:    moveq #20, %d0
 ; CHECK-NEXT:    move.l (16,%sp), %d1
 ; CHECK-NEXT:    move.l %d1, %d2
@@ -113,7 +118,7 @@ define i32 @mul_32(i32 %a, i32 %b) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #12, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -16
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    move.l (20,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (4,%sp)
 ; CHECK-NEXT:    move.l (16,%sp), %d0
@@ -159,7 +164,7 @@ define i64 @mul_64(i64 %a, i64 %b) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    move.l (36,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (12,%sp)
 ; CHECK-NEXT:    move.l (32,%sp), %d0
@@ -180,7 +185,7 @@ define i64 @mul3_64(i64 %A) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    move.l (28,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (4,%sp)
 ; CHECK-NEXT:    move.l (24,%sp), %d0
@@ -199,7 +204,7 @@ define i64 @mul40_64(i64 %A) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #20, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -24
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
 ; CHECK-NEXT:    move.l (28,%sp), %d0
 ; CHECK-NEXT:    move.l %d0, (4,%sp)
 ; CHECK-NEXT:    move.l (24,%sp), %d0

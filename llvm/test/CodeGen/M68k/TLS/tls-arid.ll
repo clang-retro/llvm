@@ -8,7 +8,7 @@ define i8 @tls_arid(ptr noundef nonnull %0) unnamed_addr #2 {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0: ; %start
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    jsr __m68k_read_tp
 ; CHECK-NEXT:    move.b (tls@TPOFF+4,%a0), %d0
 ; CHECK-NEXT:    adda.l #4, %sp

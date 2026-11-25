@@ -17,7 +17,7 @@ define dso_local void @normal() "frame-pointer"="all" {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    link.w %a6, #0
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    .cfi_offset %a6, -8
 ; CHECK-NEXT:    .cfi_def_cfa_register %a6
 ; CHECK-NEXT:    jsr main

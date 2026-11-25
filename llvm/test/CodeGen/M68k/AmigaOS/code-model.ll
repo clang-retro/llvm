@@ -17,7 +17,7 @@ define void @f() {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    suba.l #4, %sp
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    move.l #counter, %a0
 ; CHECK-NEXT:    add.l #1, (%a0)
 ; CHECK-NEXT:    move.l #.Lmsg, (%sp)

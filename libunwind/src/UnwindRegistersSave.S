@@ -16,7 +16,7 @@
 #define FROM_0_TO_31 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
 #define FROM_32_TO_63 32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
     .toc
 #elif defined(__aarch64__) && defined(__ELF__) && defined(_LIBUNWIND_EXECUTE_ONLY_CODE)
     .section .text,"axy",@progbits,unique,0
@@ -422,7 +422,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
 // On entry:
 //  thread_state pointer is in r3
 //
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
 DEFINE_LIBUNWIND_FUNCTION_AND_WEAK_ALIAS(__unw_getcontext, unw_getcontext)
 #else
 DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
@@ -437,7 +437,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   std   0, PPC64_OFFS_SRR0(3) // store lr as ssr0
   PPC64_STR(1)
   PPC64_STR(4)        // Save r4 first since it will be used for fixing r2.
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // The TOC register (r2) was changed by the glue code if unw_getcontext
   // is called from a different module. Save the original TOC register
   // in the context if this is the case.
@@ -483,7 +483,7 @@ LnoR2Fix:
   std   0,  PPC64_OFFS_CR(3)
   mfxer 0
   std   0,  PPC64_OFFS_XER(3)
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // LR value saved from the register is not used, initialize it to 0.
   li    0,  0
 #else
@@ -690,7 +690,7 @@ LnoR2Fix:
 // On entry:
 //  thread_state pointer is in r3
 //
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
 DEFINE_LIBUNWIND_FUNCTION_AND_WEAK_ALIAS(__unw_getcontext, unw_getcontext)
 #else
 DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
@@ -700,7 +700,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   stw     0,   0(3) // store lr as ssr0
   stw     1,  12(3)
   stw     4,  24(3) // Save r4 first since it will be used for fixing r2.
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // The TOC register (r2) was changed by the glue code if unw_getcontext
   // is called from a different module. Save the original TOC register
   // in the context if this is the case.
@@ -750,7 +750,7 @@ LnoR2Fix:
   // save CR registers
   mfcr    0
   stw     0, 136(3)
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // LR value from the register is not used, initialize it to 0.
   li      0, 0
   stw     0, 144(3)
@@ -1143,6 +1143,30 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_arm16saveiWMMXControlEPj)
 
 #endif
 
+#elif defined(__m68k__)
+
+/*
+ * extern int __unw_getcontext(unw_context_t* thread_state)
+ *
+ * On entry, the stack holds the return address and then the thread_state
+ * pointer. The context gets D0 to D7 and A0 to A6, then the stack pointer
+ * and the program counter of the caller after the return.
+ *
+ * The m68k assembler of LLVM takes ";" as the start of a comment, so this
+ * code does not use the macros of assembly.h, which use it as a separator.
+ */
+  .globl __unw_getcontext
+  .type __unw_getcontext,@function
+__unw_getcontext:
+  move.l  (4,%sp), %a0
+  movem.l %d0-%d7/%a0-%a6, (%a0)
+  lea     (4,%sp), %a1
+  move.l  %a1, (60,%a0)
+  move.l  (%sp), (64,%a0)
+  clr.l   %d0
+  rts
+  .size __unw_getcontext, .-__unw_getcontext
+
 #elif defined(__or1k__)
 
 #
@@ -1428,6 +1452,9 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   .weak_anti_dep unw_getcontext
   .set unw_getcontext, "#unw_getcontext"
   EXPORT_SYMBOL(unw_getcontext)
+#elif defined(__m68k__)
+  .weak unw_getcontext
+  .set unw_getcontext, __unw_getcontext
 #else
   WEAK_ALIAS(__unw_getcontext, unw_getcontext)
 #endif

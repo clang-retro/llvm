@@ -78,7 +78,14 @@ extern "C" {
 #endif
 
 extern uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context);
-extern uintptr_t
+#if defined(__m68k__)
+// On m68k a function returns a pointer in A0 and an integer in D0. The type
+// is the one that GCC's and clang's unwind.h give (and libstdc++ uses).
+#define _LIBUNWIND_LSDA_TYPE void *
+#else
+#define _LIBUNWIND_LSDA_TYPE uintptr_t
+#endif
+extern _LIBUNWIND_LSDA_TYPE
     _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context);
 #ifdef __USING_SJLJ_EXCEPTIONS__
 extern _Unwind_Reason_Code

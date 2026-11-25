@@ -16,7 +16,7 @@
 #define FROM_0_TO_31 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
 #define FROM_32_TO_63 32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   .toc
 #elif defined(__aarch64__) && defined(__ELF__) && defined(_LIBUNWIND_EXECUTE_ONLY_CODE)
   .section .text,"axy",@progbits,unique,0
@@ -267,7 +267,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind15Registers_ppc646jumptoEv)
   lxvd2x n, 0, 4
 #endif
 
-#if !defined(_AIX)
+#if !defined(_LIBUNWIND_XCOFF)
   // use VRSAVE to conditionally restore the remaining VS regs, that are
   // where the V regs are mapped. In the AIX ABI, VRSAVE is not used.
   ld    5, PPC64_OFFS_VRSAVE(3)   // test VRsave
@@ -292,7 +292,7 @@ Ldone##n:
 #define PPC64_CLVSl(n) PPC64_CLVS_RESTORE(n)
 #define PPC64_CLVSh(n) PPC64_CLVS_RESTORE(n)
 
-#endif // !defined(_AIX)
+#endif // !defined(_LIBUNWIND_XCOFF)
 
   PPC64_CLVSl(32)
   PPC64_CLVSl(33)
@@ -376,7 +376,7 @@ Ldone##n:
   std    0, 8(4)                            ;\
   lvx    n, 0, 4
 
-#if !defined(_AIX)
+#if !defined(_LIBUNWIND_XCOFF)
   // restore vector registers if any are in use. In the AIX ABI, VRSAVE is
   // not used.
   ld    5, PPC64_OFFS_VRSAVE(3)   // test VRsave
@@ -400,7 +400,7 @@ Ldone  ## n:
 #define PPC64_CLV_UNALIGNEDl(n) PPC64_CLV_UNALIGNED_RESTORE(n)
 #define PPC64_CLV_UNALIGNEDh(n) PPC64_CLV_UNALIGNED_RESTORE(n)
 
-#endif // !defined(_AIX)
+#endif // !defined(_LIBUNWIND_XCOFF)
 
   subi  4, 1, 16
   // r4 is now a 16-byte aligned pointer into the red zone
@@ -449,7 +449,7 @@ Lnovec:
   ld    0, PPC64_OFFS_SRR0(3)
   mtctr 0
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   // After setting GPR1 to a higher address, AIX wipes out the original
   // stack space below that address invalidated by the new GPR1 value. Use
   // GPR0 to save the value of GPR3 in the context before it is wiped out.
@@ -461,7 +461,7 @@ Lnovec:
   PPC64_LR(5)
   PPC64_LR(4)
   PPC64_LR(1)
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
   mr 3, 0
 #else
   PPC64_LR(3)
@@ -561,7 +561,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
   stw     0, 12(4)                        SEPARATOR \
   lvx     _index, 0, 4
 
-#if !defined(_AIX)
+#if !defined(_LIBUNWIND_XCOFF)
   // restore vector registers if any are in use. In the AIX ABI, VRSAVE
   // is not used.
   lwz     5, 156(3)       // test VRsave
@@ -585,7 +585,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
 #define LOAD_VECTOR_UNALIGNEDl(_index) LOAD_VECTOR_RESTORE(_index)
 #define LOAD_VECTOR_UNALIGNEDh(_index) LOAD_VECTOR_RESTORE(_index)
 
-#endif // !defined(_AIX)
+#endif // !defined(_LIBUNWIND_XCOFF)
 
   subi    4, 1, 16
   rlwinm  4, 4, 0, 0, 27  // mask low 4-bits
@@ -896,6 +896,28 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind13Registers_arm19restoreiWMMXControlEPj)
   JMP(lr)
 
 #endif
+
+#elif defined(__m68k__)
+
+/*
+ * extern "C" void __libunwind_Registers_m68k_jumpto(Registers_m68k *);
+ *
+ * On entry, the stack holds the return address and then the pointer to
+ * the register state. The code changes to the new stack, puts the new
+ * program counter on it, loads the registers, and returns to the new
+ * program counter. A0 is loaded last, because it points to the state.
+ */
+  .globl __libunwind_Registers_m68k_jumpto
+  .type __libunwind_Registers_m68k_jumpto,@function
+__libunwind_Registers_m68k_jumpto:
+  move.l  (4,%sp), %a0
+  move.l  (60,%a0), %sp
+  move.l  (64,%a0), -(%sp)
+  movem.l (%a0), %d0-%d7
+  movem.l (36,%a0), %a1-%a6
+  move.l  (32,%a0), %a0
+  rts
+  .size __libunwind_Registers_m68k_jumpto, .-__libunwind_Registers_m68k_jumpto
 
 #elif defined(__or1k__)
 

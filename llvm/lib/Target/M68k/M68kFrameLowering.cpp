@@ -457,10 +457,22 @@ void M68kFrameLowering::emitPrologueCalleeSavedFrameMoves(
   if (CSI.empty())
     return;
 
-  // Calculate offsets.
+  // spillCalleeSavedRegisters stores all the registers with one MOVEM at
+  // the lowest of the spill slots. MOVEM puts the registers in their spill
+  // order (D0 to D7, then A0 to A7) at increasing addresses, 4 bytes each,
+  // not in the order of the frame indices.
+  int64_t Base = INT64_MAX;
+  for (const auto &I : CSI)
+    Base = std::min(Base, MFI.getObjectOffset(I.getFrameIdx()));
+
   for (const auto &I : CSI) {
-    int64_t Offset = MFI.getObjectOffset(I.getFrameIdx());
     MCRegister Reg = I.getReg();
+    unsigned Order = TRI->getSpillRegisterOrder(Reg);
+    unsigned Below = 0;
+    for (const auto &J : CSI)
+      if (TRI->getSpillRegisterOrder(J.getReg()) < Order)
+        ++Below;
+    int64_t Offset = Base + 4 * Below;
 
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
     BuildCFI(MBB, MBBI, DL,
@@ -551,8 +563,10 @@ void M68kFrameLowering::emitPrologue(MachineFunction &MF,
       // Mark the place where FP was saved.
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
+      // LINK pushed the frame pointer below the return address: the CFA is
+      // 8 bytes above the stack pointer.
       BuildCFI(MBB, MBBI, DL,
-               MCCFIInstruction::cfiDefCfaOffset(nullptr, 2 * stackGrowth));
+               MCCFIInstruction::cfiDefCfaOffset(nullptr, -2 * stackGrowth));
 
       // Change the rule for the FramePtr to be an "offset" rule.
       int DwarfFramePtr = TRI->getDwarfRegNum(MachineFramePtr, true);
@@ -641,14 +655,21 @@ void M68kFrameLowering::emitPrologue(MachineFunction &MF,
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
+      // The CFA is above the frame and the return address.
       BuildCFI(
           MBB, MBBI, DL,
-          MCCFIInstruction::cfiDefCfaOffset(nullptr, -StackSize + stackGrowth));
+          MCCFIInstruction::cfiDefCfaOffset(nullptr, StackSize - stackGrowth));
     }
+  }
 
-    // Emit DWARF info specifying the offsets of the callee-saved registers.
-    if (PushedRegs)
-      emitPrologueCalleeSavedFrameMoves(MBB, MBBI, DL);
+  // Emit DWARF info specifying the offsets of the callee-saved registers,
+  // after the MOVEM that stores them (spillCalleeSavedRegisters).
+  if (NeedsDwarfCFI && !MFI.getCalleeSavedInfo().empty()) {
+    while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup) &&
+           (MBBI->getOpcode() == M68k::MOVM32pm ||
+            MBBI->getOpcode() == M68k::PUSH32r))
+      ++MBBI;
+    emitPrologueCalleeSavedFrameMoves(MBB, MBBI, DL);
   }
 
   // TODO Interrupt handlers

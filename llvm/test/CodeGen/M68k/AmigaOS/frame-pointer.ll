@@ -12,7 +12,7 @@ define i32 @f(i32 %x) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    link.w %a5, #-8
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    .cfi_offset %a5, -8
 ; CHECK-NEXT:    .cfi_def_cfa_register %a5
 ; CHECK-NEXT:    lea (8,%a5), %a0
@@ -25,7 +25,7 @@ define i32 @f(i32 %x) {
 ; LINUX:         .cfi_startproc
 ; LINUX-NEXT:  ; %bb.0:
 ; LINUX-NEXT:    link.w %a6, #-8
-; LINUX-NEXT:    .cfi_def_cfa_offset -8
+; LINUX-NEXT:    .cfi_def_cfa_offset 8
 ; LINUX-NEXT:    .cfi_offset %a6, -8
 ; LINUX-NEXT:    .cfi_def_cfa_register %a6
 ; LINUX-NEXT:    lea (8,%a6), %a0
@@ -46,10 +46,11 @@ define i32 @libcall(i32 %x) {
 ; CHECK:         .cfi_startproc
 ; CHECK-NEXT:  ; %bb.0:
 ; CHECK-NEXT:    link.w %a5, #-4
-; CHECK-NEXT:    .cfi_def_cfa_offset -8
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    .cfi_offset %a5, -8
 ; CHECK-NEXT:    .cfi_def_cfa_register %a5
 ; CHECK-NEXT:    movem.l %a6, (-4,%a5) ; 8-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset %a6, -12
 ; CHECK-NEXT:    ;APP
 ; CHECK-NEXT:    move.l #0, %a6
 ; CHECK-NEXT:    jsr (-48,%a6)
@@ -63,7 +64,7 @@ define i32 @libcall(i32 %x) {
 ; LINUX:         .cfi_startproc
 ; LINUX-NEXT:  ; %bb.0:
 ; LINUX-NEXT:    link.w %a6, #0
-; LINUX-NEXT:    .cfi_def_cfa_offset -8
+; LINUX-NEXT:    .cfi_def_cfa_offset 8
 ; LINUX-NEXT:    .cfi_offset %a6, -8
 ; LINUX-NEXT:    .cfi_def_cfa_register %a6
 ; LINUX-NEXT:    ;APP

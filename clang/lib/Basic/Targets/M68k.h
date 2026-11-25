@@ -57,6 +57,16 @@ public:
   bool setCPU(StringRef Name) override;
   CallingConvCheckResult checkCallingConvention(CallingConv CC) const override;
 
+  /// Give the DWARF numbers of the registers that hold the exception
+  /// object (D0) and the type selector (D1) on entry to a landing pad.
+  int getEHDataRegisterNumber(unsigned RegNo) const override {
+    if (RegNo == 0)
+      return 0;
+    if (RegNo == 1)
+      return 1;
+    return -1;
+  }
+
   std::pair<unsigned, unsigned> hardwareInterferenceSizes() const override {
     return std::make_pair(32, 32);
   }

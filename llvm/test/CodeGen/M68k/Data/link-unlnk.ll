@@ -10,7 +10,7 @@ define i32 @fib(i32 %a, i32 %b) {
 ; FP:         .cfi_startproc
 ; FP-NEXT:  ; %bb.0: ; %entry
 ; FP-NEXT:    link.w %a6, #-32
-; FP-NEXT:    .cfi_def_cfa_offset -8
+; FP-NEXT:    .cfi_def_cfa_offset 8
 ; FP-NEXT:    .cfi_offset %a6, -8
 ; FP-NEXT:    .cfi_def_cfa_register %a6
 ; FP-NEXT:    move.l (8,%a6), %d1
@@ -36,7 +36,7 @@ define i32 @fib(i32 %a, i32 %b) {
 ; NO-FP:         .cfi_startproc
 ; NO-FP-NEXT:  ; %bb.0: ; %entry
 ; NO-FP-NEXT:    suba.l #32, %sp
-; NO-FP-NEXT:    .cfi_def_cfa_offset -36
+; NO-FP-NEXT:    .cfi_def_cfa_offset 36
 ; NO-FP-NEXT:    move.l (36,%sp), %d1
 ; NO-FP-NEXT:    move.l %d1, (0,%sp)
 ; NO-FP-NEXT:    move.l (40,%sp), %d0
@@ -100,7 +100,7 @@ define i32 @test_gep() {
 ; FP:         .cfi_startproc
 ; FP-NEXT:  ; %bb.0: ; %entry
 ; FP-NEXT:    link.w %a6, #-256
-; FP-NEXT:    .cfi_def_cfa_offset -8
+; FP-NEXT:    .cfi_def_cfa_offset 8
 ; FP-NEXT:    .cfi_offset %a6, -8
 ; FP-NEXT:    .cfi_def_cfa_register %a6
 ; FP-NEXT:    move.l #21, (-4,%a6)
@@ -113,7 +113,7 @@ define i32 @test_gep() {
 ; NO-FP:         .cfi_startproc
 ; NO-FP-NEXT:  ; %bb.0: ; %entry
 ; NO-FP-NEXT:    suba.l #256, %sp
-; NO-FP-NEXT:    .cfi_def_cfa_offset -260
+; NO-FP-NEXT:    .cfi_def_cfa_offset 260
 ; NO-FP-NEXT:    move.l #21, (252,%sp)
 ; NO-FP-NEXT:    move.l #12, (0,%sp)
 ; NO-FP-NEXT:    moveq #0, %d0

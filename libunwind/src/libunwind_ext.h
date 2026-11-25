@@ -49,7 +49,7 @@ extern int __unw_is_signal_frame(unw_cursor_t *);
 extern int __unw_get_proc_name(unw_cursor_t *, char *, size_t, unw_word_t *);
 extern const char *__unw_strerror(int);
 
-#if defined(_AIX)
+#if defined(_LIBUNWIND_XCOFF)
 extern uintptr_t __unw_get_data_rel_base(unw_cursor_t *);
 #endif
 
