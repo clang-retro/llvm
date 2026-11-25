@@ -14,6 +14,10 @@ entry:
   ret i32 %v
 }
 
-; CHECK: __emutls_v.tv:
-; CHECK: __emutls_t.tv:
-; CHECK-NEXT: .vbyte 4, 5
+; The variable itself is not emitted; its control record and initial
+; value are.
+; CHECK-NOT: tv[TL]
+; CHECK: .csect __emutls_v.tv[RW],2
+; CHECK: .vbyte 4, __emutls_t.tv[RO]
+; CHECK: .csect __emutls_t.tv[RO],2
+; CHECK: .vbyte 4, 5
