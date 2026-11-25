@@ -1669,6 +1669,10 @@ SDValue M68kTargetLowering::LowerGlobalTLSAddress(SDValue Op,
   assert(Subtarget.isTargetELF());
 
   auto *GA = cast<GlobalAddressSDNode>(Op);
+  // The classic Mac OS has no thread pointer: each access calls
+  // __emutls_get_address.
+  if (DAG.getTarget().useEmulatedTLS())
+    return LowerToTLSEmulatedModel(GA, DAG);
   TLSModel::Model AccessModel = DAG.getTarget().getTLSModel(GA->getGlobal());
 
   switch (AccessModel) {

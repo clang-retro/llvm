@@ -3311,8 +3311,13 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddressAIX(SDValue Op,
                                                     SelectionDAG &DAG) const {
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
 
-  if (DAG.getTarget().useEmulatedTLS())
+  if (DAG.getTarget().useEmulatedTLS()) {
+    // Classic Mac OS uses the AIX ABI but has no thread pointer: a call
+    // to __emutls_get_address finds the variable.
+    if (Subtarget.getTargetTriple().isOSMacOSClassic())
+      return LowerToTLSEmulatedModel(GA, DAG);
     report_fatal_error("Emulated TLS is not yet supported on AIX");
+  }
 
   SDLoc dl(GA);
   const GlobalValue *GV = GA->getGlobal();
