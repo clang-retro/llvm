@@ -181,12 +181,15 @@ inline _LIBCPP_HIDE_FROM_ABI char* __setlocale(int __category, const char* __loc
     std::__throw_bad_alloc();
   return __new_locale;
 }
+// crtdll.dll has no _wsetlocale.
+#  if !(defined(__MINGW32__) && __MSVCRT_VERSION__ == 0)
 inline _LIBCPP_HIDE_FROM_ABI wchar_t* __wsetlocale(int __category, const wchar_t* __locale) {
   wchar_t* __new_locale = ::_wsetlocale(__category, __locale);
   if (__new_locale == nullptr)
     std::__throw_bad_alloc();
   return __new_locale;
 }
+#  endif
 _LIBCPP_EXPORTED_FROM_ABI __lconv_t* __localeconv(__locale_t& __loc);
 _LIBCPP_EXPORTED_FROM_ABI const char* __get_locale_encoding(__locale_t __loc);
 #endif // _LIBCPP_BUILDING_LIBRARY
@@ -354,11 +357,30 @@ _LIBCPP_ATTRIBUTE_FORMAT(__printf__, 3, 4) int __asprintf(char** __ret, __locale
 
 #if defined(_LIBCPP_BUILDING_LIBRARY)
 // crtdll.dll has no per-thread locales, so the guard sets the process locale.
+// It also has no _wsetlocale, so the guard keeps the old locale string in
+// the narrow character set.
 #  if defined(__MINGW32__) && __MSVCRT_VERSION__ == 0
 #    define _LIBCPP_WIN32_CONFIGTHREADLOCALE(__flag) 0
+struct __locale_guard {
+  _LIBCPP_HIDE_FROM_ABI __locale_guard(__locale_t __l) {
+    const char* __lc = __locale::__setlocale(LC_ALL, nullptr);
+    if (std::strcmp(__l.__get_locale(), __lc) != 0) {
+      __locale_all = _strdup(__lc);
+      if (__locale_all == nullptr)
+        std::__throw_bad_alloc();
+      __locale::__setlocale(LC_ALL, __l.__get_locale());
+    }
+  }
+  _LIBCPP_HIDE_FROM_ABI ~__locale_guard() {
+    if (__locale_all != nullptr) {
+      __locale::__setlocale(LC_ALL, __locale_all);
+      free(__locale_all);
+    }
+  }
+  char* __locale_all = nullptr;
+};
 #  else
 #    define _LIBCPP_WIN32_CONFIGTHREADLOCALE(__flag) _configthreadlocale(__flag)
-#  endif
 struct __locale_guard {
   _LIBCPP_HIDE_FROM_ABI __locale_guard(__locale_t __l)
       : __status(_LIBCPP_WIN32_CONFIGTHREADLOCALE(_ENABLE_PER_THREAD_LOCALE)) {
@@ -395,6 +417,7 @@ struct __locale_guard {
   int __status;
   wchar_t* __locale_all = nullptr;
 };
+#  endif
 #endif // _LIBCPP_BUILDING_LIBRARY
 
 } // namespace __locale
