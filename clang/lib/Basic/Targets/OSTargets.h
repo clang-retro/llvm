@@ -964,6 +964,38 @@ public:
   }
 };
 
+// SCO UnixWare (2 and later) and OpenServer (5 and later) on 32-bit x86.
+template <typename Target>
+class LLVM_LIBRARY_VISIBILITY SCOTargetInfo : public OSTargetInfo<Target> {
+protected:
+  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                    MacroBuilder &Builder) const override {
+    // What SCO's own compilers defined on both systems (M_UNIX and M_I386
+    // and their underscored forms come from Xenix and OpenServer and are
+    // kept by UnixWare 7), and the SVR4 macros gcc defined for them.
+    DefineStd(Builder, "unix", Opts);
+    Builder.defineMacro("__svr4__");
+    Builder.defineMacro("__SVR4");
+    Builder.defineMacro("__ELF__");
+    if (Opts.GNUMode) {
+      Builder.defineMacro("M_UNIX");
+      Builder.defineMacro("M_I386");
+    }
+    Builder.defineMacro("_M_UNIX");
+    Builder.defineMacro("_M_I386");
+    Builder.defineMacro("__SCO__");
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_REENTRANT");
+  }
+
+public:
+  SCOTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
+      : OSTargetInfo<Target>(Triple, Opts) {
+    // The SVR4 i386 ABI: wchar_t is long.
+    this->WCharType = TargetInfo::SignedLong;
+  }
+};
+
 // 32-bit OS/2 (2.0 and later, LX executables)
 template <typename Target>
 class LLVM_LIBRARY_VISIBILITY OS2TargetInfo : public OSTargetInfo<Target> {
