@@ -230,6 +230,7 @@ bool InitHeaderSearch::ShouldAddDefaultIncludePaths(
   case llvm::Triple::AmigaOS:
   case llvm::Triple::TOS:
   case llvm::Triple::IRIX:
+  case llvm::Triple::SCO:
   case llvm::Triple::NetBSD:
   case llvm::Triple::OpenBSD:
   case llvm::Triple::PS4:

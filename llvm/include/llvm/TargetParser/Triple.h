@@ -364,7 +364,8 @@ public:
     IRIX,         // SGI IRIX 5.x and 6.x on MIPS (o32, n32 and n64)
     CPM,          // CP/M: CP/M-86 on i8086 (CMD programs), CP/M-80 on z80
                   // and i8080 (COM programs)
-    LastOSType = CPM
+    SCO,          // SCO UnixWare and OpenServer on 32-bit x86 (SVR4 ELF)
+    LastOSType = SCO
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -788,6 +789,9 @@ public:
 
   /// SGI IRIX (5.x o32, 6.x o32/n32/n64) on MIPS.
   bool isOSIRIX() const { return getOS() == Triple::IRIX; }
+
+  /// SCO UnixWare (2 and later) and OpenServer (5 and later) on 32-bit x86.
+  bool isOSSCO() const { return getOS() == Triple::SCO; }
 
   /// OS/2: 16-bit OS/2 1.x (i8086, NE executables) or 32-bit OS/2 2.0 and
   /// later (i386, LX executables).

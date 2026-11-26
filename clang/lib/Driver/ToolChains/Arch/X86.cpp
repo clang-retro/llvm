@@ -130,6 +130,16 @@ std::string x86::getX86TargetCPU(const Driver &D, const ArgList &Args,
         .Case("i586", "pentium")
         .Default("pentiumpro");
 
+  // SCO UnixWare and OpenServer run on the i386 and do not save SSE
+  // registers (before UnixWare 7.1.3 and OpenServer 5.0.7, at least), so
+  // the CPU of the arch name, with x87 floating point.
+  if (Triple.isOSSCO())
+    return llvm::StringSwitch<std::string>(Triple.getArchName())
+        .Case("i486", "i486")
+        .Case("i586", "pentium")
+        .Case("i686", "pentiumpro")
+        .Default("i386");
+
   switch (Triple.getOS()) {
   case llvm::Triple::NetBSD:
     return "i486";

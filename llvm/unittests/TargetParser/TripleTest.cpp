@@ -183,6 +183,13 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_TRUE(T.isOSIRIX());
   EXPECT_EQ("mips-unknown-irix5.3", Triple::normalize("mips-irix5.3"));
 
+  T = Triple("i386-pc-sco");
+  EXPECT_EQ(Triple::x86, T.getArch());
+  EXPECT_EQ(Triple::SCO, T.getOS());
+  EXPECT_EQ(Triple::ELF, T.getObjectFormat());
+  EXPECT_TRUE(T.isOSSCO());
+  EXPECT_TRUE(Triple("i486-pc-sco3.2v5.0.7").isOSSCO());
+
   T = Triple("powerpc-apple-macosclassic");
   EXPECT_EQ(Triple::ppc, T.getArch());
   EXPECT_EQ(Triple::Apple, T.getVendor());
@@ -4197,6 +4204,7 @@ TEST(TripleTest, X86_16) {
   EXPECT_EQ("os2", Triple::getOSTypeName(Triple::OS2));
   EXPECT_EQ("cpm", Triple::getOSTypeName(Triple::CPM));
   EXPECT_EQ("irix", Triple::getOSTypeName(Triple::IRIX));
+  EXPECT_EQ("sco", Triple::getOSTypeName(Triple::SCO));
   EXPECT_EQ("macosclassic", Triple::getOSTypeName(Triple::MacOSClassic));
   EXPECT_EQ("omf", Triple::getObjectFormatTypeName(Triple::OMF));
   EXPECT_EQ(Triple::i8086, Triple::getArchTypeForLLVMName("i8086"));

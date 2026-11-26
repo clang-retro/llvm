@@ -22,6 +22,7 @@ puts it.
 | Classic Mac OS, PowerPC | `powerpc-apple-macos9` | ELF | `<triple>-ld` (Retro68) | PEF application | [mac-sdk](https://clang-retro.github.io/mac-sdk/) |
 | Mac OS X 10.0 to 10.5, PowerPC | `powerpc-apple-darwin`, `powerpc-apple-macosx10.X` | Mach-O | `ld64` | Mach-O | [dos-sdk: Mac OS X](https://clang-retro.github.io/dos-sdk/mac/macosx/) |
 | SGI IRIX 5.3 and 6.x, MIPS | `mips-sgi-irix6.5` (o32), `mips64-sgi-irix6.5` with `-mabi=n32` or `-mabi=64` | ELF | lld | ELF program | [picolibc: IRIX](https://clang-retro.github.io/picolibc/irix/) |
+| SCO UnixWare 2 and later, OpenServer 5 and later | `i386-pc-sco` | ELF | lld | static SVR4 ELF program | [sco-sdk](https://github.com/clang-retro/sco-sdk) |
 
 ## MS-DOS, 16-bit Windows and OS/2 1.x
 
@@ -140,3 +141,21 @@ against `/usr/lib/rld` (or `lib32`, `lib64`) unless `-static` is given.
 - `long double` is IEEE quad on n32 and 64, where SGI's compilers use a
   pair of doubles, so `long double` data and calls don't match MIPSpro
   code yet.
+
+## SCO UnixWare and OpenServer
+
+`i386-pc-sco` compiles for SCO UnixWare (2 and later) and OpenServer (5
+and later) on 32-bit x86, with the SVR4 i386 ABI. The default CPU is the
+i386, or the CPU of the arch name (`i486-pc-sco`, `i586-pc-sco`,
+`i686-pc-sco`), with x87 floating point: these systems don't save SSE
+registers before UnixWare 7.1.3 and OpenServer 5.0.7. `wchar_t` is
+`long`. clang defines `__unix__`, `__svr4__`, `__SVR4`, `__SCO__`,
+`_M_UNIX` and `_M_I386`, and `unix`, `M_UNIX` and `M_I386` outside strict
+ANSI modes, as SCO's compilers did.
+
+The sysroot (by default `i386-pc-sco/` next to `bin/`) has `usr/include`
+and `usr/lib`. Programs are static ELF executables linked with lld at
+0x8048000, where SVR4 linkers put them, with `crt1.o`, `-lc` and the
+builtins, and without a build ID, `PT_GNU_RELRO` or `PT_GNU_STACK`. SCO's
+own shared libraries are not used; picolibc's SCO layer makes the system
+calls.
