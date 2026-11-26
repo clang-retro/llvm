@@ -6086,8 +6086,14 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   unsigned NumClasses = DefinedClasses.size();
   unsigned NumCategories = DefinedCategories.size();
 
-  // Return null if no symbols were defined.
-  if (!NumClasses && !NumCategories)
+  // Return null if no symbols were defined. The Objective-C runtime of
+  // Mac OS X 10.0 reads the symbol table of each module without a null
+  // check: a program with a module that has no symbol table crashes before
+  // main. The runtime of 10.4 accepts a null pointer. Before 10.4, write an
+  // empty symbol table.
+  const llvm::Triple &Triple = CGM.getTarget().getTriple();
+  bool NeedEmptySymtab = Triple.isMacOSX() && Triple.isMacOSXVersionLT(10, 4);
+  if (!NumClasses && !NumCategories && !NeedEmptySymtab)
     return llvm::Constant::getNullValue(ObjCTypes.SymtabPtrTy);
 
   ConstantInitBuilder builder(CGM);
