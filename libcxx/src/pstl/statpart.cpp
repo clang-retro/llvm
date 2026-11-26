@@ -14,8 +14,13 @@
 
 #include "std_thread_sched.h"
 
-#if defined(__APPLE__)
+// Mac OS X 10.5 and earlier have no libdispatch. Use the std::thread
+// scheduler there.
+#if defined(__APPLE__) && __has_include(<dispatch/dispatch.h>)
+#  define _LIBCPP_STATPART_USE_DISPATCH 1
 #  include <dispatch/dispatch.h>
+#else
+#  define _LIBCPP_STATPART_USE_DISPATCH 0
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -24,7 +29,7 @@ namespace __pstl::__statpart {
 
 void __apply(size_t chunk_count, void* context, void (*func)(void* context, size_t chunk)) noexcept {
   _LIBCPP_ASSERT_NON_NULL(func != nullptr, "Attempting to apply a function which is a nullptr");
-#if defined(__APPLE__)
+#if _LIBCPP_STATPART_USE_DISPATCH
   // On Apple platforms use libdispatch to provide the parallelism.
   ::dispatch_apply_f(chunk_count, DISPATCH_APPLY_AUTO, context, func);
 #elif _LIBCPP_HAS_THREADS
