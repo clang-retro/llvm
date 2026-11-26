@@ -494,14 +494,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // and a lock on an 80386. Plain stores would bypass that lock, so atomic
   // stores are calls too. Atomic loads stay plain MOVs.
   if (Subtarget.isPre486()) {
+    // Operations with a __sync libcall must use LibCall. The legalizer
+    // rejects Expand for them.
     for (auto VT : {MVT::i8, MVT::i16, MVT::i32}) {
       for (unsigned Op :
-           {ISD::ATOMIC_SWAP, ISD::ATOMIC_CMP_SWAP,
-            ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, ISD::ATOMIC_LOAD_ADD,
-            ISD::ATOMIC_LOAD_SUB, ISD::ATOMIC_LOAD_AND, ISD::ATOMIC_LOAD_OR,
-            ISD::ATOMIC_LOAD_XOR, ISD::ATOMIC_LOAD_NAND, ISD::ATOMIC_LOAD_MIN,
-            ISD::ATOMIC_LOAD_MAX, ISD::ATOMIC_LOAD_UMIN, ISD::ATOMIC_LOAD_UMAX,
-            ISD::ATOMIC_STORE})
+           {ISD::ATOMIC_SWAP, ISD::ATOMIC_CMP_SWAP, ISD::ATOMIC_LOAD_ADD,
+            ISD::ATOMIC_LOAD_SUB, ISD::ATOMIC_LOAD_AND, ISD::ATOMIC_LOAD_CLR,
+            ISD::ATOMIC_LOAD_OR, ISD::ATOMIC_LOAD_XOR, ISD::ATOMIC_LOAD_NAND,
+            ISD::ATOMIC_LOAD_MIN, ISD::ATOMIC_LOAD_MAX, ISD::ATOMIC_LOAD_UMIN,
+            ISD::ATOMIC_LOAD_UMAX})
+        setOperationAction(Op, VT, LibCall);
+      for (unsigned Op : {ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, ISD::ATOMIC_STORE})
         setOperationAction(Op, VT, Expand);
     }
   }
