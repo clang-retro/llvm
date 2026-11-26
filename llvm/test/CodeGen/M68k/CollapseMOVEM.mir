@@ -174,3 +174,27 @@ body: |
     MOVM32pm -4, $sp, 4
 
 ...
+# A register that is above the lowest register of the chain cannot go below
+# the chain, even when it is below the highest register of the chain.
+# CHECK-LABEL: CollapseMOVEM_MR_LowEndOrder
+# CHECK:       movem.l %d0/%a6, (60,%sp)
+# CHECK:       movem.l %a3, (56,%sp)
+name: CollapseMOVEM_MR_LowEndOrder
+body: |
+  bb.0:
+    MOVM32pm  60, $sp, 1
+    MOVM32pm  64, $sp, 16384
+    MOVM32pm  56, $sp, 2048
+
+...
+# CHECK-LABEL: CollapseMOVEM_MR_HighEndOrder
+# CHECK:       movem.l %a3/%a6, (56,%sp)
+# CHECK:       movem.l %d0, (64,%sp)
+name: CollapseMOVEM_MR_HighEndOrder
+body: |
+  bb.0:
+    MOVM32pm  60, $sp, 16384
+    MOVM32pm  56, $sp, 2048
+    MOVM32pm  64, $sp, 1
+
+...

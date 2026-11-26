@@ -90,13 +90,23 @@ public:
     Base = Value;
   }
 
-  // You need to call this before Mask update
+  /// Classifies the registers in NewMask against the registers in the chain.
+  /// MOVEM puts the registers in mask order, the lowest register at the lowest
+  /// address. Thus a register can go at the low end of the chain only if it is
+  /// below all the registers of the chain, and at the high end only if it is
+  /// above all of them. You must call this before the mask update.
   UpdateType classifyUpdateByMask(unsigned NewMask) const {
     assert(NewMask && "Mask needs to select at least one register");
 
-    if (NewMask > Mask) {
+    if (!Mask)
       return Ascending;
-    } else if (NewMask < Mask) {
+
+    unsigned NewLowest = NewMask & -NewMask;
+    unsigned Lowest = Mask & -Mask;
+
+    if (NewLowest > Mask) {
+      return Ascending;
+    } else if (NewMask < Lowest) {
       return Descending;
     }
 
