@@ -2234,7 +2234,7 @@ void XO65File::parseOD65Exports() {
     // Export values aren't yet known; they will be filled in once ld65 is run
     // on all xo65 sections.
     Symbol *sym = ctx.symtab->addSymbol(
-        Defined{ctx, this, name, STB_GLOBAL, /*st_other=*/0, STT_NOTYPE,
+        Defined{this, name, STB_GLOBAL, /*st_other=*/0, STT_NOTYPE,
                 /*value=*/0, /*size=*/0, /*section=*/nullptr});
     sym->isUsedInRegularObj = true;
     exports.push_back(sym);

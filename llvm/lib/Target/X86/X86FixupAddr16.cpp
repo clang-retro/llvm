@@ -218,7 +218,8 @@ bool X86FixupAddr16Legacy::copyIfNeeded(MachineInstr &MI, MachineOperand &MO,
       .addReg(Reg, RegState::NoFlags, MO.getSubReg());
   MO.setReg(NewReg);
   MO.setSubReg(0);
-  MO.setIsKill(true);
+  // No kill flag: the verifier rejects kill flags on virtual registers.
+  MO.setIsKill(false);
   return true;
 }
 
@@ -267,7 +268,7 @@ bool X86FixupAddr16Legacy::fixupInstr(MachineInstr &MI, unsigned MemOp) {
           .addReg(Index.getReg(), RegState::NoFlags, Index.getSubReg());
       Index.setReg(NewReg);
       Index.setSubReg(0);
-      Index.setIsKill(true);
+      Index.setIsKill(false);
       Base.setIsKill(false);
       return true;
     }

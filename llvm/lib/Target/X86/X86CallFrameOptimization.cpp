@@ -542,7 +542,7 @@ void X86CallFrameOptimizationImpl::adjustCallSequence(
         Register Reg = MRI->createVirtualRegister(&X86::GR16RegClass);
         BuildMI(MBB, Context.Call, DL, TII->get(X86::MOV16ri), Reg).add(PushOp);
         Push = BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH16r))
-                   .addReg(Reg, RegState::Kill);
+                   .addReg(Reg);
       } else {
         PushOpcode = Is16Bit   ? X86::PUSH16i
                      : Is64Bit ? X86::PUSH64i32

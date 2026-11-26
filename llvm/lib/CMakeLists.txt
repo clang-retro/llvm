@@ -135,6 +135,24 @@ if (LLVM_LIB_WERROR_GLOBAL_CTORS)
   endforeach()
 endif()
 
+# The clang-retro fork's libraries that still have static initializers
+# (cl::opt options), kept apart from upstream's list above.
+if (LLVM_LIB_WERROR_GLOBAL_CTORS)
+  foreach(lib
+      LLVMMOSAsmParser
+      LLVMMOSCodeGen
+      LLVMMOSDesc
+      LLVMMOSDisassembler
+      LLVMZ80AsmParser
+      LLVMZ80CodeGen
+      LLVMZ80Desc
+      )
+    if (TARGET ${lib})
+      target_compile_options(${lib} PRIVATE -Wno-global-constructors)
+    endif()
+  endforeach()
+endif()
+
 set(LLVMCONFIGLIBRARYDEPENDENCIESINC "${LLVM_BINARY_DIR}/tools/llvm-config/LibraryDependencies.inc")
 
 # Special components which don't have any source attached but aggregate other

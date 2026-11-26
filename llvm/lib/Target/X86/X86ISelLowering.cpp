@@ -33507,7 +33507,7 @@ X86TargetLowering::shouldExpandAtomicRMWInIR(const AtomicRMWInst *AI) const {
     case AtomicRMWInst::Min:
     case AtomicRMWInst::UMax:
     case AtomicRMWInst::UMin:
-      if (MemType->isIntegerTy())
+      if (AI->getType()->isIntegerTy())
         return AtomicExpansionKind::None;
       [[fallthrough]];
     default:

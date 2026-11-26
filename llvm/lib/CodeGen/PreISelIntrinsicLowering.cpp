@@ -275,12 +275,10 @@ static bool canEmitLibcall(const ModuleLibcallLoweringInfo &ModuleLowering,
 /// Whether the library's memcpy, memmove and memset can take the pointers of
 /// \p MI, which the target may refuse for some address spaces (i8086 far
 /// pointers in the small model). Otherwise the call is expanded.
-static bool libcallTakesPointers(const TargetMachine *TM,
+static bool libcallTakesPointers(const TargetMachine &TM,
                                  const MemIntrinsic *MI) {
-  if (!TM)
-    return true;
   const TargetLowering *TLI =
-      TM->getSubtargetImpl(*MI->getFunction())->getTargetLowering();
+      TM.getSubtargetImpl(*MI->getFunction())->getTargetLowering();
   auto Takes = [&](const Value *P) {
     return !TLI->shouldExpandMemIntrinsicInAddressSpace(
         P->getType()->getPointerAddressSpace());
