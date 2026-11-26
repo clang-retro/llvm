@@ -2987,7 +2987,12 @@ static void emitGlobalDtorWithCXAAtExit(CodeGenFunction &CGF,
   const char *Name = "__cxa_atexit";
   if (TLS) {
     const llvm::Triple &T = CGF.getTarget().getTriple();
-    Name = T.isOSDarwin() ?  "_tlv_atexit" : "__cxa_thread_atexit";
+    // _tlv_atexit is part of Darwin's native TLV support. With emulated TLS
+    // (for example 32-bit PowerPC Mac OS X), libc++abi's
+    // __cxa_thread_atexit registers the destructor.
+    Name = T.isOSDarwin() && !CGF.CGM.getCodeGenOpts().EmulatedTLS
+               ? "_tlv_atexit"
+               : "__cxa_thread_atexit";
   }
 
   // We're assuming that the destructor function is something we can

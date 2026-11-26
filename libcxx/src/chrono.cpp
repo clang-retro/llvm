@@ -36,12 +36,16 @@
 
 // OpenBSD, 32-bit OS/2 and GPU do not have a fully conformant suite of POSIX
 // timers, but they do have clock_gettime and CLOCK_MONOTONIC which is all we
-// need. 32-bit PowerPC Mac OS X (10.0 to 10.5) has no clock_gettime; it uses
-// gettimeofday.
-#if (defined(__APPLE__) && !defined(__ppc__)) || defined(__gnu_hurd__) || defined(__OpenBSD__) ||                      \
-    defined(__AMDGPU__) || defined(__NVPTX__) || (defined(__OS2__) && defined(__i386__)) ||                            \
+// need. 32-bit Mac OS X (PowerPC, and Intel before 10.12) has no
+// clock_gettime; it uses gettimeofday.
+#if (defined(__APPLE__) && !defined(__ppc__) && !defined(__i386__)) || defined(__gnu_hurd__) ||                        \
+    defined(__OpenBSD__) || defined(__AMDGPU__) || defined(__NVPTX__) || (defined(__OS2__) && defined(__i386__)) ||    \
     (defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0)
 #  define _LIBCPP_HAS_CLOCK_GETTIME
+#endif
+
+#if defined(__APPLE__) && (defined(__ppc__) || defined(__i386__))
+#  include <mach/mach_time.h> // mach_absolute_time for steady_clock
 #endif
 
 #ifdef _WIN32
@@ -175,7 +179,25 @@ system_clock::time_point system_clock::from_time_t(time_t t) noexcept { return s
 
 #if _LIBCPP_HAS_MONOTONIC_CLOCK
 
-#  if defined(__APPLE__)
+#  if defined(__APPLE__) && (defined(__ppc__) || defined(__i386__))
+
+// 32-bit Mac OS X before 10.12 (PowerPC and Intel) has no clock_gettime. The
+// function uses mach_absolute_time, which counts from boot and does not
+// go back, and converts its ticks with mach_timebase_info.
+static steady_clock::time_point __libcpp_steady_clock_now() {
+  static mach_timebase_info_data_t tb = [] {
+    mach_timebase_info_data_t info;
+    mach_timebase_info(&info);
+    return info;
+  }();
+  unsigned long long t = mach_absolute_time();
+  // Divide first: a 64-bit product of the ticks and the numerator can
+  // overflow after some days.
+  unsigned long long ns = t / tb.denom * tb.numer + t % tb.denom * tb.numer / tb.denom;
+  return steady_clock::time_point(nanoseconds(ns));
+}
+
+#  elif defined(__APPLE__)
 
 // On Apple platforms, only CLOCK_UPTIME_RAW, CLOCK_MONOTONIC_RAW or
 // mach_absolute_time are able to time functions in the nanosecond range.

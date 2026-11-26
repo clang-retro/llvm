@@ -8,6 +8,14 @@
 // RUN:   | FileCheck -check-prefix=NOEMU %s
 // RUN: %clang -### --target=i686-pc-cygwin %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=EMU %s
+// RUN: %clang -### --target=powerpc-apple-macosx10.4 %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=EMU %s
+// RUN: %clang -### --target=powerpc-apple-macosx10.7 %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=NOEMU %s
+// RUN: %clang -### --target=i386-apple-macosx10.4 %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=EMU %s
+// RUN: %clang -### --target=x86_64-apple-macosx10.6 %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=NOEMU %s
 // RUN: %clang -### --target=x86_64-pc-cygwin %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=EMU %s
 // RUN: %clang -### --target=i686-pc-openbsd %s 2>&1 \

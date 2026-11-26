@@ -50,7 +50,7 @@
 #if __has_include(<sys/sendfile.h>)
 #  include <sys/sendfile.h>
 #  define _LIBCPP_FILESYSTEM_USE_SENDFILE
-#elif defined(__APPLE__) || __has_include(<copyfile.h>)
+#elif __has_include(<copyfile.h>) // Mac OS X has it from 10.5
 #  include <copyfile.h>
 #  define _LIBCPP_FILESYSTEM_USE_COPYFILE
 #else
@@ -821,7 +821,9 @@ bool __remove(const path& p, error_code* ec) {
 //
 // The second implementation is used on platforms where `openat()` & friends are available,
 // and it threads file descriptors through recursive calls to avoid such race conditions.
-#if defined(_WIN32) || defined(__MVS__) || defined(__I86__)
+// 32-bit Mac OS X before 10.10 (PowerPC and Intel) has no openat.
+#if defined(_WIN32) || defined(__MVS__) || defined(__I86__) ||                                                        \
+    (defined(__APPLE__) && (defined(__ppc__) || defined(__i386__)))
 #  define REMOVE_ALL_USE_DIRECTORY_ITERATOR
 #endif
 

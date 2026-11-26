@@ -1392,7 +1392,11 @@ public:
     // __thread variables in per-thread memory (__emutls_get_address).
     // Neither has classic Mac OS, whose Thread Manager threads have no
     // thread pointer.
+    // 32-bit Mac OS X (PowerPC and Intel) before 10.7 has no thread-local
+    // variables in dyld; they came with 10.7.
     return (isAndroid() && isAndroidVersionLT(29)) || isOSOpenBSD() ||
+           (isMacOSX() && (getArch() == ppc || getArch() == x86) &&
+            isMacOSXVersionLT(10, 7)) ||
            isWindowsCygwinEnvironment() || isOHOSFamily() || isOSOS2() ||
            isOSMacOSClassic() ||
            (isWindowsGNUEnvironment() && getOSMajorVersion() != 0 &&
