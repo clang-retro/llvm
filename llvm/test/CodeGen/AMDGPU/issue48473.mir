@@ -48,7 +48,6 @@
 
 ---
 name:            issue48473
-tracksRegLiveness: true
 machineFunctionInfo:
   isEntryFunction: true
   scratchRSrcReg:  '$sgpr100_sgpr101_sgpr102_sgpr103'

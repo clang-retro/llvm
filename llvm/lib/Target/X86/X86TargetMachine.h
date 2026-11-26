@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/Support/CodeGen.h"
+#include "llvm/Target/LastSubtargetCache.h"
 #include "llvm/TargetParser/X86TargetParser.h"
 #include <memory>
 #include <optional>
@@ -30,6 +31,22 @@ class X86TargetMachine final : public CodeGenTargetMachineImpl {
   const X86Options &CLOpts;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   mutable StringMap<std::unique_ptr<X86Subtarget>> SubtargetMap;
+
+  /// The attributes that select a subtarget. This must cover every function
+  /// attribute read by getSubtargetImpl.
+  struct SubtargetAttrs {
+    Attribute CPU, TuneCPU, FS, PreferVecWidth, MinLegalVecWidth, SoftFloat;
+
+    bool operator==(const SubtargetAttrs &RHS) const {
+      return CPU == RHS.CPU && TuneCPU == RHS.TuneCPU && FS == RHS.FS &&
+             PreferVecWidth == RHS.PreferVecWidth &&
+             MinLegalVecWidth == RHS.MinLegalVecWidth &&
+             SoftFloat == RHS.SoftFloat;
+    }
+
+    bool operator!=(const SubtargetAttrs &RHS) const { return !(*this == RHS); }
+  };
+  mutable LastSubtargetCache<X86Subtarget, SubtargetAttrs> LastSubtarget;
   // True if this is used in JIT.
   bool IsJIT;
   // The i8086 memory model, from the target ABI name.

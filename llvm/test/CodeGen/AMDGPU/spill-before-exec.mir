@@ -2,7 +2,7 @@
 # llvm-mos: Handwritten checks depend on upstream register-allocation decisions
 # that differ with this fork's spilling and splitting heuristics.
 # REQUIRES: asserts
-# RUN: llc -mtriple=amdgpu6.00-- -verify-machineinstrs -debug-only=regalloc -run-pass=greedy -filetype=null %s 2>&1 | FileCheck %s
+# RUN: llc -mtriple=amdgpu6.00-- -debug-only=regalloc -run-pass=greedy -filetype=null %s 2>&1 | FileCheck %s
 
 ---
 # Check that physreg candidate is not used since cannot be spilled in a block,
@@ -10,7 +10,6 @@
 # CHECK: , cannot spill all interferences.
 
 name:            foo
-tracksRegLiveness: true
 machineFunctionInfo:
   scratchRSrcReg: $sgpr0_sgpr1_sgpr2_sgpr3
   stackPtrOffsetReg: $sgpr32

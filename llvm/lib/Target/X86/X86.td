@@ -394,9 +394,8 @@ def FeatureCCMP : SubtargetFeature<"ccmp", "HasCCMP", "true",
                                    "Support conditional cmp & test instructions">;
 def FeatureNF : SubtargetFeature<"nf", "HasNF", "true",
                                  "Support status flags update suppression">;
-// FeatureCF is not enabled by default for APXF and targets that support APXF
-// due to performance reason, though it is part of APXF. Users need to enable it
-// manually.
+// Memory-operand CFCMOV (conditional faulting load/store) is only used with
+// TuningPreferCFMemOperand.
 def FeatureCF : SubtargetFeature<"cf", "HasCF", "true",
                                  "Support conditional faulting">;
 def FeatureZU : SubtargetFeature<"zu", "HasZU", "true",
@@ -927,6 +926,12 @@ def TuningPreferLegacySetCC
     : SubtargetFeature<"prefer-legacy-setcc", "PreferLegacySetCC", "true",
                        "Prefer to emit legacy SetCC.", [], InlineIgnore>;
 
+def TuningPreferCFMemOperand
+    : SubtargetFeature<"prefer-cf-mem-operand", "PreferCFMemOperand", "true",
+                       "Use CFCMOV with memory operands (conditional "
+                       "faulting load/store).",
+                       [], InlineIgnore>;
+
 //===----------------------------------------------------------------------===//
 // X86 CPU Families
 // TODO: Remove these - use general tuning features to determine codegen.
@@ -1328,6 +1333,7 @@ def ProcessorFeatures {
                                                   FeaturePPX,
                                                   FeatureNDD,
                                                   FeatureNF,
+                                                  FeatureCF,
                                                   FeatureJMPABS,
                                                   FeatureMOVRS,
                                                   FeatureAMXMOVRS,
@@ -1501,6 +1507,7 @@ def ProcessorFeatures {
                                                   FeaturePush2Pop2,
                                                   FeaturePPX,
                                                   FeatureNF,
+                                                  FeatureCF,
                                                   FeatureNDD,
                                                   FeatureZU,
                                                   FeatureJMPABS,

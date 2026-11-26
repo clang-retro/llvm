@@ -6,6 +6,7 @@
 
 ---
 name: test_freeze_s1
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -24,6 +25,7 @@ body: |
 
 ---
 name: test_freeze_s7
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -40,6 +42,7 @@ body: |
 
 ---
 name: test_freeze_s8
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -56,6 +59,7 @@ body: |
 
 ---
 name: test_freeze_s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -74,6 +78,7 @@ body: |
 
 ---
 name: test_freeze_s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -88,6 +93,7 @@ body: |
 
 ---
 name: test_freeze_s48
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -104,6 +110,7 @@ body: |
 
 ---
 name: test_freeze_s64
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -118,6 +125,7 @@ body: |
 
 ---
 name: test_freeze_s65
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -140,6 +148,7 @@ body: |
 
 ---
 name: test_freeze_s128
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -154,6 +163,7 @@ body: |
 
 ---
 name: test_freeze_256
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -168,6 +178,7 @@ body: |
 
 ---
 name: test_freeze_s448
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -184,6 +195,7 @@ body: |
 
 ---
 name: test_freeze_s512
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -198,6 +210,7 @@ body: |
 
 ---
 name: test_freeze_s1024
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -216,6 +229,7 @@ body: |
 
 ---
 name: test_freeze_s1056
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -232,6 +246,7 @@ body: |
 
 ---
 name: test_freeze_s2048
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -253,6 +268,7 @@ body: |
 
 ---
 name: test_freeze_v2s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -267,6 +283,7 @@ body: |
 
 ---
 name: test_freeze_v3s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -281,6 +298,7 @@ body: |
 
 ---
 name: test_freeze_v4s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -295,6 +313,7 @@ body: |
 
 ---
 name: test_freeze_v5s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -309,6 +328,7 @@ body: |
 
 ---
 name: test_freeze_v6s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -323,6 +343,7 @@ body: |
 
 ---
 name: test_freeze_v7s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -337,6 +358,7 @@ body: |
 
 ---
 name: test_freeze_v8s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -351,6 +373,7 @@ body: |
 
 ---
 name: test_freeze_v16s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -365,6 +388,7 @@ body: |
 
 ---
 name: test_freeze_v17s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -379,6 +403,7 @@ body: |
 
 ---
 name: test_freeze_v32s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -393,6 +418,7 @@ body: |
 
 ---
 name: test_freeze_v33s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -411,6 +437,7 @@ body: |
 
 ---
 name: test_freeze_v64s32
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -427,6 +454,7 @@ body: |
 
 ---
 name: test_freeze_v2s1
+tracksRegLiveness: false
 body: |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2_vgpr3
@@ -455,6 +483,7 @@ body: |
 
 ---
 name: test_freeze_v3s1
+tracksRegLiveness: false
 body: |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2, $vgpr3_vgpr4_vgpr5
@@ -485,6 +514,7 @@ body: |
 
 ---
 name: test_freeze_v2s8
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -501,6 +531,7 @@ body: |
 
 ---
 name: test_freeze_v3s8
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -522,6 +553,7 @@ body: |
 
 ---
 name: test_freeze_v2s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -536,6 +568,7 @@ body: |
 
 ---
 name: test_freeze_v3s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -571,6 +604,7 @@ body: |
 
 ---
 name: test_freeze_v4s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -585,6 +619,7 @@ body: |
 
 ---
 name: test_freeze_v5s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -627,6 +662,7 @@ body: |
 
 ---
 name: test_freeze_v6s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -641,6 +677,7 @@ body: |
 
 ---
 name: test_freeze_v8s16
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -655,6 +692,7 @@ body: |
 
 ---
 name: test_freeze_v2s64
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -669,6 +707,7 @@ body: |
 
 ---
 name: test_freeze_v4s8
+tracksRegLiveness: false
 body: |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3
@@ -704,6 +743,7 @@ body: |
 
 ---
 name: test_freeze_p0
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -718,6 +758,7 @@ body: |
 
 ---
 name: test_freeze_p1
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -732,6 +773,7 @@ body: |
 
 ---
 name: test_freeze_p2
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -746,6 +788,7 @@ body: |
 
 ---
 name: test_freeze_p3
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -760,6 +803,7 @@ body: |
 
 ---
 name: test_freeze_p4
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -774,6 +818,7 @@ body: |
 
 ---
 name: test_freeze_p5
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -788,6 +833,7 @@ body: |
 
 ---
 name: test_freeze_p999
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -803,6 +849,7 @@ body: |
 
 ---
 name: test_freeze_v2s1024
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -818,6 +865,7 @@ body: |
 ---
 
 name: test_freeze_v3s1024
+tracksRegLiveness: false
 body: |
   bb.0:
 

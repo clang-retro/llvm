@@ -373,7 +373,7 @@ __input_arithmetic(basic_istream<_CharT, _Traits>& __is, _Tp& __n) {
 #    endif // _LIBCPP_HAS_EXCEPTIONS
       typedef istreambuf_iterator<_CharT, _Traits> _Ip;
       typedef num_get<_CharT, _Ip> _Fp;
-      std::use_facet<_Fp>(__is.getloc()).get(_Ip(__is), _Ip(), __is, __state, __n);
+      std::use_facet<_Fp>(__is.__getloc()).get(_Ip(__is), _Ip(), __is, __state, __n);
 #    if _LIBCPP_HAS_EXCEPTIONS
     } catch (...) {
       __state |= ios_base::badbit;
@@ -455,7 +455,7 @@ __input_arithmetic_with_numeric_limits(basic_istream<_CharT, _Traits>& __is, _Tp
       typedef istreambuf_iterator<_CharT, _Traits> _Ip;
       typedef num_get<_CharT, _Ip> _Fp;
       long __temp;
-      std::use_facet<_Fp>(__is.getloc()).get(_Ip(__is), _Ip(), __is, __state, __temp);
+      std::use_facet<_Fp>(__is.__getloc()).get(_Ip(__is), _Ip(), __is, __state, __temp);
       if (__temp < numeric_limits<_Tp>::min()) {
         __state |= ios_base::failbit;
         __n = numeric_limits<_Tp>::min();

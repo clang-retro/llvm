@@ -95,6 +95,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
     return "mos";
   case msp430:
     return "msp430";
+  case nanomips:
+    return "nanomips";
   case nvptx64:
     return "nvptx64";
   case nvptx:
@@ -251,6 +253,8 @@ StringRef Triple::getArchName(ArchType Kind, SubArchType SubArch) {
       return "dxilv1.8";
     case Triple::DXILSubArch_v1_9:
       return "dxilv1.9";
+    case Triple::DXILSubArch_v1_10:
+      return "dxilv1.10";
     default:
       break;
     }
@@ -298,6 +302,7 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
   case m68k:
     return "m68k";
 
+  case nanomips:
   case mips:
   case mipsel:
   case mips64:
@@ -493,6 +498,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
       .Case("msp430", msp430)
       .Case("z80", z80)
       .Case("i8080", i8080)
+      .Case("nanomips", nanomips)
       .Case("ppc64", ppc64)
       .Case("ppc32", ppc)
       .Case("ppc", ppc)
@@ -703,9 +709,10 @@ Triple::ArchType Triple::parseArch(StringRef ArchName) {
           .Case("loongarch64", Triple::loongarch64)
           .Cases({"dxil", "dxilv1.0", "dxilv1.1", "dxilv1.2", "dxilv1.3",
                   "dxilv1.4", "dxilv1.5", "dxilv1.6", "dxilv1.7", "dxilv1.8",
-                  "dxilv1.9"},
+                  "dxilv1.9", "dxilv1.10"},
                  Triple::dxil)
           .Case("xtensa", Triple::xtensa)
+          .Case("nanomips", Triple::nanomips)
           .Default(Triple::UnknownArch);
 
   // Some architectures require special parsing logic just to compute the
@@ -804,6 +811,7 @@ Triple::SubArchType Triple::parseSubArch(StringRef SubArchName) {
         .EndsWith("v1.7", Triple::DXILSubArch_v1_7)
         .EndsWith("v1.8", Triple::DXILSubArch_v1_8)
         .EndsWith("v1.9", Triple::DXILSubArch_v1_9)
+        .EndsWith("v1.10", Triple::DXILSubArch_v1_10)
         .Default(Triple::NoSubArch);
 
   if (SubArchName.consume_front("amdgpu")) {
@@ -1016,6 +1024,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::msp430:
   case Triple::z80:
   case Triple::i8080:
+  case Triple::nanomips:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::ppc64le:
@@ -1205,7 +1214,7 @@ static StringRef getDXILArchNameFromShaderModel(StringRef ShaderModelStr) {
   VersionTuple Ver =
       parseVersionFromName(ShaderModelStr.drop_front(strlen("shadermodel")));
   // Default DXIL minor version when Shader Model version is anything other
-  // than 6.[0...9] or 6.x (which translates to latest current SM version)
+  // than 6.[0...10] or 6.x (which translates to latest current SM version)
   const unsigned SMMajor = 6;
   if (!Ver.empty()) {
     if (Ver.getMajor() == SMMajor) {
@@ -1231,6 +1240,8 @@ static StringRef getDXILArchNameFromShaderModel(StringRef ShaderModelStr) {
           return Triple::getArchName(Triple::dxil, Triple::DXILSubArch_v1_8);
         case 9:
           return Triple::getArchName(Triple::dxil, Triple::DXILSubArch_v1_9);
+        case 10:
+          return Triple::getArchName(Triple::dxil, Triple::DXILSubArch_v1_10);
         default:
           report_fatal_error("Unsupported Shader Model version", false);
         }
@@ -1824,6 +1835,7 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::m68k:
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
+  case llvm::Triple::nanomips:
   case llvm::Triple::nvptx:
   case llvm::Triple::ppc:
   case llvm::Triple::ppcle:
@@ -1938,6 +1950,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::m68k:
   case Triple::mips:
   case Triple::mipsel:
+  case Triple::nanomips:
   case Triple::nvptx:
   case Triple::ppc:
   case Triple::ppcle:
@@ -2040,6 +2053,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::msp430:
   case Triple::z80:
   case Triple::i8080:
+  case Triple::nanomips:
   case Triple::r600:
   case Triple::shave:
   case Triple::sparcel:
@@ -2170,6 +2184,7 @@ Triple Triple::getBigEndianArchVariant() const {
   case Triple::msp430:
   case Triple::z80:
   case Triple::i8080:
+  case Triple::nanomips:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::r600:
@@ -2314,6 +2329,7 @@ bool Triple::isLittleEndian() const {
   case Triple::msp430:
   case Triple::z80:
   case Triple::i8080:
+  case Triple::nanomips:
   case Triple::nvptx64:
   case Triple::nvptx:
   case Triple::ppcle:
@@ -2350,11 +2366,46 @@ bool Triple::isLittleEndian() const {
 unsigned Triple::getDefaultWCharSize() const {
   if (getArch() == Triple::xcore)
     return 1;
+  if (isArch16Bit())
+    return 2;
   if (isOSWindowsOrUEFI() || isPS())
     return 2;
   if (isOSAIX() && isArch32Bit())
     return 2;
   return 4;
+}
+
+bool Triple::supportsMathErrno() const {
+  switch (getArch()) {
+  case Triple::amdgpu:
+  case Triple::r600:
+  case Triple::nvptx:
+  case Triple::nvptx64:
+  case Triple::spir:
+  case Triple::spir64:
+  case Triple::spirv:
+  case Triple::spirv32:
+  case Triple::spirv64:
+    return false;
+  default:
+    break;
+  }
+
+  switch (getOS()) {
+  case Triple::Emscripten:
+  case Triple::FreeBSD:
+  case Triple::Fuchsia:
+  case Triple::OpenBSD:
+  case Triple::WASI:
+  case Triple::WASIp1:
+  case Triple::WASIp2:
+  case Triple::WASIp3:
+    return false;
+  default:
+    break;
+  }
+
+  return !isOSDarwin() && !isAndroid() && !isMusl();
 }
 
 bool Triple::isCompatibleWith(const Triple &Other) const {
@@ -2594,6 +2645,7 @@ ExceptionHandling Triple::getDefaultExceptionHandling() const {
   case Triple::m68k:
   case Triple::mos:
   case Triple::msp430:
+  case Triple::nanomips:
   case Triple::systemz:
   case Triple::xcore:
   case Triple::xtensa:
@@ -2643,6 +2695,7 @@ ThreadModel Triple::getDefaultThreadModel() const { return ThreadModel::POSIX; }
 
 LongDoubleFormat Triple::getDefaultLongDoubleFormat() const {
   switch (getArch()) {
+  case loongarch32:
   case loongarch64:
   case riscv32:
   case riscv64:
@@ -2664,10 +2717,12 @@ LongDoubleFormat Triple::getDefaultLongDoubleFormat() const {
   case ppcle:
   case ppc64:
   case ppc64le:
-    // PowerPC uses IBM double-double, except on a handful of OSes that use
-    // plain IEEE double. NetBSD only switches to IEEE double on 32-bit PowerPC.
+    // PowerPC uses IBM double-double, except with SPE, musl and a handful of
+    // OSes that use plain IEEE double. NetBSD only switches to IEEE double on
+    // 32-bit PowerPC.
     if (isOSAIX() || isOSMacOSClassic() || isOSFreeBSD() || isOSOpenBSD() ||
-        isMusl() || (isOSNetBSD() && isPPC32()))
+        getSubArch() == PPCSubArch_spe || isMusl() ||
+        (isOSNetBSD() && isPPC32()))
       return LongDoubleFormat::IEEEdouble;
     return LongDoubleFormat::PPCDoubleDouble;
   case x86:
@@ -2687,11 +2742,14 @@ LongDoubleFormat Triple::getDefaultLongDoubleFormat() const {
   case aarch64_be:
   case aarch64_32:
     // AArch64 uses IEEE quad, except on Windows and Darwin.
-    if (isOSWindows() || isOSDarwin())
+    if (isOSWindows() || isOSDarwin() || isUEFI())
       return LongDoubleFormat::IEEEdouble;
     return LongDoubleFormat::IEEEquad;
   case mips64:
   case mips64el:
+    // 64-bit MIPS uses IEEE quad, except on FreeBSD.
+    if (isOSFreeBSD())
+      return LongDoubleFormat::IEEEdouble;
     return LongDoubleFormat::IEEEquad;
   case avr:
   case tce:

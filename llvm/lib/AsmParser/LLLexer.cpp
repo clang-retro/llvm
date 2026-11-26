@@ -666,6 +666,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(msp430_intrcc);
   KEYWORD(avr_intrcc);
   KEYWORD(avr_signalcc);
+  KEYWORD(avr_builtincc);
   KEYWORD(ptx_kernel);
   KEYWORD(ptx_device);
   KEYWORD(spir_kernel);
@@ -819,6 +820,8 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(summaries);
   KEYWORD(flags);
   KEYWORD(blockcount);
+  KEYWORD(cfiFunctionDefs);
+  KEYWORD(cfiFunctionDecls);
   KEYWORD(linkage);
   KEYWORD(visibility);
   KEYWORD(notEligibleToImport);
@@ -887,6 +890,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(indir);
   KEYWORD(singleImpl);
   KEYWORD(branchFunnel);
+  KEYWORD(speculative);
   KEYWORD(singleImplName);
   KEYWORD(resByArg);
   KEYWORD(byArg);
@@ -904,6 +908,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(versions);
   KEYWORD(memProf);
   KEYWORD(notcold);
+  KEYWORD(ambiguous);
 
 #undef KEYWORD
 

@@ -22,31 +22,18 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
-// FIXME: Once the integrated assembler supports full register names, tie this
-// to the verbose-asm setting.
-static cl::opt<bool>
-FullRegNames("ppc-asm-full-reg-names", cl::Hidden, cl::init(false),
-             cl::desc("Use full register names when printing assembly"));
-
-// Useful for testing purposes. Prints vs{31-63} as v{0-31} respectively.
-static cl::opt<bool>
-ShowVSRNumsAsVR("ppc-vsr-nums-as-vr", cl::Hidden, cl::init(false),
-             cl::desc("Prints full register names with vs{31-63} as v{0-31}"));
-
-// Prints full register names with percent symbol.
-static cl::opt<bool>
-FullRegNamesWithPercent("ppc-reg-with-percent-prefix", cl::Hidden,
-                        cl::init(false),
-                        cl::desc("Prints full register names with percent"));
-
 #define PRINT_ALIAS_INSTR
 #include "PPCGenAsmWriter.inc"
+
+PPCInstPrinter::PPCInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
+                               const MCRegisterInfo &MRI, Triple T)
+    : MCInstPrinter(MAI, MII, MRI),
+      CLOpts(PPC_MC::getCLOpts(MAI.getTargetOptions())), TT(T) {}
 
 void PPCInstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) {
   const char *RegName = getRegisterName(Reg);
@@ -565,7 +552,7 @@ void PPCInstPrinter::printTLSCall(const MCInst *MI, unsigned OpNo,
 /// printed with a percentage symbol as prefix.
 bool PPCInstPrinter::showRegistersWithPercentPrefix(const char *RegName) const {
   // Apple's assembler takes bare register names (r3, f1) and no '%'.
-  if ((!FullRegNamesWithPercent && !MAI.useFullRegisterNames()) ||
+  if ((!CLOpts.reg_with_percent_prefix && !MAI.useFullRegisterNames()) ||
       TT.getOS() == Triple::AIX || TT.isOSBinFormatMachO())
     return false;
 
@@ -586,7 +573,7 @@ bool PPCInstPrinter::showRegistersWithPercentPrefix(const char *RegName) const {
 const char *
 PPCInstPrinter::getVerboseConditionRegName(MCRegister Reg,
                                            unsigned RegEncoding) const {
-  if (!FullRegNames && !MAI.useFullRegisterNames())
+  if (!CLOpts.asm_full_reg_names && !MAI.useFullRegisterNames())
     return nullptr;
   if (Reg < PPC::CR0EQ || Reg > PPC::CR7UN)
     return nullptr;
@@ -606,7 +593,8 @@ PPCInstPrinter::getVerboseConditionRegName(MCRegister Reg,
 // showRegistersWithPrefix - This method determines whether registers
 // should be number-only or include the prefix.
 bool PPCInstPrinter::showRegistersWithPrefix() const {
-  return FullRegNamesWithPercent || FullRegNames || MAI.useFullRegisterNames();
+  return CLOpts.reg_with_percent_prefix || CLOpts.asm_full_reg_names ||
+         MAI.useFullRegisterNames();
 }
 
 void PPCInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
@@ -614,7 +602,7 @@ void PPCInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     MCRegister Reg = Op.getReg();
-    if (!ShowVSRNumsAsVR)
+    if (!CLOpts.vsr_nums_as_vr)
       Reg = PPC::getRegNumForOperand(MII.get(MI->getOpcode()), Reg, OpNo);
 
     // Apple's assembler has no names for condition register bits, so print
