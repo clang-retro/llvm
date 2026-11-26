@@ -1402,7 +1402,7 @@ public:
            (isMacOSX() && (getArch() == ppc || getArch() == x86) &&
             isMacOSXVersionLT(10, 7)) ||
            isWindowsCygwinEnvironment() || isOHOSFamily() || isOSOS2() ||
-           isOSMacOSClassic() ||
+           (isOSMSDOS() && getArch() == x86) || isOSMacOSClassic() ||
            (isWindowsGNUEnvironment() && getOSMajorVersion() != 0 &&
             getOSMajorVersion() < 6);
   }

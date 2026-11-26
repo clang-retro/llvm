@@ -38,6 +38,7 @@
 #include "ToolChains/Linux.h"
 #include "ToolChains/MOSToolchain.h"
 #include "ToolChains/MSDOS.h"
+#include "ToolChains/MSDOS32.h"
 #include "ToolChains/MSP430.h"
 #include "ToolChains/MSVC.h"
 #include "ToolChains/MacOSClassic.h"
@@ -6219,6 +6220,12 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       TC = std::make_unique<toolchains::Haiku>(*this, Target, Args);
       break;
     case llvm::Triple::MSDOS:
+      // 32-bit DOS programs are LE programs, linked as 32-bit OS/2 ones are.
+      if (Target.getArch() == llvm::Triple::x86)
+        TC = std::make_unique<toolchains::MSDOS32>(*this, Target, Args);
+      else
+        TC = std::make_unique<toolchains::MSDOS>(*this, Target, Args);
+      break;
     case llvm::Triple::Win16:
       TC = std::make_unique<toolchains::MSDOS>(*this, Target, Args);
       break;

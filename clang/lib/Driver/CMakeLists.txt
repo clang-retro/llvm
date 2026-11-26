@@ -76,6 +76,7 @@ add_clang_library(clangDriver
   ToolChains/Gnu.cpp
   ToolChains/Haiku.cpp
   ToolChains/MSDOS.cpp
+  ToolChains/MSDOS32.cpp
   ToolChains/OS2.cpp
   ToolChains/MacOSClassic.cpp
   ToolChains/HIPUtility.cpp
