@@ -1024,6 +1024,34 @@ public:
   }
 };
 
+// 32-bit DOS (i386-pc-msdos): flat 32-bit programs under a DPMI DOS extender
+// (DOS/32A), as Open Watcom's DOS/4GW and DOS/32A targets are.
+template <typename Target>
+class LLVM_LIBRARY_VISIBILITY MSDOS32TargetInfo : public OSTargetInfo<Target> {
+protected:
+  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                    MacroBuilder &Builder) const override {
+    // The 16-bit DOS names, and __386__ and __FLAT__ as Open Watcom defines
+    // them for 32-bit DOS. __DPMI__ tells that the program runs in protected
+    // mode under a DPMI host.
+    DefineStd(Builder, "MSDOS", Opts);
+    Builder.defineMacro("__DOS__");
+    Builder.defineMacro("_DOS");
+    Builder.defineMacro("__386__");
+    Builder.defineMacro("__FLAT__");
+    Builder.defineMacro("__DPMI__");
+    if (Opts.C11)
+      Builder.defineMacro("__STDC_NO_THREADS__");
+  }
+
+public:
+  MSDOS32TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
+      : OSTargetInfo<Target>(Triple, Opts) {
+    // wchar_t is 16 bits, as with Open Watcom.
+    this->WCharType = TargetInfo::UnsignedShort;
+  }
+};
+
 // z/OS target
 template <typename Target>
 class LLVM_LIBRARY_VISIBILITY ZOSTargetInfo : public OSTargetInfo<Target> {

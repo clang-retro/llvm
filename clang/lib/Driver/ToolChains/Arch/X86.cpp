@@ -122,8 +122,9 @@ std::string x86::getX86TargetCPU(const Driver &D, const ArgList &Args,
         .Default("i686");
 
   // OS/2 targets the CPU of the arch name, i386 for i386-pc-os2. Before Warp
-  // Server for e-business, OS/2 does not save SSE registers, so no SSE.
-  if (Triple.isOSOS2())
+  // Server for e-business, OS/2 does not save SSE registers, so no SSE. 32-bit
+  // DOS (i386-pc-msdos) is the same: DOS extenders do not enable SSE.
+  if (Triple.isOSOS2() || Triple.isOSMSDOS())
     return llvm::StringSwitch<std::string>(Triple.getArchName())
         .Case("i386", "i386")
         .Case("i486", "i486")
