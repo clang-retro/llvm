@@ -506,12 +506,44 @@ struct __libcpp_beginthreadex_thunk_data {
   void* __arg;
 };
 
+#if !_LIBCPP_WIN32_VISTA_SYNC
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+
+// Windows 9x does not run TLS callbacks. The runtime's callbacks run the
+// thread_local destructors and the TlsAlloc key destructors, so on 9x a
+// thread of a program runs them itself, for DLL_THREAD_DETACH, when its
+// function returns. A DLL gets DLL_THREAD_DETACH in its entry point, and
+// the runtime runs its callbacks there. The TLS directory comes from the
+// PE header: a reference to _tls_used would give each program one.
+static void __libcpp_thread_end_9x() {
+  if (!(GetVersion() & 0x80000000))
+    return;
+  auto* __base = reinterpret_cast<const BYTE*>(&__ImageBase);
+  if (reinterpret_cast<HMODULE>(&__ImageBase) != GetModuleHandleA(nullptr))
+    return;
+  auto* __nt  = reinterpret_cast<const IMAGE_NT_HEADERS*>(__base + __ImageBase.e_lfanew);
+  auto& __dir = __nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+  if (__nt->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_TLS || !__dir.VirtualAddress)
+    return;
+  auto* __tls = reinterpret_cast<const IMAGE_TLS_DIRECTORY*>(__base + __dir.VirtualAddress);
+  auto* __cb  = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(__tls->AddressOfCallBacks);
+  for (; __cb && *__cb; ++__cb)
+    (*__cb)(reinterpret_cast<HMODULE>(&__ImageBase), DLL_THREAD_DETACH, nullptr);
+}
+#endif
+
+// Runs the function of a std::thread with its argument, then, before
+// Vista, the thread end work that Windows 9x leaves out.
 static inline _LIBCPP_HIDE_FROM_ABI unsigned WINAPI __libcpp_beginthreadex_thunk(void* __raw_data) {
   auto* __data = static_cast<__libcpp_beginthreadex_thunk_data*>(__raw_data);
   auto* __func = __data->__func;
   void* __arg  = __data->__arg;
   delete __data;
-  return static_cast<unsigned>(reinterpret_cast<uintptr_t>(__func(__arg)));
+  void* __result = __func(__arg);
+#if !_LIBCPP_WIN32_VISTA_SYNC
+  __libcpp_thread_end_9x();
+#endif
+  return static_cast<unsigned>(reinterpret_cast<uintptr_t>(__result));
 }
 
 bool __libcpp_thread_isnull(const __libcpp_thread_t* __t) { return *__t == 0; }
