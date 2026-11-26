@@ -18,7 +18,7 @@ body: |
     dead %0:gpr = IMPLICIT_DEF
     %1:gpr = LDAbs 1000
     INLINEASM &"", sideeffect attdialect, reguse:GPR, undef %0, reguse:GPR, undef %0, reguse:GPR, %1, reguse:GPR, undef $a
-    INLINEASM &"", sideeffect attdialect, reguse:GPR, undef %0, reguse:GPR, killed %1
+    INLINEASM &"", sideeffect attdialect, reguse:GPR, undef %0, reguse:GPR, %1
     RTS
 ...
 
@@ -36,7 +36,7 @@ body: |
     ; CHECK-NEXT: RTS
     %0:gpr = LDAbs 1000
     INLINEASM &"", sideeffect attdialect, reguse:GPR, undef %0, reguse:GPR, %0
-    STAbs killed %0, 2000
+    STAbs %0, 2000
     RTS
 ...
 

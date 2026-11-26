@@ -2,6 +2,7 @@
 # RUN: llc -mtriple=mos -run-pass=prolog-epilog -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: addrlostk
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -24,6 +25,7 @@ body: |
 ...
 ---
 name: addrlostk_0
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -44,6 +46,7 @@ body: |
 ...
 ---
 name: addrhistk
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -67,6 +70,7 @@ body: |
 ...
 ---
 name: addrhistk_0
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -88,6 +92,7 @@ body: |
 ...
 ---
 name: incsp
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1234 }
 body: |
@@ -114,6 +119,7 @@ body: |
 ...
 ---
 name: incsp_hi_only
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 512 }
 body: |
@@ -134,6 +140,7 @@ body: |
 ...
 ---
 name: ld_byte
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -154,6 +161,7 @@ body:             |
 ...
 ---
 name: ld_byte_high
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -179,6 +187,7 @@ body:             |
 ...
 ---
 name: ld_byte_x
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -200,6 +209,7 @@ body:             |
 ...
 ---
 name: ld_byte_xlsb
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -221,6 +231,7 @@ body:             |
 ...
 ---
 name: ld_byte_c
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -244,6 +255,7 @@ body:             |
 ...
 ---
 name: ld_ptr
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 4 }
 body: |
@@ -268,6 +280,7 @@ body: |
 ...
 ---
 name: st_byte
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -290,6 +303,7 @@ body:             |
 ...
 ---
 name: st_byte_c
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 1 }
   - { id: 1, size: 2 }
@@ -313,6 +327,7 @@ body:             |
 ...
 ---
 name: st_byte_high
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
   - { id: 1, size: 2 }
@@ -339,6 +354,7 @@ body:             |
 ...
 ---
 name: st_ptr
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 4 }
 body: |
@@ -364,6 +380,7 @@ body: |
 ...
 ---
 name: variable_sized
+tracksRegLiveness: false
 stack:
   - { id: 0, type: variable-sized }
   - { id: 1, size: 1 }
@@ -419,6 +436,7 @@ body: |
 ...
 ---
 name: save_restore_csr
+tracksRegLiveness: false
 stack:
 body: |
   bb.0.entry:
@@ -508,6 +526,7 @@ body: |
 ...
 ---
 name: save_restore_csr_variable_sized
+tracksRegLiveness: false
 stack:
   - { id: 0, type: variable-sized }
 body: |

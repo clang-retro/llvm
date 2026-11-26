@@ -41,6 +41,7 @@
   }
 ---
 name: nonreentrant
+tracksRegLiveness: false
 frameInfo:
   adjustsStack: true
 stack:
@@ -103,6 +104,7 @@ body:             |
 ...
 ---
 name: nonreentrant_variable_sized
+tracksRegLiveness: false
 stack:
   - { id: 0, type: variable-sized }
   - { id: 1, size: 1 }
@@ -171,6 +173,7 @@ body: |
 ...
 ---
 name: interrupt_axy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; 6502-LABEL: name: interrupt_axy
@@ -941,6 +944,7 @@ body: |
 ...
 ---
 name: interrupt_caller
+tracksRegLiveness: false
 frameInfo:
   adjustsStack: true
 body: |

@@ -41,6 +41,7 @@
   attributes #0 = { optsize }
 ---
 name: memcpy_to_tii
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: memcpy_to_tii
@@ -59,6 +60,7 @@ body: |
 ...
 ---
 name: memset_to_tii
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: memset_to_tii
@@ -78,6 +80,7 @@ body: |
 ...
 ---
 name: memcpy_to_multiple_tii
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: memcpy_to_multiple_tii
@@ -98,6 +101,7 @@ body: |
 ...
 ---
 name: memset_to_multiple_tii
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: memset_to_multiple_tii
@@ -119,6 +123,7 @@ body: |
 ...
 ---
 name: load_constant_zp_addr_negative
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: load_constant_zp_addr_negative
@@ -131,6 +136,7 @@ body: |
 ...
 ---
 name: load_zp_ptr
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: load_zp_ptr
@@ -145,6 +151,7 @@ body: |
 ...
 ---
 name: load_zp_ptradd_const8
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: load_zp_ptradd_const8
@@ -160,6 +167,7 @@ body: |
 ...
 ---
 name: addrspace_cast_data_zp
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: addrspace_cast_data_zp
@@ -178,6 +186,7 @@ body: |
 ...
 ---
 name: addrspace_cast_zp_data
+tracksRegLiveness: false
 body: |
   bb.1 (%ir-block.0):
     ; CHECK-LABEL: name: addrspace_cast_zp_data

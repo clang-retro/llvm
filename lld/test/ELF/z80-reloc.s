@@ -30,6 +30,6 @@ data:
 # CHECK:      Contents of section .data:
 # CHECK-NEXT:  0200 0b0156
 
-# HDR: Machine: EM_Z80
+# HDR: Machine: Zilog Z80
 
 # RANGE: error: {{.*}}:(.text+0x1): relocation R_Z80_16 out of range: 65536 is not in [-32768, 65535]; references section '.data'

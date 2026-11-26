@@ -2,6 +2,7 @@
 # RUN: llc -mtriple=mos -mcpu=mos65c02 -run-pass=legalizer -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: brjt
+tracksRegLiveness: false
 jumpTable:
   kind: block-address
   entries:
