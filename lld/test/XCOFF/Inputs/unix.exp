@@ -1,0 +1,4 @@
+#! /unix
+* Kernel services the tests call.
+kwrite syscall
+_exit syscall
