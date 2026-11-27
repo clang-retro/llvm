@@ -635,10 +635,25 @@ void Writer::run() {
   build(data);
   build(toc);
 
-  // Glink code and its TOC entries.
+  // Glink code and its TOC entries, and the constructor and destructor
+  // tables.
   for (auto &[c, bytes] : contents) {
     if (c->file)
       continue;
+    if (c == ctx.initArray || c == ctx.finiArray) {
+      const std::vector<Symbol *> &list =
+          c == ctx.initArray ? ctx.sinits : ctx.sterms;
+      for (size_t i = 0; i < list.size(); ++i) {
+        Symbol *s = list[i];
+        write32be(bytes.data() + 4 * i, csectAddr(s->csect) + s->offset);
+        uint32_t secIdx = s->csect->out == OutKind::Text  ? 0
+                          : s->csect->out == OutKind::Bss ? 2
+                                                          : 1;
+        ldRelocs.push_back(
+            {c->outAddr + 4 * (uint32_t)i, secIdx, 0x1f00 | R_POS, snData});
+      }
+      continue;
+    }
     Symbol *imp = nullptr;
     for (auto &e : ctx.symtab)
       if (e.second->kind == Symbol::Imported &&

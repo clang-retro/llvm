@@ -92,6 +92,7 @@ private:
   void addImportFile(MemoryBufferRef mb);
   void fetch(const Archive::Symbol &sym);
   void drain();
+  void makeInitFini();
   void resolveImports();
 
   std::vector<std::string> inputs; // files and "-l" names, in order
@@ -442,6 +443,58 @@ void LinkerDriver::addLibrary(StringRef name) {
   error("unable to find library -l" + name);
 }
 
+// clang names each static constructor's descriptor __sinit<priority>_...
+// and each destructor's __sterm<priority>_..., with the priority as 8 hex
+// digits, for the AIX binder to collect. Collect them into tables between
+// __init_array_start/__init_array_end and __fini_array_start/
+// __fini_array_end, which the C library's startup code runs.
+void LinkerDriver::makeInitFini() {
+  for (auto &e : ctx.symtab) {
+    Symbol *s = e.second;
+    if (s->kind != Symbol::Defined)
+      continue;
+    if (s->name.starts_with("__sinit"))
+      ctx.sinits.push_back(s);
+    else if (s->name.starts_with("__sterm"))
+      ctx.sterms.push_back(s);
+  }
+  auto byName = [](const Symbol *a, const Symbol *b) {
+    return a->name < b->name;
+  };
+  llvm::sort(ctx.sinits, byName);
+  llvm::sort(ctx.sterms, byName);
+
+  auto table = [](StringRef name, size_t n) {
+    auto *c = make<InputCsect>();
+    c->name = name;
+    c->smc = XCOFF::XMC_RW;
+    c->symType = XCOFF::XTY_SD;
+    c->alignLog2 = 2;
+    c->size = 4 * n;
+    c->out = OutKind::Data;
+    ctx.synthetic.push_back(c);
+    return c;
+  };
+  ctx.initArray = table("__init_array", ctx.sinits.size());
+  ctx.finiArray = table("__fini_array", ctx.sterms.size());
+
+  auto define = [](StringRef name, InputCsect *c, uint32_t off) {
+    Symbol *s = symtabFind(name);
+    if (!s || (s->kind != Symbol::Undefined && s->kind != Symbol::Lazy))
+      return;
+    s->kind = Symbol::Defined;
+    s->csect = c;
+    s->offset = off;
+    s->lazy.reset();
+  };
+  define("__preinit_array_start", ctx.initArray, 0);
+  define("__preinit_array_end", ctx.initArray, 0);
+  define("__init_array_start", ctx.initArray, 0);
+  define("__init_array_end", ctx.initArray, ctx.initArray->size);
+  define("__fini_array_start", ctx.finiArray, 0);
+  define("__fini_array_end", ctx.finiArray, ctx.finiArray->size);
+}
+
 void LinkerDriver::resolveImports() {
   std::vector<Symbol *> undefs;
   for (auto &e : ctx.symtab)
@@ -547,6 +600,7 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> args) {
   if (errorCount())
     return;
 
+  makeInitFini();
   resolveImports();
   if (errorCount())
     return;

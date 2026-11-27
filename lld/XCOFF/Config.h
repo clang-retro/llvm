@@ -40,6 +40,11 @@ struct Ctx {
   llvm::StringMap<ImportEntry> imports;
   std::vector<InputCsect *> synthetic; // glink code and its TOC entries
 
+  // The constructor and destructor tables: the descriptors of every
+  // __sinit* and __sterm* function clang emits, in priority order.
+  InputCsect *initArray = nullptr, *finiArray = nullptr;
+  std::vector<Symbol *> sinits, sterms;
+
   void reset() { *this = Ctx(); }
 };
 
