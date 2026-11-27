@@ -172,6 +172,29 @@ void Writer::layout() {
   bssSize = place(bss, bssAddr) - bssAddr;
 
   loaderOff = alignTo(dataOff + dataSize, 4);
+
+  for (auto &e : ctx.symtab) {
+    Symbol *s = e.second;
+    switch (s->boundary) {
+    case Symbol::NoBoundary:
+      break;
+    case Symbol::TextStart:
+      s->absValue = textAddr;
+      break;
+    case Symbol::TextEnd:
+      s->absValue = textAddr + textSize;
+      break;
+    case Symbol::DataStart:
+      s->absValue = dataAddr;
+      break;
+    case Symbol::DataEnd:
+      s->absValue = dataAddr + dataSize;
+      break;
+    case Symbol::BssEnd:
+      s->absValue = bssAddr + bssSize;
+      break;
+    }
+  }
 }
 
 uint32_t Writer::csectAddr(const InputCsect *c) const {
@@ -467,9 +490,13 @@ void Writer::writeLoader(uint8_t *buf) {
       p[15] = s->import->smc; // l_smclas
       write32be(p + 16, s->import->file->id);
     } else {
+      bool isEntry = !ctx.arg.noEntry && s->name == ctx.arg.entry;
+      bool isLabel = s->offset != 0 || s->csect->name != s->name;
       write32be(p + 8, csectAddr(s->csect) + s->offset);
       write16be(p + 12, outSection(s->csect));
-      p[14] = 0x20 | XTY_SD; // L_ENTRY
+      // L_ENTRY and L_EXPORT, with the symbol type.
+      p[14] = (isEntry ? 0x20 : 0) | (s->exported ? 0x10 : 0) |
+              (isLabel ? XTY_LD : s->csect->symType);
       p[15] = s->csect->smc;
       write32be(p + 16, 0);
     }
@@ -570,6 +597,19 @@ void Writer::run() {
     Symbol *e = symtabFind(ctx.arg.entry);
     e->ldIndex = ldSyms.size();
     ldSyms.push_back(e);
+  }
+
+  // Exported symbols, in name order.
+  std::vector<Symbol *> exports;
+  for (auto &e : ctx.symtab)
+    if (e.second->exported && e.second->ldIndex < 0)
+      exports.push_back(e.second);
+  llvm::sort(exports, [](const Symbol *a, const Symbol *b) {
+    return a->name < b->name;
+  });
+  for (Symbol *s : exports) {
+    s->ldIndex = ldSyms.size();
+    ldSyms.push_back(s);
   }
 
   // Relocate every placed csect into a scratch copy first, which collects

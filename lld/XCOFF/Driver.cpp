@@ -24,6 +24,7 @@
 #include "lld/Common/Version.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -94,6 +95,7 @@ private:
   void resolveImports();
 
   std::vector<std::string> inputs; // files and "-l" names, in order
+  std::vector<std::string> exportFiles;
   DenseSet<Fetched> fetched;
   std::vector<Symbol *> pendingFetch;
 };
@@ -227,9 +229,10 @@ bool LinkerDriver::parseArgs(ArrayRef<const char *> argsArr) {
         c.noEntry = true;
       } else if (b == "64") {
         error("64-bit XCOFF output is not supported yet");
-      } else if (b.consume_front("E:") || b.consume_front("export:") ||
-                 b == "expall" || b == "expfull") {
-        warn("ignoring " + a + ": exports are not supported");
+      } else if (b.consume_front("E:") || b.consume_front("export:")) {
+        exportFiles.push_back(b.str());
+      } else if (b == "expall" || b == "expfull") {
+        warn("ignoring " + a + ": list the symbols to export with -bE:");
       } else if (b.starts_with("M:") || b.starts_with("modtype:")) {
         if (b != "M:1L" && b != "modtype:1L")
           warn("ignoring " + a + ": only 1L modules are made");
@@ -452,6 +455,19 @@ void LinkerDriver::resolveImports() {
   for (Symbol *s : undefs) {
     if (!s->file && !s->referencedStrongly)
       continue; // a name from an archive symbol table nobody used
+    // The section boundaries the AIX binder defines.
+    Symbol::Boundary b = StringSwitch<Symbol::Boundary>(s->name)
+                             .Case("_text", Symbol::TextStart)
+                             .Cases({"_etext", "etext"}, Symbol::TextEnd)
+                             .Case("_data", Symbol::DataStart)
+                             .Cases({"_edata", "edata"}, Symbol::DataEnd)
+                             .Cases({"_end", "end"}, Symbol::BssEnd)
+                             .Default(Symbol::NoBoundary);
+    if (b != Symbol::NoBoundary) {
+      s->kind = Symbol::Absolute;
+      s->boundary = b;
+      continue;
+    }
     auto it = ctx.imports.find(s->name);
     if (it != ctx.imports.end()) {
       s->kind = Symbol::Imported;
@@ -534,6 +550,27 @@ void LinkerDriver::linkerMain(ArrayRef<const char *> args) {
   resolveImports();
   if (errorCount())
     return;
+
+  // Export files: one symbol per line, as for the AIX binder.
+  for (const std::string &path : exportFiles) {
+    std::optional<MemoryBufferRef> mb = readFile(path);
+    if (!mb)
+      continue;
+    SmallVector<StringRef, 0> lines;
+    mb->getBuffer().split(lines, '\n');
+    for (StringRef line : lines) {
+      line = line.trim();
+      if (line.empty() || line[0] == '*' || line[0] == '#')
+        continue;
+      StringRef name = line.split(' ').first;
+      Symbol *s = symtabFind(name);
+      if (!s || s->kind != Symbol::Defined) {
+        warn(path + ": cannot export " + name + ": it is not defined");
+        continue;
+      }
+      s->exported = true;
+    }
+  }
 
   if (!ctx.arg.noEntry) {
     Symbol *e = symtabFind(ctx.arg.entry);

@@ -15,6 +15,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 
 #include <set>
 
@@ -107,6 +108,72 @@ static bool hasExportListLinkerOpts(const ArgStringList &CmdArgs) {
   return false;
 }
 
+// Link a static program for an older AIX with xcoff-ld and the clang-retro
+// SDK: its crt0.o and C library, which call the kernel through the system
+// calls that /unix exports, listed in unix.exp. Nothing from an AIX system is
+// needed to build.
+static void constructRetroLinkJob(const Tool &T, Compilation &C,
+                                  const JobAction &JA, const InputInfo &Output,
+                                  const InputInfoList &Inputs,
+                                  const ArgList &Args) {
+  const ToolChain &TC = T.getToolChain();
+  const Driver &D = TC.getDriver();
+  ArgStringList CmdArgs;
+
+  if (!TC.getTriple().isArch32Bit())
+    D.Diag(diag::err_drv_unsupported_opt_for_target)
+        << "-m64" << TC.getTriple().str();
+  if (Args.hasArg(options::OPT_shared))
+    D.Diag(diag::err_drv_unsupported_opt_for_target)
+        << "-shared" << TC.getTriple().str();
+
+  CmdArgs.push_back("-b32");
+  CmdArgs.push_back("-bpT:0x10000000");
+  CmdArgs.push_back("-bpD:0x20000000");
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  }
+
+  bool StartFiles = !Args.hasArg(options::OPT_nostdlib,
+                                 options::OPT_nostartfiles, options::OPT_r);
+  if (StartFiles)
+    CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crt0.o")));
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  for (const auto &LibPath : TC.getFilePaths())
+    CmdArgs.push_back(Args.MakeArgString("-L" + LibPath));
+  AddLinkerInputs(TC, Inputs, Args, CmdArgs, JA);
+
+  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
+    if (D.CCCIsCXX() && TC.ShouldLinkCXXStdlib(Args))
+      TC.AddCXXStdlibLibArgs(Args, CmdArgs);
+    CmdArgs.push_back("-lc");
+    // The builtins from the resource directory, or else from the sysroot,
+    // where the clang-retro package puts them.
+    std::string RT = TC.getCompilerRT(Args, "builtins");
+    if (!TC.getVFS().exists(RT))
+      RT = TC.GetFilePath("libclang_rt.builtins.a");
+    if (TC.getVFS().exists(RT))
+      CmdArgs.push_back(Args.MakeArgString(RT));
+  }
+  if (!Args.hasArg(options::OPT_nostdlib)) {
+    // The kernel calls the C library makes, and the symbols it exports to
+    // the loader (errno, which the kernel sets).
+    std::string Imports = TC.GetFilePath("unix.exp");
+    if (TC.getVFS().exists(Imports))
+      CmdArgs.push_back(Args.MakeArgString("-bI:" + Imports));
+    std::string Exports = TC.GetFilePath("libc.exp");
+    if (TC.getVFS().exists(Exports))
+      CmdArgs.push_back(Args.MakeArgString("-bE:" + Exports));
+  }
+
+  C.addCommand(std::make_unique<Command>(
+      JA, T, ResponseFileSupport::AtFileCurCP(),
+      Args.MakeArgString(TC.GetProgramPath("xcoff-ld")), CmdArgs, Inputs,
+      Output));
+}
+
 void aix::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                const InputInfo &Output,
                                const InputInfoList &Inputs, const ArgList &Args,
@@ -114,6 +181,11 @@ void aix::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const AIX &ToolChain = static_cast<const AIX &>(getToolChain());
   const Driver &D = ToolChain.getDriver();
   ArgStringList CmdArgs;
+
+  if (ToolChain.isRetro()) {
+    constructRetroLinkJob(*this, C, JA, Output, Inputs, Args);
+    return;
+  }
 
   const bool IsArch32Bit = ToolChain.getTriple().isArch32Bit();
   const bool IsArch64Bit = ToolChain.getTriple().isArch64Bit();
@@ -349,11 +421,26 @@ AIX::AIX(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   ParseInlineAsmUsingAsmParser = Args.hasFlag(
       options::OPT_fintegrated_as, options::OPT_fno_integrated_as, true);
-  getLibraryPaths().push_back(getDriver().SysRoot + "/usr/lib");
+
+  // The clang-retro SDK: a sysroot next to the compiler, or -fuse-ld=lld,
+  // which links with xcoff-ld instead of the AIX system linker.
+  SysRoot = getDriver().SysRoot;
+  if (const Arg *A = Args.getLastArg(options::OPT_fuse_ld_EQ))
+    Retro = StringRef(A->getValue()) == "lld";
+  if (SysRoot.empty() && Triple.isArch32Bit()) {
+    SmallString<128> Dir(getDriver().Dir);
+    llvm::sys::path::append(Dir, "..", "powerpc-ibm-aix");
+    if (getVFS().exists(Dir)) {
+      SysRoot = std::string(Dir);
+      Retro = true;
+    }
+  }
+
+  getLibraryPaths().push_back(SysRoot + "/usr/lib");
 
   // FilePaths gets System Paths for -print-search-dirs
-  getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
-  getFilePaths().push_back(getDriver().SysRoot + "/lib");
+  getFilePaths().push_back(SysRoot + "/usr/lib");
+  getFilePaths().push_back(SysRoot + "/lib");
 }
 
 // Returns the effective header sysroot path to use.
@@ -362,8 +449,8 @@ llvm::StringRef
 AIX::GetHeaderSysroot(const llvm::opt::ArgList &DriverArgs) const {
   if (DriverArgs.hasArg(options::OPT_isysroot))
     return DriverArgs.getLastArgValue(options::OPT_isysroot);
-  if (!getDriver().SysRoot.empty())
-    return getDriver().SysRoot;
+  if (!SysRoot.empty())
+    return SysRoot;
   return "/";
 }
 
@@ -457,8 +544,8 @@ void AIX::AddFilePathLibArgs(const llvm::opt::ArgList &Args,
   // flags to avoid duplicates. But keep them in FilePaths for
   // -print-search-dirs
   for (const auto &LibPath : getFilePaths()) {
-    if (LibPath.length() > 0 && LibPath != getDriver().SysRoot + "/usr/lib" &&
-        LibPath != getDriver().SysRoot + "/lib") {
+    if (LibPath.length() > 0 && LibPath != SysRoot + "/usr/lib" &&
+        LibPath != SysRoot + "/lib") {
       CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
     }
   }

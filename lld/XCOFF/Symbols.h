@@ -46,6 +46,20 @@ struct Symbol {
   // Absolute.
   uint32_t absValue = 0;
 
+  // A boundary symbol the linker defines, such as _end.
+  enum Boundary : uint8_t {
+    NoBoundary,
+    TextStart,
+    TextEnd,
+    DataStart,
+    DataEnd,
+    BssEnd
+  };
+  Boundary boundary = NoBoundary;
+
+  // Listed in an export file: the loader section names it.
+  bool exported = false;
+
   // Lazy.
   std::optional<llvm::object::Archive::Symbol> lazy;
 
