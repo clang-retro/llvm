@@ -412,10 +412,13 @@ bool M68kInstrInfo::ExpandMOVI(MachineInstrBuilder &MIB, MVT MVTSize) const {
 
     // movea.w implicitly sign extends to the full register width,
     // so exploit that if the immediate fits in the correct range.
+    // The range is signed: movea.w #$8000..#$FFFF gives $FFFF8000..$FFFFFFFF,
+    // not $00008000..$0000FFFF. The immediate of a 32-bit move can be
+    // zero-extended, so sign-extend it from 32 bits before the test.
     //
     // TODO: use lea imm.w, %an for further constants when 16-bit
     // absolute addressing is implemented.
-  } else if (AR32->contains(Reg) && isUInt<16>(Imm)) {
+  } else if (AR32->contains(Reg) && isInt<16>(SignExtend64<32>(Imm))) {
     LLVM_DEBUG(dbgs() << "MOVEA w/ implicit extend\n");
 
     unsigned SubReg = RI.getSubReg(Reg, M68k::MxSubRegIndex16Lo);

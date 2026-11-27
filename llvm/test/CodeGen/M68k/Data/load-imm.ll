@@ -147,3 +147,42 @@ define ptr @return_large_nonnull() {
 ; CHECK-NEXT:    rts
   ret ptr inttoptr (i32 74281 to ptr)
 }
+
+; movea.w sign-extends, so a 16-bit pattern with the top bit set must not
+; use it for a zero-extended address constant.
+define ptr @return_0xff00_nonnull() {
+; CHECK-LABEL: return_0xff00_nonnull:
+; CHECK:         .cfi_startproc
+; CHECK-NEXT:  ; %bb.0:
+; CHECK-NEXT:    move.l #65280, %a0
+; CHECK-NEXT:    rts
+  ret ptr inttoptr (i32 65280 to ptr)
+}
+
+define ptr @return_0x8000_nonnull() {
+; CHECK-LABEL: return_0x8000_nonnull:
+; CHECK:         .cfi_startproc
+; CHECK-NEXT:  ; %bb.0:
+; CHECK-NEXT:    move.l #32768, %a0
+; CHECK-NEXT:    rts
+  ret ptr inttoptr (i32 32768 to ptr)
+}
+
+define ptr @return_0x7fff_nonnull() {
+; CHECK-LABEL: return_0x7fff_nonnull:
+; CHECK:         .cfi_startproc
+; CHECK-NEXT:  ; %bb.0:
+; CHECK-NEXT:    move.w #32767, %a0
+; CHECK-NEXT:    rts
+  ret ptr inttoptr (i32 32767 to ptr)
+}
+
+; 0xFFFF8000 is the sign extension of 0x8000, so movea.w is correct for it.
+define ptr @return_0xffff8000_nonnull() {
+; CHECK-LABEL: return_0xffff8000_nonnull:
+; CHECK:         .cfi_startproc
+; CHECK-NEXT:  ; %bb.0:
+; CHECK-NEXT:    move.w #-32768, %a0
+; CHECK-NEXT:    rts
+  ret ptr inttoptr (i32 -32768 to ptr)
+}
