@@ -55,6 +55,7 @@ public:
   std::string_view getClobbers() const override;
   BuiltinVaListKind getBuiltinVaListKind() const override;
   bool setCPU(StringRef Name) override;
+  void fillValidCPUList(SmallVectorImpl<StringRef> &Values) const override;
   CallingConvCheckResult checkCallingConvention(CallingConv CC) const override;
 
   /// Give the DWARF numbers of the registers that hold the exception

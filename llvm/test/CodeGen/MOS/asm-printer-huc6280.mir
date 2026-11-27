@@ -1,6 +1,7 @@
 # RUN: llc -mtriple=mos -mcpu=moshuc6280 -start-after=machine-opt-remark-emitter -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: tii_memcpy
+tracksRegLiveness: false
 # CHECK-LABEL: tii_memcpy
 body: |
   bb.0.entry:
@@ -11,6 +12,7 @@ body: |
 ...
 ---
 name: tdd_memcpy
+tracksRegLiveness: false
 # CHECK-LABEL: tdd_memcpy
 body: |
   bb.0.entry:
@@ -21,6 +23,7 @@ body: |
 ...
 ---
 name: cly_implied
+tracksRegLiveness: false
 # CHECK-LABEL: cly_implied
 body: |
   bb.0.entry:
@@ -31,6 +34,7 @@ body: |
 ...
 ---
 name: sax_implied
+tracksRegLiveness: false
 # CHECK-LABEL: sax_implied
 body: |
   bb.0.entry:
@@ -41,6 +45,7 @@ body: |
 ...
 ---
 name: sax_implied_sxa
+tracksRegLiveness: false
 # CHECK-LABEL: sax_implied_sxa
 body: |
   bb.0.entry:
@@ -51,6 +56,7 @@ body: |
 ...
 ---
 name: inc_zeropage_x
+tracksRegLiveness: false
 # CHECK-LABEL: inc_zeropage_x
 body: |
   bb.0.entry:
@@ -61,6 +67,7 @@ body: |
 ...
 ---
 name: inc_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: inc_absolute_x
 body: |
   bb.0.entry:
@@ -71,6 +78,7 @@ body: |
 ...
 ---
 name: inc_absolute_nonzp_x
+tracksRegLiveness: false
 # CHECK-LABEL: inc_absolute_nonzp_x
 body: |
   bb.0.entry:

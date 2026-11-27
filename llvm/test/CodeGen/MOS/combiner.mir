@@ -105,6 +105,7 @@
   }
 ---
 name: fold_global_offset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fold_global_offset
@@ -117,6 +118,7 @@ body: |
 ...
 ---
 name: sbc_literal_eq
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sbc_literal_eq
@@ -131,6 +133,7 @@ body: |
 ...
 ---
 name: extract_low_bit_using_earlier_shift_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_low_bit_using_earlier_shift_8
@@ -148,6 +151,7 @@ body: |
 ...
 ---
 name: extract_low_bit_using_earlier_shift_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_low_bit_using_earlier_shift_16
@@ -168,6 +172,7 @@ body: |
 ...
 ---
 name: extract_low_bit_using_later_shift
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_low_bit_using_later_shift
@@ -185,6 +190,7 @@ body: |
 ...
 ---
 name: extract_low_bit_and
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_low_bit_and
@@ -205,6 +211,7 @@ body: |
 
 ---
 name: extract_not_low_bit_and_using_earlier_shift
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_not_low_bit_and_using_earlier_shift
@@ -226,6 +233,7 @@ body: |
 ...
 ---
 name: extract_not_low_bit_and_using_later_shift
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_not_low_bit_and_using_later_shift
@@ -247,6 +255,7 @@ body: |
 ...
 ---
 name: extract_low_bits
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: extract_low_bits
@@ -265,6 +274,7 @@ body: |
 ...
 ---
 name: uaddo_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: uaddo_1
@@ -281,6 +291,7 @@ body: |
 ...
 ---
 name: cmpz_0
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: cmpz_0
@@ -295,6 +306,7 @@ body: |
 ...
 ---
 name: load_store_to_memcpy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_store_to_memcpy
@@ -311,6 +323,7 @@ body: |
 ...
 ---
 name: load_store_not_to_memcpy_if_volatile
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_store_not_to_memcpy_if_volatile
@@ -327,6 +340,7 @@ body: |
 ...
 ---
 name: store_repeating_to_memset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: store_repeating_to_memset
@@ -342,6 +356,7 @@ body: |
 ...
 ---
 name: fold_adde
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:
@@ -372,6 +387,7 @@ body: |
 ...
 ---
 name: fold_sbc
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:
@@ -440,6 +456,7 @@ body: |
 ...
 ---
 name: fold_shift
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:
@@ -481,6 +498,7 @@ body: |
 ...
 ---
 name: shift_unused_carry_in
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:
@@ -538,6 +556,7 @@ body: |
 ...
 ---
 name: mul_to_shift
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:
@@ -553,6 +572,7 @@ body: |
 ...
 ---
 name: mul_to_shift_and_add
+tracksRegLiveness: false
 legalized: true
 body: |
   bb.0.entry:

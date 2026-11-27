@@ -1612,7 +1612,7 @@ void MOSInstrInfo::expandLDImm1(MachineIRBuilder &Builder) const {
         Builder.buildInstr(MOS::PH, {}, {Register(MOS::P)});
         Builder.buildInstr(MOS::PL, {ACopy}, {});
         Builder.buildInstr(MOS::ORAImm, {ACopy}, {ACopy, INT64_C(0x40)});
-        Builder.buildInstr(MOS::PH).addUse(ACopy, RegState::Kill);
+        Builder.buildInstr(MOS::PH).addUse(ACopy);
         Builder.buildInstr(MOS::PL, {MOS::P}, {});
         MI.eraseFromParent();
         return;

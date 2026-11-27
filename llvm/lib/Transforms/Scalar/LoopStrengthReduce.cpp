@@ -1217,6 +1217,7 @@ public:
     C.ImmCost = 0;
     C.SetupCost = 0;
     C.ScaleCost = 0;
+    C.NumPrePostIndex = 0;
   }
 
   bool isLess(const Cost &Other) const;
@@ -1226,10 +1227,11 @@ public:
 #ifndef NDEBUG
   // Once any of the metrics loses, they must all remain losers.
   bool isValid() {
-    return ((C.Insns | C.NumRegs | C.AddRecCost | C.NumIVMuls | C.NumBaseAdds
-             | C.ImmCost | C.SetupCost | C.ScaleCost) != ~0u)
-      || ((C.Insns & C.NumRegs & C.AddRecCost & C.NumIVMuls & C.NumBaseAdds
-           & C.ImmCost & C.SetupCost & C.ScaleCost) == ~0u);
+    return ((C.Insns | C.NumRegs | C.AddRecCost | C.NumIVMuls | C.NumBaseAdds |
+             C.ImmCost | C.SetupCost | C.ScaleCost | C.NumPrePostIndex) !=
+            ~0u) ||
+           ((C.Insns & C.NumRegs & C.AddRecCost & C.NumIVMuls & C.NumBaseAdds &
+             C.ImmCost & C.SetupCost & C.ScaleCost & C.NumPrePostIndex) == ~0u);
   }
 #endif
 
@@ -1428,8 +1430,9 @@ void Cost::RateRegister(const Formula &F, const SCEV *Reg,
 
     unsigned LoopCost =
         DL.isLegalInteger(SE->getTypeSizeInBits(AR->getType())) ? 1 : 2;
-    if (TTI->isIndexedLoadLegal(TTI->MIM_PostInc, AR->getType()) ||
-        TTI->isIndexedStoreLegal(TTI->MIM_PostInc, AR->getType())) {
+    if (LU.Kind == LSRUse::Address &&
+        (TTI->isIndexedLoadLegal(TTI->MIM_PostInc, AR->getType()) ||
+         TTI->isIndexedStoreLegal(TTI->MIM_PostInc, AR->getType()))) {
       const SCEV *Start;
       const APInt *Step;
       if (match(AR, m_scev_AffineAddRec(m_SCEV(Start), m_scev_APInt(Step)))) {
@@ -1442,8 +1445,10 @@ void Cost::RateRegister(const Formula &F, const SCEV *Reg,
                             !isa<SCEVConstant>(Start) &&
                             SE->isLoopInvariant(Start, L);
         // We can only pre or post index when the load/store is unconditional.
-        if ((CanPreIndex || CanPostIndex) && LU.AllFixupsUnconditional)
+        if ((CanPreIndex || CanPostIndex) && LU.AllFixupsUnconditional) {
+          ++C.NumPrePostIndex;
           LoopCost = 0;
+        }
       }
     }
 
@@ -1630,6 +1635,7 @@ void Cost::Lose() {
   C.ImmCost = std::numeric_limits<unsigned>::max();
   C.SetupCost = std::numeric_limits<unsigned>::max();
   C.ScaleCost = std::numeric_limits<unsigned>::max();
+  C.NumPrePostIndex = std::numeric_limits<unsigned>::max();
 }
 
 /// Choose the lower cost.
@@ -1658,6 +1664,8 @@ void Cost::print(raw_ostream &OS) const {
     OS << ", plus " << C.ImmCost << " imm cost";
   if (C.SetupCost != 0)
     OS << ", plus " << C.SetupCost << " setup cost";
+  if (C.NumPrePostIndex != 0)
+    OS << ", plus " << C.NumPrePostIndex << " pre/post-index";
 }
 
 LLVM_DUMP_METHOD void Cost::dump() const {
@@ -6247,6 +6255,10 @@ void LSRInstance::RewriteForPHI(PHINode *PN, const LSRUse &LU,
             i = PN->getBasicBlockIndex(BB);
 
             needUpdateFixups = true;
+
+            if (auto *OldIncomingInst =
+                    dyn_cast<Instruction>(PN->getIncomingValue(i)))
+              DeadInsts.emplace_back(OldIncomingInst);
           }
         }
       }
@@ -7394,6 +7406,15 @@ static bool ReduceLoopStrength(Loop *L, IVUsers &IU, ScalarEvolution &SE,
       DeleteDeadPHIs(L->getHeader(), &TLI, MSSAU.get());
     }
   }
+
+  // We might end up with duplicate phi nodes when preserving LCSSA. Clean them
+  // up here, as otherwise rewriteLoopExitValues will bail due to the extra
+  // uses.
+  SmallVector<BasicBlock *, 4> ExitBlocks;
+  L->getUniqueExitBlocks(ExitBlocks);
+  for (BasicBlock *ExitBB : ExitBlocks)
+    Changed |= EliminateDuplicatePHINodes(ExitBB);
+
   // LSR may at times remove all uses of an induction variable from a loop.
   // The only remaining use is the PHI in the exit block.
   // When this is the case, if the exit value of the IV can be calculated using

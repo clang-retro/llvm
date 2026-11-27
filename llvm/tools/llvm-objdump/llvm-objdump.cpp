@@ -81,7 +81,6 @@
 #include "llvm/TargetParser/RISCVISAInfo.h"
 #include "llvm/TargetParser/Triple.h"
 #include <algorithm>
-#include <cctype>
 #include <cstring>
 #include <optional>
 #include <set>
@@ -290,6 +289,7 @@ std::string objdump::MCPU;
 std::vector<std::string> objdump::MAttrs;
 bool objdump::ShowRawInsn;
 bool objdump::LeadingAddr;
+cl::LibraryOptionsContext objdump::LibraryOptions;
 static bool Offloading;
 static bool RawClangAST;
 bool objdump::Relocations;
@@ -1158,6 +1158,7 @@ DisassemblerTarget::DisassemblerTarget(const Target *TheTarget, ObjectFile &Obj,
     reportError(Obj.getFileName(), "no register info for target " + TripleName);
 
   // Set up disassembler.
+  Options.LibraryOptions = &LibraryOptions;
   AsmInfo.reset(TheTarget->createMCAsmInfo(*RegisterInfo, TheTriple, Options));
   if (!AsmInfo)
     reportError(Obj.getFileName(), "no assembly info for target " + TripleName);
@@ -2033,6 +2034,10 @@ disassembleObject(ObjectFile &Obj, const ObjectFile &DbgObj,
           });
       if (Sec != SectionAddresses.begin()) {
         --Sec;
+        // The export RVA has a mode indicator on the address.
+        if (COFFObj->getMachine() == COFF::IMAGE_FILE_MACHINE_ARMNT &&
+            Sec->second.isText())
+          VA &= ~1ULL;
         AllSymbols[Sec->second].emplace_back(VA, Name, ELF::STT_NOTYPE);
       } else
         AbsoluteSymbols.emplace_back(VA, Name, ELF::STT_NOTYPE);
@@ -3973,7 +3978,7 @@ static void parseObjdumpOptions(const llvm::opt::InputArgList &InputArgs) {
   if (AsmSyntax)
     Args.push_back(AsmSyntax);
   if (Args.size() > 1)
-    llvm::cl::ParseCommandLineOptions(Args.size(), Args.data());
+    cl::parseCommandLineOptions(LibraryOptions, Args);
 
   // Look up any provided build IDs, then append them to the input filenames.
   for (const opt::Arg *A : InputArgs.filtered(OBJDUMP_build_id)) {

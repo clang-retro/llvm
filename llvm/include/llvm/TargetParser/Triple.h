@@ -71,6 +71,7 @@ public:
     mips64el,    // MIPS64EL: mips64el, mips64r6el, mipsn32el, mipsn32r6el
     mos,          // MOS: mos 65xx
     msp430,      // MSP430: msp430
+    nanomips,    // nanoMIPS (little endian): nanomips
     ppc,         // PPC: powerpc
     ppcle,       // PPCLE: powerpc (little endian)
     ppc64,       // PPC64: powerpc64, ppu
@@ -196,7 +197,8 @@ public:
     DXILSubArch_v1_7,
     DXILSubArch_v1_8,
     DXILSubArch_v1_9,
-    LatestDXILSubArch = DXILSubArch_v1_9,
+    DXILSubArch_v1_10,
+    LatestDXILSubArch = DXILSubArch_v1_10,
 
     // AMDGPU sub-arch
     AMDGPUSubArch6,
@@ -1201,6 +1203,9 @@ public:
     return getArch() == Triple::mips64 || getArch() == Triple::mips64el;
   }
 
+  /// Tests whether the target is nanoMIPS.
+  bool isNanoMips() const { return getArch() == Triple::nanomips; }
+
   /// Tests whether the target is MIPS (little and big endian, 32- or 64-bit).
   bool isMIPS() const { return isMIPS32() || isMIPS64(); }
 
@@ -1411,6 +1416,11 @@ public:
   bool hasDefaultTLSDESC() const {
     return isAArch64() || (isAndroid() && isRISCV64()) || isOSFuchsia();
   }
+
+  /// Tests whether the target's math library may set errno. Targets where
+  /// math_errhandling never includes MATH_ERRNO, or which have no errno, return
+  /// false.
+  LLVM_ABI bool supportsMathErrno() const;
 
   /// Tests whether the target uses -data-sections as default.
   bool hasDefaultDataSections() const {

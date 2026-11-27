@@ -1919,7 +1919,7 @@ bool MOSInstructionSelector::selectBrIndirect(MachineInstr &MI) {
     MachineIRBuilder Builder(MI);
     Register XZero = Builder.getMRI()->createVirtualRegister(&MOS::XcRegClass);
     Builder.buildInstr(MOS::LDImm, {XZero}, {INT64_C(0)});
-    MI.addOperand(MachineOperand::CreateReg(XZero, false, true, true));
+    MI.addOperand(MachineOperand::CreateReg(XZero, false, true));
   }
   return selectGeneric(MI);
 }

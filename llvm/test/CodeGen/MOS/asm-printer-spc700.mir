@@ -1,6 +1,7 @@
 # RUN: llc -mtriple=mos -mcpu=mosspc700 -start-after=machine-opt-remark-emitter -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: negative_imm8
+tracksRegLiveness: false
 # CHECK-LABEL: negative_imm8
 body: |
   bb.0.entry:
@@ -11,6 +12,7 @@ body: |
 ...
 ---
 name: negative_imm8_imag
+tracksRegLiveness: false
 # CHECK-LABEL: negative_imm8_imag
 body: |
   bb.0.entry:
@@ -21,6 +23,7 @@ body: |
 ...
 ---
 name: adc_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: adc_absolute_x
 body: |
   bb.0.entry:
@@ -31,6 +34,7 @@ body: |
 ...
 ---
 name: adc_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: adc_absolute_y
 body: |
   bb.0.entry:
@@ -41,6 +45,7 @@ body: |
 ...
 ---
 name: sbc_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: sbc_absolute_x
 body: |
   bb.0.entry:
@@ -51,6 +56,7 @@ body: |
 ...
 ---
 name: sbc_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: sbc_absolute_y
 body: |
   bb.0.entry:
@@ -61,6 +67,7 @@ body: |
 ...
 ---
 name: and_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: and_absolute_x
 body: |
   bb.0.entry:
@@ -71,6 +78,7 @@ body: |
 ...
 ---
 name: and_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: and_absolute_y
 body: |
   bb.0.entry:
@@ -81,6 +89,7 @@ body: |
 ...
 ---
 name: eor_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: eor_absolute_x
 body: |
   bb.0.entry:
@@ -91,6 +100,7 @@ body: |
 ...
 ---
 name: eor_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: eor_absolute_y
 body: |
   bb.0.entry:
@@ -101,6 +111,7 @@ body: |
 ...
 ---
 name: ora_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: ora_absolute_x
 body: |
   bb.0.entry:
@@ -111,6 +122,7 @@ body: |
 ...
 ---
 name: ora_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: ora_absolute_y
 body: |
   bb.0.entry:
@@ -121,6 +133,7 @@ body: |
 ...
 ---
 name: asl_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: asl_zeropage
 body: |
   bb.0.entry:
@@ -131,6 +144,7 @@ body: |
 ...
 ---
 name: asl_accumulator
+tracksRegLiveness: false
 # CHECK-LABEL: asl_accumulator
 body: |
   bb.0.entry:
@@ -142,6 +156,7 @@ body: |
 ...
 ---
 name: bcs_relative
+tracksRegLiveness: false
 # CHECK-LABEL: bcs_relative
 body: |
   bb.0.entry:
@@ -153,6 +168,7 @@ body: |
 ...
 ---
 name: bcc_relative
+tracksRegLiveness: false
 # CHECK-LABEL: bcc_relative
 body: |
   bb.0.entry:
@@ -164,6 +180,7 @@ body: |
 ...
 ---
 name: bra_relative
+tracksRegLiveness: false
 # CHECK-LABEL: bra_relative
 body: |
   bb.0.entry:
@@ -175,6 +192,7 @@ body: |
 ...
 ---
 name: cmp_immediate
+tracksRegLiveness: false
 # CHECK-LABEL: cmp_immediate
 body: |
   bb.0.entry:
@@ -185,6 +203,7 @@ body: |
 ...
 ---
 name: cpx_immediate
+tracksRegLiveness: false
 # CHECK-LABEL: cpx_immediate
 body: |
   bb.0.entry:
@@ -195,6 +214,7 @@ body: |
 ...
 ---
 name: cpy_immediate
+tracksRegLiveness: false
 # CHECK-LABEL: cpy_immediate
 body: |
   bb.0.entry:
@@ -205,6 +225,7 @@ body: |
 ...
 ---
 name: cmp_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: cmp_zeropage
 body: |
   bb.0.entry:
@@ -215,6 +236,7 @@ body: |
 ...
 ---
 name: cpx_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: cpx_zeropage
 body: |
   bb.0.entry:
@@ -225,6 +247,7 @@ body: |
 ...
 ---
 name: cpy_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: cpy_zeropage
 body: |
   bb.0.entry:
@@ -235,6 +258,7 @@ body: |
 ...
 ---
 name: cmp_absolute
+tracksRegLiveness: false
 # CHECK-LABEL: cmp_absolute
 body: |
   bb.0.entry:
@@ -245,6 +269,7 @@ body: |
 ...
 ---
 name: cpx_absolute
+tracksRegLiveness: false
 # CHECK-LABEL: cpx_absolute
 body: |
   bb.0.entry:
@@ -255,6 +280,7 @@ body: |
 ...
 ---
 name: cpy_absolute
+tracksRegLiveness: false
 # CHECK-LABEL: cpy_absolute
 body: |
   bb.0.entry:
@@ -265,6 +291,7 @@ body: |
 ...
 ---
 name: cmp_absolute_x
+tracksRegLiveness: false
 # CHECK-LABEL: cmp_absolute_x
 body: |
   bb.0.entry:
@@ -275,6 +302,7 @@ body: |
 ...
 ---
 name: cmp_absolute_y
+tracksRegLiveness: false
 # CHECK-LABEL: cmp_absolute_y
 body: |
   bb.0.entry:
@@ -285,6 +313,7 @@ body: |
 ...
 ---
 name: lda_immediate
+tracksRegLiveness: false
 # CHECK-LABEL: lda_immediate
 body: |
   bb.0.entry:
@@ -295,6 +324,7 @@ body: |
 ...
 ---
 name: lda_absolutex
+tracksRegLiveness: false
 # CHECK-LABEL: lda_absolutex
 body: |
   bb.0.entry:
@@ -305,6 +335,7 @@ body: |
 ...
 ---
 name: clc_implied
+tracksRegLiveness: false
 # CHECK-LABEL: clc_implied
 body: |
   bb.0.entry:
@@ -315,6 +346,7 @@ body: |
 ...
 ---
 name: sec_implied
+tracksRegLiveness: false
 # CHECK-LABEL: sec_implied
 body: |
   bb.0.entry:
@@ -325,6 +357,7 @@ body: |
 ...
 ---
 name: dea_implied
+tracksRegLiveness: false
 # CHECK-LABEL: dea_implied
 body: |
   bb.0.entry:
@@ -335,6 +368,7 @@ body: |
 ...
 ---
 name: ina_implied
+tracksRegLiveness: false
 # CHECK-LABEL: ina_implied
 body: |
   bb.0.entry:
@@ -345,6 +379,7 @@ body: |
 ...
 ---
 name: dex_implied
+tracksRegLiveness: false
 # CHECK-LABEL: dex_implied
 body: |
   bb.0.entry:
@@ -355,6 +390,7 @@ body: |
 ...
 ---
 name: inx_implied
+tracksRegLiveness: false
 # CHECK-LABEL: inx_implied
 body: |
   bb.0.entry:
@@ -365,6 +401,7 @@ body: |
 ...
 ---
 name: mov_imag8
+tracksRegLiveness: false
 # CHECK-LABEL: mov_imag8
 body: |
   bb.0.entry:
@@ -375,6 +412,7 @@ body: |
 ...
 ---
 name: pha_implied
+tracksRegLiveness: false
 # CHECK-LABEL: pha_implied
 body: |
   bb.0.entry:
@@ -385,6 +423,7 @@ body: |
 ...
 ---
 name: pla_implied
+tracksRegLiveness: false
 # CHECK-LABEL: pla_implied
 body: |
   bb.0.entry:
@@ -395,6 +434,7 @@ body: |
 ...
 ---
 name: phx_implied
+tracksRegLiveness: false
 # CHECK-LABEL: phx_implied
 body: |
   bb.0.entry:
@@ -405,6 +445,7 @@ body: |
 ...
 ---
 name: plx_implied
+tracksRegLiveness: false
 # CHECK-LABEL: plx_implied
 body: |
   bb.0.entry:
@@ -415,6 +456,7 @@ body: |
 ...
 ---
 name: phy_implied
+tracksRegLiveness: false
 # CHECK-LABEL: phy_implied
 body: |
   bb.0.entry:
@@ -425,6 +467,7 @@ body: |
 ...
 ---
 name: ply_implied
+tracksRegLiveness: false
 # CHECK-LABEL: ply_implied
 body: |
   bb.0.entry:
@@ -435,6 +478,7 @@ body: |
 ...
 ---
 name: sta_absolutex
+tracksRegLiveness: false
 # CHECK-LABEL: sta_absolutex
 body: |
   bb.0.entry:
@@ -445,6 +489,7 @@ body: |
 ...
 ---
 name: sta_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: sta_zeropage
 body: |
   bb.0.entry:
@@ -455,6 +500,7 @@ body: |
 ...
 ---
 name: sty_zeropage
+tracksRegLiveness: false
 # CHECK-LABEL: sty_zeropage
 body: |
   bb.0.entry:
@@ -465,6 +511,7 @@ body: |
 ...
 ---
 name: txa_implied
+tracksRegLiveness: false
 # CHECK-LABEL: txa_implied
 body: |
   bb.0.entry:
@@ -475,6 +522,7 @@ body: |
 ...
 ---
 name: external_symbol_offset
+tracksRegLiveness: false
 # CHECK-LABEL: external_symbol_offset
 body: |
   bb.0.entry:
@@ -485,6 +533,7 @@ body: |
 ...
 ---
 name: global_operand
+tracksRegLiveness: false
 # CHECK-LABEL: global_operand
 body: |
   bb.0.entry:
@@ -495,6 +544,7 @@ body: |
 ...
 ---
 name: imm_operand
+tracksRegLiveness: false
 # CHECK-LABEL: imm_operand
 body: |
   bb.0.entry:
@@ -505,6 +555,7 @@ body: |
 ...
 ---
 name: memory_operand
+tracksRegLiveness: false
 # CHECK-LABEL: memory_operand
 body: |
   bb.0.entry:
@@ -515,6 +566,7 @@ body: |
 ...
 ---
 name: gpr_operand
+tracksRegLiveness: false
 # CHECK-LABEL: gpr_operand
 body: |
   bb.0.entry:

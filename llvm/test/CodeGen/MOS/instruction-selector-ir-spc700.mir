@@ -36,6 +36,7 @@
   }
 ---
 name: br_indirect
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |
@@ -43,7 +44,7 @@ body: |
     ; CHECK-LABEL: name: br_indirect
     ; CHECK: [[LDImm16SPC700_:%[0-9]+]]:imag16 = LDImm16SPC700 blockaddress(@br_indirect, %ir-block.entry)
     ; CHECK-NEXT: [[LDImm:%[0-9]+]]:xc = LDImm 0
-    ; CHECK-NEXT: JMPIndir [[LDImm16SPC700_]], implicit killed [[LDImm]]
+    ; CHECK-NEXT: JMPIndir [[LDImm16SPC700_]], implicit [[LDImm]]
     ; CHECK-NEXT: RTS
     %0:any(p0) = G_BLOCK_ADDR blockaddress(@br_indirect, %ir-block.entry)
     G_BRINDIRECT %0
@@ -51,6 +52,7 @@ body: |
 ...
 ---
 name: ldimm_local
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 stack:
@@ -68,6 +70,7 @@ body: |
 ...
 ---
 name: unmerge_local
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 stack:
@@ -85,6 +88,7 @@ body: |
 ...
 ---
 name: ldimm_global
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |
@@ -97,6 +101,7 @@ body: |
 ...
 ---
 name: ldimm_global_offset
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |
@@ -109,6 +114,7 @@ body: |
 ...
 ---
 name: ldimm_zp_global
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |
@@ -121,6 +127,7 @@ body: |
 ...
 ---
 name: ldimm_zp_global_offset
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |
@@ -133,6 +140,7 @@ body: |
 ...
 ---
 name: unmerge_global
+tracksRegLiveness: false
 legalized: true
 regBankSelected: true
 body: |

@@ -44,6 +44,7 @@
   }
 ---
 name: ptradd_global_offset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptradd_global_offset
@@ -56,6 +57,7 @@ body: |
 ...
 ---
 name: load_global
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_global
@@ -67,6 +69,7 @@ body: |
 ...
 ---
 name: load_ptradd_global_offset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_ptradd_global_offset
@@ -80,6 +83,7 @@ body: |
 ...
 ---
 name: load_ptradd_global_offset_after_zext
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_ptradd_global_offset_after_zext
@@ -97,6 +101,7 @@ body: |
 ...
 ---
 name: load_frame_index_offset
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
 body: |
@@ -112,6 +117,7 @@ body: |
 ...
 ---
 name: load_frame_index_offset_no_ss
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
 body: |
@@ -138,6 +144,7 @@ body: |
 ...
 ---
 name: load_frame_index_zext
+tracksRegLiveness: false
 stack:
   - { id: 0, size: 256 }
 body: |
@@ -157,6 +164,7 @@ body: |
 ...
 ---
 name: ptradd_zp_global_offset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptradd_zp_global_offset
@@ -169,6 +177,7 @@ body: |
 ...
 ---
 name: load_zp_global
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_global
@@ -180,6 +189,7 @@ body: |
 ...
 ---
 name: load_ptradd_zp_global_offset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_ptradd_zp_global_offset

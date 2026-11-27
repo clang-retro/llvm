@@ -2,6 +2,7 @@
 # RUN: llc -mtriple=mos -mcpu=mosw65816 -run-pass=mos-late-opt -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: cmpzero_x_a_busy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     liveins: $x, $a
@@ -15,6 +16,7 @@ body: |
 ...
 ---
 name: cmpzero_y_a_busy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     liveins: $x, $a
@@ -28,6 +30,7 @@ body: |
 ...
 ---
 name: ldimm_to_txy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ldimm_to_txy
@@ -42,6 +45,7 @@ body: |
 ...
 ---
 name: ldimm_to_tyx
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ldimm_to_tyx
@@ -60,6 +64,7 @@ body: |
 # the new transfer reads a register the verifier considers undefined. Before the fix
 # these crashed with "Bad machine code: Using an undefined physical register".
 name: ldimm_to_txy_clears_dead_source
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ldimm_to_txy_clears_dead_source
@@ -72,6 +77,7 @@ body: |
 ...
 ---
 name: ldimm_to_tyx_clears_dead_source
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ldimm_to_tyx_clears_dead_source

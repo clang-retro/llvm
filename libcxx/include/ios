@@ -317,6 +317,7 @@ public:
   // 27.5.2.3 locales:
   locale imbue(const locale& __loc);
   [[__nodiscard__]] locale getloc() const;
+  [[__nodiscard__]] _LIBCPP_HIDE_FROM_ABI const locale& __getloc() const { return __loc_; }
 
   // 27.5.2.5 storage:
   [[__nodiscard__]] static int xalloc();
@@ -539,7 +540,7 @@ struct __dos_lean_ctype : ctype_base {
 template <class _CharT>
 struct __stream_ctype {
   typedef const ctype<_CharT>& type;
-  _LIBCPP_HIDE_FROM_ABI static type __get(const ios_base& __s) { return std::use_facet<ctype<_CharT> >(__s.getloc()); }
+  _LIBCPP_HIDE_FROM_ABI static type __get(const ios_base& __s) { return std::use_facet<ctype<_CharT> >(__s.__getloc()); }
 };
 
 #    if _LIBCPP_DOS_LEAN_AND_MEAN

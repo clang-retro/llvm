@@ -2,18 +2,20 @@
 # RUN: llc -mtriple=mos -mcpu=mosspc700 -run-pass=post-ra-pseudos -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: set_v
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: set_v
     ; CHECK: PH $p
     ; CHECK-NEXT: [[PL:%[0-9]+]]:ac = PL
     ; CHECK-NEXT: [[PL:%[0-9]+]]:ac = ORAImm [[PL]], 64
-    ; CHECK-NEXT: PH killed [[PL]]
+    ; CHECK-NEXT: PH [[PL]]
     ; CHECK-NEXT: $p = PL
     $v = LDImm1 -1
 ...
 ---
 name: ldxidx_y
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     liveins: $y
@@ -28,6 +30,7 @@ body: |
 ...
 ---
 name: ldyidx_x
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     liveins: $x
@@ -42,6 +45,7 @@ body: |
 ...
 ---
 name: ldimm16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ldimm16

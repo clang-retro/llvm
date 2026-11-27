@@ -3,6 +3,7 @@
 
 ---
 name: test_unmerge_values_s1_trunc_v2s1_of_build_vector_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s1_trunc_v2s1_of_build_vector_v2s32
@@ -40,6 +41,7 @@ body:             |
 # trunc and unmerge.
 ---
 name: test_unmerge_values_s1_trunc_v2s1_of_build_vector_v2s32_extra_copies
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s1_trunc_v2s1_of_build_vector_v2s32_extra_copies
@@ -77,6 +79,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_sext_v2s32_of_build_vector_v2s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_sext_v2s32_of_build_vector_v2s16
@@ -118,6 +121,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_zext_v2s32_of_build_vector_v2s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_zext_v2s32_of_build_vector_v2s16
@@ -159,6 +163,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_anyext_v2s32_of_build_vector_v2s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_anyext_v2s32_of_build_vector_v2s16
@@ -198,6 +203,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s16_zext_v4s32_of_build_vector_v4s16
+tracksRegLiveness: false
 
 body:             |
   bb.0:
@@ -234,6 +240,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s1_trunc_v4s1_of_concat_vectors_v4s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s1_trunc_v4s1_of_concat_vectors_v4s32_v2s32
@@ -266,6 +273,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_of_concat_vectors_v2s16_v2s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s16_of_concat_vectors_v2s16_v2s16
@@ -290,6 +298,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_of_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_of_concat_vectors_v2s32_v2s32
@@ -307,6 +316,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_of_concat_vectors_v2s64_v2s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_of_concat_vectors_v2s64_v2s64
@@ -324,6 +334,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_of_trunc_concat_vectors_v2s64_v2s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_of_trunc_concat_vectors_v2s64_v2s64
@@ -346,6 +357,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s64_of_sext_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s64_of_sext_concat_vectors_v2s32_v2s32
@@ -368,6 +380,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s64_of_zext_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s64_of_zext_concat_vectors_v2s32_v2s32
@@ -390,6 +403,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s64_of_anyext_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s64_of_anyext_concat_vectors_v2s32_v2s32
@@ -412,6 +426,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s8_of_trunc_v4s16_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s8_of_trunc_v4s16_concat_vectors_v2s32_v2s32
@@ -449,6 +464,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_of_anyext_v4s64_concat_vectors_v2s32_v2s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s16_of_anyext_v4s64_concat_vectors_v2s32_v2s32
@@ -472,6 +488,7 @@ body:             |
 # FIXME: Handle this
 ---
 name: test_unmerge_values_s32_of_concat_vectors_v4s32_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_of_concat_vectors_v4s32_v4s32
@@ -500,6 +517,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s64_of_build_vector_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s64_of_build_vector_v4s32
@@ -533,6 +551,7 @@ body:             |
 # s64 = bitcast <2 x s32> <-- we are missing the code to do that
 ---
 name: test_unmerge_values_s128_of_zext_of_concat_vectors
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s128_of_zext_of_concat_vectors
@@ -560,6 +579,7 @@ body:             |
 ---
 
 name: test_unmerge_values_v3s32_of_v12s32_concat_vectors_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_v3s32_of_v12s32_concat_vectors_v4s32
@@ -579,6 +599,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v3s16_of_v12s16_concat_vectors_v4s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_v3s16_of_v12s16_concat_vectors_v4s16
@@ -625,7 +646,6 @@ body:             |
 
 ---
 name:            unmerge_v2s16_from_v4s16_sext_v4s8_concat_vectors_v2s8
-tracksRegLiveness: true
 body:             |
   bb.1:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3
@@ -672,7 +692,6 @@ body:             |
 
 ---
 name:            unmerge_v2s16_from_v8s16_sext_v8s8_concat_vectors_v4s8
-tracksRegLiveness: true
 body:             |
   bb.1:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3, $vgpr4, $vgpr5, $vgpr6, $vgpr7
@@ -745,7 +764,6 @@ body:             |
 
 ---
 name:            unmerge_v2s16_from_v16s16_sext_v16s8_concat_vectors_v8s8
-tracksRegLiveness: true
 body:             |
   bb.1:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3, $vgpr4, $vgpr5, $vgpr6, $vgpr7, $vgpr8, $vgpr9, $vgpr10, $vgpr11, $vgpr12, $vgpr13, $vgpr14, $vgpr15
@@ -870,6 +888,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_trunc_s96_of_merge_values_s192_s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2_vgpr3, $vgpr4_vgpr5
@@ -893,6 +912,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_trunc_s96_of_merge_values_s192_s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2_vgpr3, $vgpr4_vgpr5
@@ -926,6 +946,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_trunc_s96_of_merge_values_s192_s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3, $vgpr4, $vgpr5
@@ -966,6 +987,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s64_anyext_s128_of_merge_values_s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s64_anyext_s128_of_merge_values_s64
@@ -988,6 +1010,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_trunc_s64_of_merge_values_s128
+tracksRegLiveness: false
 body:             |
   bb.0:
     ; CHECK-LABEL: name: test_unmerge_values_s32_trunc_s64_of_merge_values_s128
@@ -1006,6 +1029,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s8_v4s8_trunc_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3
@@ -1029,6 +1053,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s8_v4s8_trunc_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3
@@ -1052,6 +1077,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v4s8_v8s8_trunc_v8s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1074,6 +1100,7 @@ body:             |
 ---
 
 name: test_unmerge_values_s16_v4s16_trunc_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3
@@ -1097,6 +1124,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s16_v4s16_trunc_v4s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3
@@ -1118,6 +1146,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s16_v8s16_trunc_v8s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1141,6 +1170,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v4s16_v8s16_trunc_v8s32
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1167,6 +1197,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s8_v4s8_trunc_v4s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1
@@ -1195,6 +1226,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s8_v4s8_trunc_v4s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1
@@ -1216,6 +1248,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_v4s32_trunc_v4s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1239,6 +1272,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s32_v4s32_trunc_v4s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1265,6 +1299,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_v4s16_trunc_v4s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1288,6 +1323,7 @@ body:             |
 
 ---
 name: test_unmerge_values_v2s16_v4s16_trunc_v4s64
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2_vgpr3_vgpr4_vgpr5_vgpr6_vgpr7
@@ -1324,6 +1360,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_from_v3s16_from_v6s16
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2
@@ -1359,6 +1396,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s16_from_v3s16_from_v6s16_other_def_use
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0_vgpr1_vgpr2
@@ -1392,6 +1430,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_from_sext_v2s64_from_v2s1
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2
@@ -1433,6 +1472,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_from_zext_v2s64_from_v2s1
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2
@@ -1475,6 +1515,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_from_anyext_v2s64_from_v2s1
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2
@@ -1516,6 +1557,7 @@ body:             |
 
 ---
 name: test_unmerge_values_s32_from_sext_v3s64_from_v3s1
+tracksRegLiveness: false
 body:             |
   bb.0:
     liveins: $vgpr0, $vgpr1, $vgpr2, $vgpr3
@@ -1568,6 +1610,7 @@ body:             |
 
 ---
 name: test_unmerge_values_look_through_scalar_to_vector_bitcast
+tracksRegLiveness: false
 body: |
   bb.0:
 
@@ -1590,6 +1633,7 @@ body: |
 
 ---
 name: test_unmerge_values_look_through_vector_to_scalar_bitcast
+tracksRegLiveness: false
 body: |
   bb.0:
 

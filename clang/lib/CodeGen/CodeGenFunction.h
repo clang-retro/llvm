@@ -37,6 +37,7 @@
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGenUtils/CallUtils.h"
+#include "clang/CodeGenUtils/TargetUtils.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
@@ -46,6 +47,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/SanitizerStats.h"
+#include <array>
 #include <optional>
 
 namespace llvm {
@@ -2282,7 +2284,8 @@ public:
   void enableDebugInfo() { DisableDebugInfo = false; }
 
   bool shouldUseFusedARCCalls() {
-    return CGM.getCodeGenOpts().OptimizationLevel == 0;
+    return CGM.getCodeGenOpts().OptimizationLevel == 0 &&
+           !SanOpts.has(SanitizerKind::Thread);
   }
 
   const LangOptions &getLangOpts() const { return CGM.getLangOpts(); }
@@ -2651,6 +2654,11 @@ public:
   void EmitVTablePtrCheck(const CXXRecordDecl *RD, llvm::Value *VTable,
                           CFITypeCheckKind TCK, SourceLocation Loc);
 
+  /// Emit a CFI check failure handler or trap for a vtable type test result.
+  void EmitVTableCheck(CFITypeCheckKind TCK, CanQualType T, llvm::Metadata *MD,
+                       llvm::Value *VTable, llvm::Value *TypeTest,
+                       SourceLocation Loc, bool UseCrossDsoSlowPath);
+
   /// If whole-program virtual table optimization is enabled, emit an assumption
   /// that VTable is a member of RD's type identifier. Or, if vptr CFI is
   /// enabled, emit a check that VTable is a member of RD's type identifier.
@@ -2666,7 +2674,8 @@ public:
   llvm::Value *EmitVTableTypeCheckedLoad(const CXXRecordDecl *RD,
                                          llvm::Value *VTable,
                                          llvm::Type *VTableTy,
-                                         uint64_t VTableByteOffset);
+                                         uint64_t VTableByteOffset,
+                                         SourceLocation Loc);
 
   /// EnterDtorCleanups - Enter the cleanups necessary to complete the
   /// given phase of destruction for a destructor.  The end result
@@ -3712,9 +3721,12 @@ public:
                                     SourceLocation Loc,
                                     SourceLocation AssumptionLoc,
                                     llvm::Value *Alignment,
-                                    llvm::Value *OffsetValue,
-                                    llvm::Value *TheCheck,
-                                    llvm::Instruction *Assumption);
+                                    llvm::Value *OffsetValue = nullptr);
+
+  void emitReturnAlignmentAssumptionCheck(llvm::Value *Ptr, QualType Ty,
+                                          SourceLocation AssumptionLoc,
+                                          llvm::Value *Alignment,
+                                          llvm::Value *OffsetValue = nullptr);
 
   void emitAlignmentAssumption(llvm::Value *PtrValue, QualType Ty,
                                SourceLocation Loc, SourceLocation AssumptionLoc,
@@ -3776,6 +3788,8 @@ public:
   void EmitDefaultStmt(const DefaultStmt &S, ArrayRef<const Attr *> Attrs);
   void EmitCaseStmt(const CaseStmt &S, ArrayRef<const Attr *> Attrs);
   void EmitCaseStmtRange(const CaseStmt &S, ArrayRef<const Attr *> Attrs);
+  void EmitBPFRelocatedCaseStmt(const CaseStmt &S,
+                                ArrayRef<const Attr *> Attrs);
   void EmitDeferStmt(const DeferStmt &S);
   void EmitAsmStmt(const AsmStmt &S);
 
@@ -4107,7 +4121,8 @@ public:
   void EmitOMPDistributeSimdDirective(const OMPDistributeSimdDirective &S);
   void EmitOMPTargetParallelForSimdDirective(
       const OMPTargetParallelForSimdDirective &S);
-  void EmitOMPTargetSimdDirective(const OMPTargetSimdDirective &S);
+  /// Also emits 'target loop'.
+  void EmitOMPTargetSimdDirective(const OMPLoopDirective &S);
   void EmitOMPTeamsDistributeDirective(const OMPTeamsDistributeDirective &S);
   void
   EmitOMPTeamsDistributeSimdDirective(const OMPTeamsDistributeSimdDirective &S);
@@ -4162,10 +4177,10 @@ public:
   static void EmitOMPTargetTeamsDistributeSimdDeviceFunction(
       CodeGenModule &CGM, StringRef ParentName,
       const OMPTargetTeamsDistributeSimdDirective &S);
-  /// Emit device code for the target simd directive.
+  /// Emit device code for the target simd and target loop directives.
   static void EmitOMPTargetSimdDeviceFunction(CodeGenModule &CGM,
                                               StringRef ParentName,
-                                              const OMPTargetSimdDirective &S);
+                                              const OMPLoopDirective &S);
   /// Emit device code for the target teams distribute parallel for simd
   /// directive.
   static void EmitOMPTargetTeamsDistributeParallelForSimdDeviceFunction(
@@ -5112,7 +5127,7 @@ public:
                                llvm::AtomicOrdering &AO,
                                llvm::SyncScope::ID &SSID);
 
-  enum class MSVCIntrin;
+  using MSVCIntrin = CodeGenUtils::MSVCIntrin;
   llvm::Value *EmitMSVCBuiltinExpr(MSVCIntrin BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitBuiltinAvailable(const VersionTuple &Version);
@@ -5477,6 +5492,8 @@ public:
     BCK_CTZPassedZero,
     BCK_CLZPassedZero,
     BCK_AssumePassedFalse,
+    BCK_NonUniformLane,
+    BCK_InactiveLane,
   };
 
   /// Emits an argument for a call to a builtin. If the builtin sanitizer is
@@ -5499,6 +5516,11 @@ public:
   /// passing to a runtime sanitizer handler.
   llvm::Constant *EmitCheckSourceLocation(SourceLocation Loc);
 
+  /// Emit a private unnamed_addr non-constant global containing static
+  /// arguments for a UBSan runtime check handler.
+  llvm::GlobalVariable *
+  EmitCheckStaticData(ArrayRef<llvm::Constant *> StaticArgs);
+
   void EmitKCFIOperandBundle(const CGCallee &Callee,
                              SmallVectorImpl<llvm::OperandBundleDef> &Bundles);
 
@@ -5518,6 +5540,12 @@ public:
                             llvm::Value *Cond, llvm::ConstantInt *TypeId,
                             llvm::Value *Ptr,
                             ArrayRef<llvm::Constant *> StaticArgs);
+
+  /// Build the static argument array {CheckKind, SourceLocation,
+  /// TypeDescriptor} for a UBSan CFICheckFail handler.
+  std::array<llvm::Constant *, 3>
+  EmitCFICheckFailStaticArgs(CFITypeCheckKind CheckKind, SourceLocation Loc,
+                             QualType Type);
 
   /// Emit a reached-unreachable diagnostic if \p Loc is valid and runtime
   /// checking is enabled. Otherwise, just emit an unreachable instruction.

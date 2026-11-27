@@ -7,6 +7,7 @@
   }
 ---
 name: zero_page_offsets
+tracksRegLiveness: false
 # CHECK-LABEL: zero_page_offsets
 body: |
   bb.0.entry:

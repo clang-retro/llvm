@@ -1,5 +1,3 @@
-# UNSUPPORTED: system-windows
-
 # RUN: llc -mtriple=amdgpu9.0a-amd-amdhsa \
 # RUN:   -passes="require<machine-register-class-info>,si-pre-allocate-wwm-regs,require<machine-register-class-info>" \
 # RUN:   -debug-pass-manager -filetype=null %s 2>&1 | FileCheck %s
@@ -14,14 +12,13 @@
 # CHECK-NEXT: Running analysis: MachineRegisterClassAnalysis on test_wwm_reserved
 # CHECK-NEXT: Running pass: SIPreAllocateWWMRegsPass on test_wwm_reserved
 # CHECK:      Running pass: RequireAnalysisPass<{{.*}}MachineRegisterClassAnalysis,{{.*}}MachineFunction{{.*}}> on test_wwm_reserved
-# CHECK-NEXT: Running pass: PrintMIRPreparePass on [module]
+# CHECK-NEXT: Running pass: MachineVerifierPass on test_wwm_reserved
 
 # MIR: wwmReservedRegs:
 # MIR-NEXT: - '$vgpr0'
 
 ---
 name: test_wwm_reserved
-tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $sgpr1

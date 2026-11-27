@@ -267,6 +267,28 @@ public:
 
 } // end anonymous namespace
 
+[[maybe_unused]] static bool hasAtomicLibcallLowering(unsigned Opc) {
+  switch (Opc) {
+  case ISD::ATOMIC_FENCE:
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_CMP_SWAP:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_CLR:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
+    return true;
+  default:
+    return false;
+  }
+}
+
 // Helper function that generates an MMO that considers the alignment of the
 // stack, and the size of the stack object
 static MachineMemOperand *getStackAlignedMMO(SDValue StackPtr,
@@ -1065,6 +1087,22 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     Action = TLI.getOperationAction(Node->getOpcode(),
                                     Node->getOperand(1).getValueType());
     break;
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_CLR:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_CMP_SWAP:
+    Action = TLI.getOperationAction(Node->getOpcode(),
+                                    cast<AtomicSDNode>(Node)->getMemoryVT());
+    break;
   case ISD::SELECT_CC:
   case ISD::STRICT_FSETCC:
   case ISD::STRICT_FSETCCS:
@@ -1083,8 +1121,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
                               : Opc == ISD::STRICT_FSETCCS ? 1
                                                            : 0;
     MVT OpVT = Node->getOperand(CompareOperand).getSimpleValueType();
-    ISD::CondCode CCCode =
-        cast<CondCodeSDNode>(Node->getOperand(CCOperand))->get();
+    ISD::CondCode CCCode = Node->getOperandCondCode(CCOperand);
     Action = TLI.getCondCodeAction(CCCode, OpVT);
     if (Action == TargetLowering::Legal) {
       if (Node->getOpcode() == ISD::SELECT_CC)
@@ -1389,6 +1426,9 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     case TargetLowering::Expand:
       if (ExpandNode(Node))
         return;
+      assert((Action != TargetLowering::Expand ||
+              !hasAtomicLibcallLowering(Node->getOpcode())) &&
+             "atomic operations lowered to calls must use LibCall");
       [[fallthrough]];
     case TargetLowering::LibCall:
       ConvertNodeToLibcall(Node);
@@ -1513,6 +1553,7 @@ SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
   // Store the value to a temporary stack slot, then LOAD the returned part.
   EVT VecVT = Vec.getValueType();
   EVT PartVT = Part.getValueType();
+  bool IsInsertSubvector = Op.getOpcode() == ISD::INSERT_SUBVECTOR;
   SDValue StackPtr = DAG.CreateStackTemporary(VecVT);
   int FI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
   MachinePointerInfo PtrInfo =
@@ -1527,11 +1568,14 @@ SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
   // Freeze the index so we don't poison the clamping code we're about to emit.
   Idx = DAG.getFreeze(Idx);
 
-  Type *PartTy = PartVT.getTypeForEVT(*DAG.getContext());
+  // INSERT_VECTOR_ELT implicitly truncates an over-width scalar, so use the
+  // vector element type as the actual store type.
+  EVT PartMemVT = IsInsertSubvector ? PartVT : VecVT.getVectorElementType();
+  Type *PartTy = PartMemVT.getTypeForEVT(*DAG.getContext());
   Align PartAlignment = DAG.getDataLayout().getPrefTypeAlign(PartTy);
 
   // Then store the inserted part.
-  if (PartVT.isVector()) {
+  if (IsInsertSubvector) {
     SDValue SubStackPtr =
         TLI.getVectorSubVecPointer(DAG, StackPtr, VecVT, PartVT, Idx);
 
@@ -2446,7 +2490,8 @@ SDValue SelectionDAGLegalize::ExpandSincosStretLibCall(SDNode *Node) const {
   /// - Single return as vector elements
   /// - sret struct
 
-  const RTLIB::RuntimeLibcallsInfo &CallsInfo = TLI.getRuntimeLibcallsInfo();
+  const RTLIB::RuntimeLibcallsInfo &CallsInfo =
+      DAG.getLibcalls().getRuntimeLibcallsInfo();
 
   const DataLayout &DL = DAG.getDataLayout();
 
@@ -3365,6 +3410,22 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Results.push_back(Res.getValue(1));
     break;
   }
+  case ISD::ATOMIC_LOAD_AND: {
+    AtomicSDNode *AN = cast<AtomicSDNode>(Node);
+    if (TLI.getOperationAction(ISD::ATOMIC_LOAD_CLR, AN->getMemoryVT()) ==
+        TargetLowering::Expand)
+      break;
+
+    SDLoc DL(Node);
+    EVT VT = Node->getValueType(0);
+    SDValue NewRHS = DAG.getNOT(DL, Node->getOperand(2), VT);
+    SDValue Res = DAG.getAtomic(ISD::ATOMIC_LOAD_CLR, DL, AN->getMemoryVT(),
+                                Node->getOperand(0), Node->getOperand(1),
+                                NewRHS, AN->getMemOperand());
+    Results.push_back(Res);
+    Results.push_back(Res.getValue(1));
+    break;
+  }
   case ISD::ATOMIC_LOAD_FSUB: {
     SDLoc DL(Node);
     EVT VT = Node->getValueType(0);
@@ -4274,9 +4335,9 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp2 = Node->getOperand(1);
     Tmp3 = Node->getOperand(2);
     if (Tmp1.getOpcode() == ISD::SETCC) {
-      Tmp1 = DAG.getSelectCC(
-          dl, Tmp1.getOperand(0), Tmp1.getOperand(1), Tmp2, Tmp3,
-          cast<CondCodeSDNode>(Tmp1.getOperand(2))->get(), Node->getFlags());
+      Tmp1 =
+          DAG.getSelectCC(dl, Tmp1.getOperand(0), Tmp1.getOperand(1), Tmp2,
+                          Tmp3, Tmp1.getOperandCondCode(2), Node->getFlags());
     } else {
       Tmp1 =
           DAG.getSelectCC(dl, Tmp1, DAG.getConstant(0, dl, Tmp1.getValueType()),
@@ -4721,25 +4782,21 @@ void SelectionDAGLegalize::ConvertNodeToLibcall(SDNode *Node) {
   case ISD::ATOMIC_CMP_SWAP: {
     MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
     AtomicOrdering Order = cast<AtomicSDNode>(Node)->getMergedOrdering();
-    RTLIB::Libcall LC = RTLIB::getOUTLINE_ATOMIC(Opc, Order, VT);
+    RTLIB::AtomicLibcall LC =
+        RTLIB::selectAtomicLibcall(DAG.getLibcalls(), Opc, Order, VT);
     EVT RetVT = Node->getValueType(0);
     SmallVector<SDValue, 4> Ops;
-    if (DAG.getLibcalls().getLibcallImpl(LC) != RTLIB::Unsupported) {
+    if (LC.IsOutline) {
       // If outline atomic available, prepare its arguments and expand.
       Ops.append(Node->op_begin() + 2, Node->op_end());
       Ops.push_back(Node->getOperand(1));
-
     } else {
-      LC = RTLIB::getSYNC(Opc, VT);
-      assert(LC != RTLIB::UNKNOWN_LIBCALL &&
-             "Unexpected atomic op or value type!");
       // Arguments for expansion to sync libcall
       Ops.append(Node->op_begin() + 1, Node->op_end());
     }
-    std::pair<SDValue, SDValue> Tmp = TLI.makeLibCall(DAG, LC, RetVT,
-                                                      Ops, CallOptions,
-                                                      SDLoc(Node),
-                                                      Node->getOperand(0));
+    std::pair<SDValue, SDValue> Tmp =
+        TLI.makeLibCall(DAG, LC.Impl, RetVT, Ops, CallOptions, SDLoc(Node),
+                        Node->getOperand(0));
     Results.push_back(Tmp.first);
     Results.push_back(Tmp.second);
     break;
@@ -5700,7 +5757,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   case ISD::STRICT_FSETCCS: {
     unsigned ExtOp = ISD::FP_EXTEND;
     if (NVT.isInteger()) {
-      ISD::CondCode CCCode = cast<CondCodeSDNode>(Node->getOperand(2))->get();
+      ISD::CondCode CCCode = Node->getOperandCondCode(2);
       if (isSignedIntSetCC(CCCode) ||
           TLI.isSExtCheaperThanZExt(Node->getOperand(0).getValueType(), NVT))
         ExtOp = ISD::SIGN_EXTEND;
@@ -5731,8 +5788,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   case ISD::BR_CC: {
     unsigned ExtOp = ISD::FP_EXTEND;
     if (NVT.isInteger()) {
-      ISD::CondCode CCCode =
-        cast<CondCodeSDNode>(Node->getOperand(1))->get();
+      ISD::CondCode CCCode = Node->getOperandCondCode(1);
       ExtOp = isSignedIntSetCC(CCCode) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
     }
     Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(2));

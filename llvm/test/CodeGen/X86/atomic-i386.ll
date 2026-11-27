@@ -90,11 +90,11 @@ define void @inc_unused(ptr %p) {
 define i1 @dec_is_zero(ptr %p) {
 ; I386-LABEL: dec_is_zero:
 ; I386:       # %bb.0:
-; I386-NEXT:    pushl $-1
+; I386-NEXT:    pushl $1
 ; I386-NEXT:    .cfi_adjust_cfa_offset 4
 ; I386-NEXT:    pushl {{[0-9]+}}(%esp)
 ; I386-NEXT:    .cfi_adjust_cfa_offset 4
-; I386-NEXT:    calll ___sync_fetch_and_add_4
+; I386-NEXT:    calll ___sync_fetch_and_sub_4
 ; I386-NEXT:    addl $8, %esp
 ; I386-NEXT:    .cfi_adjust_cfa_offset -8
 ; I386-NEXT:    cmpl $1, %eax
@@ -115,14 +115,12 @@ define i1 @dec_is_zero(ptr %p) {
 define i16 @sub16(ptr %p, i16 %x) {
 ; I386-LABEL: sub16:
 ; I386:       # %bb.0:
-; I386-NEXT:    xorl %eax, %eax
-; I386-NEXT:    subw {{[0-9]+}}(%esp), %ax
-; I386-NEXT:    movzwl %ax, %eax
+; I386-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
 ; I386-NEXT:    pushl %eax
 ; I386-NEXT:    .cfi_adjust_cfa_offset 4
 ; I386-NEXT:    pushl {{[0-9]+}}(%esp)
 ; I386-NEXT:    .cfi_adjust_cfa_offset 4
-; I386-NEXT:    calll ___sync_fetch_and_add_2
+; I386-NEXT:    calll ___sync_fetch_and_sub_2
 ; I386-NEXT:    addl $8, %esp
 ; I386-NEXT:    .cfi_adjust_cfa_offset -8
 ; I386-NEXT:    retl

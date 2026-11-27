@@ -21,6 +21,7 @@
 #include "llvm/Support/MemoryBufferRef.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Threading.h"
+#include <atomic>
 
 namespace llvm {
 struct DILineInfo;
@@ -262,6 +263,10 @@ public:
   void parse(bool ignoreComdats = false);
   void parseLazy();
 
+  // Intern global symbol names on a worker thread and then set `interned`.
+  void internSymbols();
+  std::atomic<bool> interned = false;
+
   StringRef getShtGroupSignature(ArrayRef<Elf_Shdr> sections,
                                  const Elf_Shdr &sec);
 
@@ -292,13 +297,13 @@ public:
 
   void initDwarf();
 
-  void initSectionsAndLocalSyms(bool ignoreComdats);
+  void initSectionsAndLocalSyms();
   void postParse();
   void importCmseSymbols();
 
 private:
-  void initializeSections(bool ignoreComdats,
-                          const llvm::object::ELFFile<ELFT> &obj);
+  void initializeSections(const llvm::object::ELFFile<ELFT> &obj);
+  Symbol *insertGlobal(size_t i);
   void initializeSymbols(const llvm::object::ELFFile<ELFT> &obj);
   void initDynDbgSymbols();
   void initializeJustSymbols();

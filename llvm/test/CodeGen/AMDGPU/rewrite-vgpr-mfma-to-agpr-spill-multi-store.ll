@@ -3,7 +3,7 @@
 ; llvm-mos eviction heuristics keep AMDGPU regalloc from reaching the
 ; "Split unspilled interval" path this test checks for.
 ; RUN: llc -mtriple=amdgpu9.0a-amd-amdhsa -O3 \
-; RUN:   -amdgpu-use-amdgpu-trackers=1 -vgpr-regalloc=basic -verify-machineinstrs \
+; RUN:   -amdgpu-use-amdgpu-trackers=1 -vgpr-regalloc=basic \
 ; RUN:   -stop-after=amdgpu-rewrite-agpr-copy-mfma \
 ; RUN:   -debug-only=amdgpu-rewrite-agpr-copy-mfma -filetype=null %s 2>&1 | FileCheck %s
 

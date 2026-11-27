@@ -2,6 +2,7 @@
 # RUN: llc -mtriple=mos -run-pass=legalizer -verify-machineinstrs -o - %s | FileCheck %s
 ---
 name: const_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: const_ptr
@@ -12,6 +13,7 @@ body: |
 ...
 ---
 name: const_zp_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: const_zp_ptr
@@ -22,6 +24,7 @@ body: |
 ...
 ---
 name: mul_s2
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: mul_s2
@@ -45,6 +48,7 @@ body: |
 ...
 ---
 name: mul_s128
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: mul_s128
@@ -700,6 +704,7 @@ body: |
 ...
 ---
 name: udivrem
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: udivrem
@@ -723,6 +728,7 @@ body: |
 ...
 ---
 name: sdivrem
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sdivrem
@@ -746,6 +752,7 @@ body: |
 ...
 ---
 name: anyext_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: anyext_1
@@ -764,6 +771,7 @@ body: |
 ...
 ---
 name: sext_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sext_1
@@ -782,6 +790,7 @@ body: |
 ...
 ---
 name: sext_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sext_8
@@ -800,6 +809,7 @@ body: |
 ...
 ---
 name: sext_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sext_16
@@ -821,6 +831,7 @@ body: |
 ...
 ---
 name: sext_32_24
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sext_32_24
@@ -844,6 +855,7 @@ body: |
 ...
 ---
 name: zext_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: zext_1
@@ -860,6 +872,7 @@ body: |
 ...
 ---
 name: zext_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: zext_8
@@ -873,6 +886,7 @@ body: |
 ...
 ---
 name: zext_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: zext_16
@@ -887,6 +901,7 @@ body: |
 ...
 ---
 name: trunc_anyext
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: trunc_anyext
@@ -899,6 +914,7 @@ body: |
 ...
 ---
 name: unmerge_anyext_to_copy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: unmerge_anyext_to_copy
@@ -913,6 +929,7 @@ body: |
 ...
 ---
 name: unmerge_anyext_to_unmerge
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: unmerge_anyext_to_unmerge
@@ -928,6 +945,7 @@ body: |
 ...
 ---
 name: bswap_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: bswap_16
@@ -943,6 +961,7 @@ body: |
 ...
 ---
 name: inc_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: inc_16
@@ -958,6 +977,7 @@ body: |
 ...
 ---
 name: inc_by_sub
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: inc_by_sub
@@ -973,6 +993,7 @@ body: |
 ...
 ---
 name: inc_32
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: inc_32
@@ -994,6 +1015,7 @@ body: |
 ...
 ---
 name: dec_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: dec_16
@@ -1009,6 +1031,7 @@ body: |
 ...
 ---
 name: dec_by_add
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: dec_by_add
@@ -1024,6 +1047,7 @@ body: |
 ...
 ---
 name: dec_32
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: dec_32
@@ -1045,6 +1069,7 @@ body: |
 ...
 ---
 name: usubsat
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: usubsat
@@ -1065,6 +1090,7 @@ body: |
 ...
 ---
 name: shl_1_8bit
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_1_8bit
@@ -1080,6 +1106,7 @@ body: |
 ...
 ---
 name: shl_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_1
@@ -1105,6 +1132,7 @@ body: |
 ...
 ---
 name: shl_2
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_2
@@ -1126,6 +1154,7 @@ body: |
 ...
 ---
 name: shl_5
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_5
@@ -1153,6 +1182,7 @@ body: |
 ...
 ---
 name: shl_9
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_9
@@ -1172,6 +1202,7 @@ body: |
 ...
 ---
 name: shl_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_16
@@ -1191,6 +1222,7 @@ body: |
 ...
 ---
 name: shl_var
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_var
@@ -1210,6 +1242,7 @@ body: |
 ...
 ---
 name: shl_var_17
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: shl_var_17
@@ -1238,6 +1271,7 @@ body: |
 ...
 ---
 name: lshr_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: lshr_1
@@ -1257,6 +1291,7 @@ body: |
 ...
 ---
 name: lshr_var
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: lshr_var
@@ -1276,6 +1311,7 @@ body: |
 ...
 ---
 name: ashr_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ashr_1
@@ -1294,6 +1330,7 @@ body: |
 ...
 ---
 name: ashr_7
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ashr_7
@@ -1315,6 +1352,7 @@ body: |
 ...
 ---
 name: ashr_var_17
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ashr_var_17
@@ -1343,6 +1381,7 @@ body: |
 ...
 ---
 name: ashr_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ashr_16
@@ -1369,6 +1408,7 @@ body: |
 ...
 ---
 name: rotl_narrow
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: rotl_narrow
@@ -1394,6 +1434,7 @@ body: |
 ...
 ---
 name: rotl_var_16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: rotl_var_16
@@ -1418,6 +1459,7 @@ body: |
 ...
 ---
 name: rotl_7
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: rotl_7
@@ -1435,6 +1477,7 @@ body: |
 ...
 ---
 name: rotr_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: rotr_1
@@ -1451,6 +1494,7 @@ body: |
 ...
 ---
 name: icmp_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ptr
@@ -1476,6 +1520,7 @@ body: |
 ...
 ---
 name: icmp_zp_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_zp_ptr
@@ -1496,6 +1541,7 @@ body: |
 ...
 ---
 name: icmp_s3
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_s3
@@ -1517,6 +1563,7 @@ body: |
 ...
 ---
 name: icmp_eq_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_eq_s16
@@ -1540,6 +1587,7 @@ body: |
 ...
 ---
 name: icmp_z_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_z_s16
@@ -1562,6 +1610,7 @@ body: |
 ...
 ---
 name: icmp_ule_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ule_s16
@@ -1584,6 +1633,7 @@ body: |
 ...
 ---
 name: icmp_slt_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_slt_s16
@@ -1610,6 +1660,7 @@ body: |
 ...
 ---
 name: icmp_eq
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_eq
@@ -1628,6 +1679,7 @@ body: |
 ...
 ---
 name: icmp_ne
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ne
@@ -1651,6 +1703,7 @@ body: |
 ...
 ---
 name: icmp_ugt
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ugt
@@ -1672,6 +1725,7 @@ body: |
 ...
 ---
 name: icmp_ugt_254
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ugt_254
@@ -1688,6 +1742,7 @@ body: |
 ...
 ---
 name: icmp_ugt_255
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ugt_255
@@ -1709,6 +1764,7 @@ body: |
 ...
 ---
 name: icmp_uge
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_uge
@@ -1725,6 +1781,7 @@ body: |
 ...
 ---
 name: icmp_ult
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ult
@@ -1746,6 +1803,7 @@ body: |
 ...
 ---
 name: icmp_ule
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ule
@@ -1762,6 +1820,7 @@ body: |
 ...
 ---
 name: icmp_ule_254
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ule_254
@@ -1783,6 +1842,7 @@ body: |
 ...
 ---
 name: icmp_ule_255
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_ule_255
@@ -1799,6 +1859,7 @@ body: |
 ...
 ---
 name: icmp_sgt
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sgt
@@ -1822,6 +1883,7 @@ body: |
 ...
 ---
 name: icmp_sgt_126
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sgt_126
@@ -1849,6 +1911,7 @@ body: |
 ...
 ---
 name: icmp_sgt_127
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sgt_127
@@ -1872,6 +1935,7 @@ body: |
 ...
 ---
 name: icmp_sge
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sge
@@ -1899,6 +1963,7 @@ body: |
 ...
 ---
 name: icmp_slt
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_slt
@@ -1922,6 +1987,7 @@ body: |
 ...
 ---
 name: icmp_slt_0
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_slt_0
@@ -1940,6 +2006,7 @@ body: |
 ...
 ---
 name: icmp_slt_0_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_slt_0_s16
@@ -1960,6 +2027,7 @@ body: |
 ...
 ---
 name: icmp_sle
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sle
@@ -1987,6 +2055,7 @@ body: |
 ...
 ---
 name: icmp_sle_126
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sle_126
@@ -2010,6 +2079,7 @@ body: |
 ...
 ---
 name: icmp_sle_127
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: icmp_sle_127
@@ -2037,6 +2107,7 @@ body: |
 ...
 ---
 name: select_p
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: select_p
@@ -2060,6 +2131,7 @@ body: |
 ...
 ---
 name: select_zp
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: select_zp
@@ -2079,6 +2151,7 @@ body: |
 ...
 ---
 name: abs
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: abs
@@ -2096,6 +2169,7 @@ body: |
 ...
 ---
 name: ptradd
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptradd
@@ -2117,6 +2191,7 @@ body: |
 ...
 ---
 name: ptr_inc
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptr_inc
@@ -2130,6 +2205,7 @@ body: |
 ...
 ---
 name: ptr_dec
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptr_dec
@@ -2143,6 +2219,7 @@ body: |
 ...
 ---
 name: ptradd_zp
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptradd_zp
@@ -2159,6 +2236,7 @@ body: |
 ...
 ---
 name: ptrmask
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptrmask
@@ -2179,6 +2257,7 @@ body: |
 ...
 ---
 name: ptrmask_zp
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ptrmask_zp
@@ -2195,6 +2274,7 @@ body: |
 ...
 ---
 name: uaddo
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: uaddo
@@ -2210,6 +2290,7 @@ body: |
 ...
 ---
 name: saddo
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: saddo
@@ -2225,6 +2306,7 @@ body: |
 ...
 ---
 name: usubo
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: usubo
@@ -2246,6 +2328,7 @@ body: |
 ...
 ---
 name: ssubo
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ssubo
@@ -2263,6 +2346,7 @@ body: |
 ...
 ---
 name: usube
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: usube
@@ -2288,6 +2372,7 @@ body: |
 ...
 ---
 name: ssube
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: ssube
@@ -2309,6 +2394,7 @@ body: |
 ...
 ---
 name: load_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_ptr
@@ -2326,6 +2412,7 @@ body: |
 ...
 ---
 name: load_constant_addr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_constant_addr
@@ -2338,6 +2425,7 @@ body: |
 ...
 ---
 name: load_constant_zp_addr_negative
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_constant_zp_addr_negative
@@ -2350,6 +2438,7 @@ body: |
 ...
 ---
 name: load_constant_ptradd_zext_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_constant_ptradd_zext_8
@@ -2365,6 +2454,7 @@ body: |
 ...
 ---
 name: load_constant_zext_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_constant_zext_1
@@ -2383,6 +2473,7 @@ body: |
 ...
 ---
 name: load_variable_ptradd_zext_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_variable_ptradd_zext_8
@@ -2399,6 +2490,7 @@ body: |
 ...
 ---
 name: load_ptradd_const8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_ptradd_const8
@@ -2414,6 +2506,7 @@ body: |
 ...
 ---
 name: load_zp_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_ptr
@@ -2428,6 +2521,7 @@ body: |
 ...
 ---
 name: load_zp_constant_addr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_constant_addr
@@ -2440,6 +2534,7 @@ body: |
 ...
 ---
 name: load_zp_constant_ptradd_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_constant_ptradd_8
@@ -2455,6 +2550,7 @@ body: |
 ...
 ---
 name: load_zp_constant_zext_1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_constant_zext_1
@@ -2473,6 +2569,7 @@ body: |
 ...
 ---
 name: load_zp_ptradd_const8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_zp_ptradd_const8
@@ -2488,6 +2585,7 @@ body: |
 ...
 ---
 name: store_ptradd_zext_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: store_ptradd_zext_8
@@ -2504,6 +2602,7 @@ body: |
 ...
 ---
 name: store_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: store_ptr
@@ -2523,6 +2622,7 @@ body: |
 ...
 ---
 name: store_zp_ptradd_8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: store_zp_ptradd_8
@@ -2543,6 +2643,7 @@ body: |
 ...
 ---
 name: store_zp_ptr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: store_zp_ptr
@@ -2559,6 +2660,7 @@ body: |
 ...
 ---
 name: sextload
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: sextload
@@ -2578,6 +2680,7 @@ body: |
 ...
 ---
 name: zextload
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: zextload
@@ -2592,6 +2695,7 @@ body: |
 ...
 ---
 name: brcond
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: brcond
@@ -2604,6 +2708,7 @@ body: |
 ...
 ---
 name: brcond_not
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: brcond_not
@@ -2618,6 +2723,7 @@ body: |
 ...
 ---
 name: brcond_icmp_ne
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: brcond_icmp_ne
@@ -2636,6 +2742,7 @@ body: |
 ...
 ---
 name: brcond_cmpz_s16
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: brcond_cmpz_s16
@@ -2654,6 +2761,7 @@ body: |
 ...
 ---
 name: brjt
+tracksRegLiveness: false
 jumpTable:
   kind: block-address
   entries:
@@ -2674,6 +2782,7 @@ body: |
 ...
 ---
 name: vaarg
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: vaarg
@@ -2707,6 +2816,7 @@ body: |
 ...
 ---
 name: alloca
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: alloca
@@ -2733,6 +2843,7 @@ body: |
 ...
 ---
 name: va_copy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: va_copy
@@ -2756,6 +2867,7 @@ body: |
 ...
 ---
 name: trap
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: trap
@@ -2766,6 +2878,7 @@ body: |
 ...
 ---
 name: dyn_stackalloc
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: dyn_stackalloc
@@ -2796,6 +2909,7 @@ body: |
 ...
 ---
 name: cse_shle
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: cse_shle
@@ -2813,6 +2927,7 @@ body: |
 ...
 ---
 name: cse_lshr
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: cse_lshr
@@ -2830,6 +2945,7 @@ body: |
 ...
 ---
 name: freeze_s1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: freeze_s1
@@ -2842,6 +2958,7 @@ body: |
 ...
 ---
 name: freeze_s8
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: freeze_s8
@@ -2854,6 +2971,7 @@ body: |
 ...
 ---
 name: freeze_s32
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: freeze_s32
@@ -2867,6 +2985,7 @@ body: |
 ...
 ---
 name: freeze_p0
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: freeze_p0
@@ -2879,6 +2998,7 @@ body: |
 ...
 ---
 name: freeze_p1
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: freeze_p1
@@ -2891,6 +3011,7 @@ body: |
 ...
 ---
 name: memcpy
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memcpy
@@ -2920,6 +3041,7 @@ body: |
 ...
 ---
 name: memcpy_large
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memcpy_large
@@ -2952,6 +3074,7 @@ body: |
 ...
 ---
 name: memmove
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memmove
@@ -2981,6 +3104,7 @@ body: |
 ...
 ---
 name: memmove_large
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memmove_large
@@ -3013,6 +3137,7 @@ body: |
 ...
 ---
 name: memset
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memset
@@ -3036,6 +3161,7 @@ body: |
 ...
 ---
 name: memset_large
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: memset_large
@@ -3064,6 +3190,7 @@ body: |
 ...
 ---
 name: addrspace_cast_data_zp
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: addrspace_cast_data_zp
@@ -3082,6 +3209,7 @@ body: |
 ...
 ---
 name: addrspace_cast_zp_data
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: addrspace_cast_zp_data
@@ -3101,6 +3229,7 @@ body: |
 ...
 ---
 name: fabs
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fabs
@@ -3114,6 +3243,7 @@ body: |
 ...
 ---
 name: fneg
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fneg
@@ -3127,6 +3257,7 @@ body: |
 ...
 ---
 name: fptoui_sat
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fptoui_sat
@@ -3177,6 +3308,7 @@ body: |
 ...
 ---
 name: fptosi_sat
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: fptosi_sat
@@ -3265,6 +3397,7 @@ body: |
 ...
 ---
 name: modf_f32
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: modf_f32
@@ -3312,6 +3445,7 @@ body: |
 ...
 ---
 name: modf_f64
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: modf_f64
@@ -3387,6 +3521,7 @@ body: |
 ...
 ---
 name: load_store_vector
+tracksRegLiveness: false
 body: |
   bb.0.entry:
     ; CHECK-LABEL: name: load_store_vector
