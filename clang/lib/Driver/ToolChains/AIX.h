@@ -59,6 +59,9 @@ public:
   AIX(const Driver &D, const llvm::Triple &Triple,
       const llvm::opt::ArgList &Args);
 
+  // Whether programs are linked with xcoff-ld and the clang-retro SDK.
+  bool isRetro() const { return Retro; }
+
   bool parseInlineAsmUsingAsmParser() const override {
     return ParseInlineAsmUsingAsmParser;
   }
@@ -110,6 +113,8 @@ protected:
 private:
   llvm::StringRef GetHeaderSysroot(const llvm::opt::ArgList &DriverArgs) const;
   bool ParseInlineAsmUsingAsmParser;
+  bool Retro = false;
+  std::string SysRoot;
   void AddOpenMPIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                             llvm::opt::ArgStringList &CC1Args) const;
 };

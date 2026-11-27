@@ -32,6 +32,7 @@ static Flavor getFlavor(StringRef s) {
   return StringSwitch<Flavor>(s)
       .CasesLower({"ld", "ld.lld", "gnu"}, Gnu)
       .CasesLower({"wasm", "ld-wasm"}, Wasm)
+      .CasesLower({"xcoff", "ld-xcoff"}, Xcoff)
       .CaseLower("link", WinLink)
       .CasesLower({"ld64", "ld64.lld", "darwin"}, Darwin)
       .Default(Invalid);
@@ -118,7 +119,7 @@ parseFlavorWithoutMinGW(llvm::SmallVectorImpl<const char *> &argsV) {
   if (f == Invalid) {
     err("lld is a generic driver.\n"
         "Invoke ld.lld (Unix), ld64.lld (macOS), lld-link (Windows), wasm-ld"
-        " (WebAssembly) instead");
+        " (WebAssembly), xcoff-ld (AIX) instead");
     return Invalid;
   }
   return f;

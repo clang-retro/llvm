@@ -107,8 +107,16 @@ StringRef getNormalizedPPCTargetCPU(const Triple &T, StringRef CPUName) {
 
   // LLVM may default to generating code for the native CPU, but, like gcc, we
   // default to a more generic option for each architecture. (except on AIX)
-  if (T.isOSAIX())
+  if (T.isOSAIX()) {
+    // Older AIX releases run on older processors: AIX 4 and 5 on the first
+    // PowerPCs, AIX 6 and 7.1 on POWER4 and later.
+    unsigned Major = T.getOSMajorVersion();
+    if (Major != 0 && Major < 6 && T.isArch32Bit())
+      return "601";
+    if (Major != 0 && T.getOSVersion() < VersionTuple(7, 2))
+      return "pwr4";
     return "pwr7";
+  }
   // Classic Mac OS: the 601, the first PowerPC Mac, so code runs on all of
   // them.
   if (T.isOSMacOSClassic())
