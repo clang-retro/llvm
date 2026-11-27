@@ -246,7 +246,9 @@ void ObjFile::parse() {
   // Attach relocations to the csects that contain them.
   for (size_t si = 0; si < sections.size(); ++si) {
     const XCOFFSectionHeader32 &sec = sections[si];
-    if (sec.NumberOfRelocations == 0)
+    // Debug sections (DWARF, .debug, .except) are not linked.
+    if (sec.NumberOfRelocations == 0 ||
+        !(sec.Flags & (XCOFF::STYP_TEXT | XCOFF::STYP_DATA)))
       continue;
     std::vector<InputCsect *> &list = bySection[si + 1];
     llvm::stable_sort(list, [](const InputCsect *a, const InputCsect *b) {

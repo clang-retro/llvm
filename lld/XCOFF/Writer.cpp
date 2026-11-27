@@ -392,6 +392,12 @@ void Writer::applyRelocs(InputCsect *c, uint8_t *buf) {
         continue;
       }
       uint32_t insn = read32be(loc);
+      // A call to an undefined weak function becomes a nop, as GNU ld does
+      // on PowerPC; the caller tests the function's address first.
+      if (global && global->kind == Symbol::Undefined) {
+        write32be(loc, nopInsn);
+        break;
+      }
       if (insn & 2) {
         // An absolute branch.
         uint32_t target = (insn & 0x03fffffc) - sOld + s;
