@@ -44,7 +44,6 @@
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
-#include <cmath>
 #include <optional>
 #include <tuple>
 

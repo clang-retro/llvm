@@ -321,7 +321,7 @@ static bool expandStackMemIntrinsics(Function &F,
       if (!expandMemMoveAsLoop(M, TTI))
         report_fatal_error("cannot expand a memmove on the stack");
     } else {
-      expandMemSetAsLoop(cast<MemSetInst>(New));
+      expandMemSetAsLoop(cast<MemSetInst>(New), TTI);
     }
     New->eraseFromParent();
   }

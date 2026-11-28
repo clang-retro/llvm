@@ -658,6 +658,9 @@ constexpr FeatureBitset ImpliedFeaturesAMX_AVX512 =
     FeatureAMX_TILE | FeatureAVX10_2;
 constexpr FeatureBitset ImpliedFeaturesHRESET = {};
 
+// ACE v1 Features
+constexpr FeatureBitset ImpliedFeaturesACEV1 = FeatureAVX10_1;
+
 constexpr FeatureBitset ImpliedFeaturesPREFETCHI = {};
 constexpr FeatureBitset ImpliedFeaturesCMPCCXADD = {};
 constexpr FeatureBitset ImpliedFeaturesRAOINT = {};
