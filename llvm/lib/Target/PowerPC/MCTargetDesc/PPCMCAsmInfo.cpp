@@ -238,32 +238,31 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const Triple &T,
   // The assemblers shipped before Mac OS X 10.6 lack this directive.
   if (T.isMacOSX() && T.isMacOSXVersionLT(10, 6))
     HasWeakDefCanBeHiddenDirective = false;
+
+  // The Apple assembler writes relocation specifiers as functions:
+  // lo16(sym), hi16(sym) and ha16(sym).
+  SpecifierExprPrintFn = [](const MCAsmInfo &MAI, raw_ostream &OS,
+                            const MCSpecifierExpr &Expr) {
+    switch (Expr.getSpecifier()) {
+    case PPC::S_LO:
+      OS << "lo16";
+      break;
+    case PPC::S_HI:
+      OS << "hi16";
+      break;
+    case PPC::S_HA:
+      OS << "ha16";
+      break;
+    default:
+      llvm_unreachable("specifier has no Mach-O spelling");
+    }
+    OS << '(';
+    MAI.printExpr(OS, *Expr.getSubExpr());
+    OS << ')';
+  };
+  SpecifierExprEvaluateFn = evaluateAsRelocatable;
 }
 
-void PPCMCAsmInfoDarwin::printSpecifierExpr(raw_ostream &OS,
-                                            const MCSpecifierExpr &Expr) const {
-  switch (Expr.getSpecifier()) {
-  case PPC::S_LO:
-    OS << "lo16";
-    break;
-  case PPC::S_HI:
-    OS << "hi16";
-    break;
-  case PPC::S_HA:
-    OS << "ha16";
-    break;
-  default:
-    llvm_unreachable("specifier has no Mach-O spelling");
-  }
-  OS << '(';
-  printExpr(OS, *Expr.getSubExpr());
-  OS << ')';
-}
-
-bool PPCMCAsmInfoDarwin::evaluateAsRelocatableImpl(
-    const MCSpecifierExpr &Expr, MCValue &Res, const MCAssembler *Asm) const {
-  return evaluateAsRelocatable(Expr, Res, Asm);
-}
 
 PPCXCOFFMCAsmInfo::PPCXCOFFMCAsmInfo(bool Is64Bit, const Triple &T,
                                      const MCTargetOptions &Options)

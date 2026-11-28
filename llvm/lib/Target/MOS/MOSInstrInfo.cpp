@@ -200,6 +200,18 @@ MachineInstr *MOSInstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
   return CommutedMI;
 }
 
+/// Returns the maximum length in bytes of one instruction for the subtarget
+/// STI.
+static unsigned getMaxInstLength(const MCSubtargetInfo &STI) {
+  if (STI.hasFeature(MOS::FeatureHUC6280))
+    return 7;
+  if (STI.hasFeature(MOS::Feature45GS02))
+    return 5;
+  if (STI.hasFeature(MOS::FeatureW65816))
+    return 4;
+  return 3;
+}
+
 unsigned MOSInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   if (MI.isDebugInstr())
     return 0;
@@ -211,12 +223,13 @@ unsigned MOSInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   default: {
     unsigned Size = get(MI.getOpcode()).getSize();
     if (!Size)
-      Size = MCAI.getMaxInstLength(STI);
+      Size = getMaxInstLength(*STI);
     return Size;
   }
   case MOS::INLINEASM:
   case MOS::INLINEASM_BR:
-    return getInlineAsmLength(MI.getOperand(0).getSymbolName(), MCAI, STI);
+    return getInlineAsmLength(MI.getOperand(0).getSymbolName(), MCAI,
+                              getMaxInstLength(*STI));
   }
 }
 

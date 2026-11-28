@@ -125,7 +125,7 @@ static void printSwitchToSection(const MCAsmInfo &MAI, const MCSection &Section,
     if (Flags & ELF::SHF_HEX_GPREL)
       OS << 's';
   } else if (Arch == Triple::mos) {
-    if (Sec.Flags & ELF::SHF_MOS_ZEROPAGE)
+    if (Flags & ELF::SHF_MOS_ZEROPAGE)
       OS << 'z';
   } else if (Arch == Triple::x86_64) {
     if (Flags & ELF::SHF_X86_64_LARGE)

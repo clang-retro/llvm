@@ -37,7 +37,7 @@ static constexpr EnumStringDef<MCAsmInfo::AtSpecifierKind> AtSpecifierDefs[] = {
 static constexpr auto AtSpecifiers = BUILD_ENUM_STRINGS(AtSpecifierDefs);
 
 MOSMCAsmInfo::MOSMCAsmInfo(const Triple &TT, const MCTargetOptions &Options)
-    : MCAsmInfoELF(Options) {
+    : MCAsmInfoELF(TT, Options) {
   // While the platform uses 2-byte pointers, the ELF files use 4-byte pointers
   // to convey banking information; this field is used, among others, by the
   // DWARF debug structures.
@@ -55,19 +55,9 @@ MOSMCAsmInfo::MOSMCAsmInfo(const Triple &TT, const MCTargetOptions &Options)
   SupportsDebugInformation = true;
 
   initializeAtSpecifiers(AtSpecifiers);
-}
 
-unsigned MOSMCAsmInfo::getMaxInstLength(const MCSubtargetInfo *STI) const {
-  if (!STI)
-    return MaxInstLength;
-
-  if (STI->hasFeature(MOS::FeatureHUC6280))
-    return 7;
-  if (STI->hasFeature(MOS::Feature45GS02))
-    return 5;
-  if (STI->hasFeature(MOS::FeatureW65816))
-    return 4;
-  return 3;
+  // .bss is supported without .section.
+  SectionDirectives.insert(".bss");
 }
 
 } //  namespace llvm

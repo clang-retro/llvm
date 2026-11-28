@@ -12,13 +12,12 @@ using namespace llvm;
 void Z80MCAsmInfo::anchor() {}
 
 Z80MCAsmInfo::Z80MCAsmInfo(const Triple &TT, const MCTargetOptions &Options)
-    : MCAsmInfoELF(Options) {
+    : MCAsmInfoELF(TT, Options) {
   CodePointerSize = 2;
   CalleeSaveStackSlotSize = 2;
   MaxInstLength = 4;
   CommentString = ";";
   SeparatorString = "{";
   AlignmentIsInBytes = false;
-  UsesELFSectionDirectiveForBSS = true;
   SupportsDebugInformation = true;
 }

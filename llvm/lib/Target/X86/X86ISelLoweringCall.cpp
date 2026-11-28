@@ -1610,7 +1610,7 @@ void VarArgsLoweringHelper::createVarArgAreaAndStoreRegisters(
                     CallConv != CallingConv::X86_ThisCall)) {
     FuncInfo->setVarArgsFrameIndex(
         FrameInfo.CreateFixedObject(
-            1, StackSize + (Subtarget.isFarFunction16(TheFunction) ? 2 : 0),
+            1, StackSize + (Subtarget.isFarFunction16(TheMachineFunction.getFunction()) ? 2 : 0),
             true));
   }
 
