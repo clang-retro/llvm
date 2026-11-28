@@ -1572,7 +1572,6 @@ public:
                         CallingConv::ID CallConv, CCState &CCInfo)
       : FuncInfo(FuncInfo), DL(Loc), DAG(DAG), Subtarget(Subtarget),
         TheMachineFunction(DAG.getMachineFunction()),
-        TheFunction(TheMachineFunction.getFunction()),
         FrameInfo(TheMachineFunction.getFrameInfo()),
         FrameLowering(*Subtarget.getFrameLowering()),
         TargLowering(DAG.getTargetLoweringInfo()), CallConv(CallConv),
@@ -1594,7 +1593,6 @@ private:
   SelectionDAG &DAG;
   const X86Subtarget &Subtarget;
   MachineFunction &TheMachineFunction;
-  const Function &TheFunction;
   MachineFrameInfo &FrameInfo;
   const TargetFrameLowering &FrameLowering;
   const TargetLowering &TargLowering;
