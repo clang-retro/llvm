@@ -44,6 +44,15 @@ public:
   }
   const char *getDefaultLinker() const override { return "ld"; }
 
+  /// Return the DWARF version that -g makes. PowerPC objects are XCOFF, which
+  /// has sections only for DWARF v2 to v4, so use v4 there. 68k objects are
+  /// ELF and use the usual default.
+  unsigned GetDefaultDwarfVersion() const override {
+    return getTriple().isOSBinFormatXCOFF()
+               ? 4
+               : ToolChain::GetDefaultDwarfVersion();
+  }
+
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                             llvm::opt::ArgStringList &CC1Args) const override;

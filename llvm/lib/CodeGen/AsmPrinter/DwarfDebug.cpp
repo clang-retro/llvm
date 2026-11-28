@@ -35,8 +35,10 @@
 #include "llvm/DebugInfo/DWARF/LowLevel/DWARFExpression.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -315,6 +317,12 @@ static AccelTableKind computeAccelTableKind(unsigned DwarfVersion,
                                             bool GenerateTypeUnits,
                                             DebuggerKind Tuning,
                                             const Triple &TT) {
+  // XCOFF has no section for an accelerator table (Apple or DWARF v5).
+  // Do not emit one, even on an explicit request: there is no section to
+  // put it in.
+  if (TT.isOSBinFormatXCOFF())
+    return AccelTableKind::None;
+
   // Honor an explicit request.
   if (AccelTables != AccelTableKind::Default)
     return AccelTables;
@@ -357,8 +365,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
 
   HasAppleExtensionAttributes = tuneForLLDB();
 
-  // Handle split DWARF.
-  HasSplitDwarf = !Asm->TM.Options.MCOptions.SplitDwarfFile.empty();
+  // Handle split DWARF. XCOFF has no .dwo sections, so it cannot use split
+  // DWARF: all of the debug information goes in the object file.
+  HasSplitDwarf = !Asm->TM.Options.MCOptions.SplitDwarfFile.empty() &&
+                  !TT.isOSBinFormatXCOFF();
 
   // SCE defaults to linkage names only for abstract subprograms.
   if (DwarfLinkageNames == DefaultLinkageNames)
@@ -371,6 +381,19 @@ DwarfDebug::DwarfDebug(AsmPrinter *A)
                                     : MMI->getModule()->getDwarfVersion();
   if (!DwarfVersion)
     DwarfVersion = dwarf::DWARF_VERSION;
+
+  // XCOFF has sections only for the DWARF v2 to v4 debug information (there
+  // is no .debug_str_offsets, .debug_addr, .debug_rnglists, .debug_loclists
+  // or .debug_line_str). Emit DWARF v4 when a later version is requested,
+  // for example by IR from a front end that does not know the target (AIX,
+  // or classic Mac OS on PowerPC), and tell the user.
+  if (DwarfVersion > 4 && TT.isOSBinFormatXCOFF()) {
+    MMI->getModule()->getContext().diagnose(DiagnosticInfoGeneric(
+        "DWARF version " + Twine(DwarfVersion) +
+            " is not supported for XCOFF; emitting DWARF version 4",
+        DS_Warning));
+    DwarfVersion = 4;
+  }
 
   UseRangesSection = !NoDwarfRangesSection;
 
