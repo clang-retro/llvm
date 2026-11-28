@@ -4844,8 +4844,10 @@ renderDebugOptions(const ToolChain &TC, const Driver &D, const llvm::Triple &T,
   // object file generation and no IR generation, -gN should not be needed. So
   // allow -gsplit-dwarf with either -gN or IR input.
   if (IRInput || Args.hasArg(options::OPT_g_Group)) {
-    // FIXME: -gsplit-dwarf on AIX is currently unimplemented.
-    if (TC.getTriple().isOSAIX() && Args.hasArg(options::OPT_gsplit_dwarf)) {
+    // FIXME: -gsplit-dwarf on XCOFF (AIX, and classic Mac OS on PowerPC) is
+    // currently unimplemented.
+    if (TC.getTriple().isOSBinFormatXCOFF() &&
+        Args.hasArg(options::OPT_gsplit_dwarf)) {
       D.Diag(diag::err_drv_unsupported_opt_for_target)
           << Args.getLastArg(options::OPT_gsplit_dwarf)->getSpelling()
           << TC.getTripleString();

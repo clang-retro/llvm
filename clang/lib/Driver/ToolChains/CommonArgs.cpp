@@ -2482,7 +2482,9 @@ unsigned tools::getDwarfVersion(const ToolChain &TC,
   if (const Arg *GDwarfN = getDwarfNArg(Args))
     if (int N = DwarfVersionNum(GDwarfN->getSpelling())) {
       DwarfVersion = N;
-      if (DwarfVersion == 5 && TC.getTriple().isOSAIX())
+      // XCOFF (AIX, and classic Mac OS on PowerPC) has no sections for the
+      // DWARF v5 debug information.
+      if (DwarfVersion >= 5 && TC.getTriple().isOSBinFormatXCOFF())
         TC.getDriver().Diag(diag::err_drv_unsupported_opt_for_target)
             << GDwarfN->getSpelling() << TC.getTriple().str();
     }
