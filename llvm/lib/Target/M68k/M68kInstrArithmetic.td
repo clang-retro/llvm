@@ -1181,7 +1181,6 @@ foreach S = [8, 16, 32] in {
                         MxEncAddrMode_k<"dst">>;
 }
 
-// Left shift 16 bits lowers to: swap dn -> clr.w dn
-def : Pat<(shl i32:$src, (i32 16)),
-  (SUBREG_TO_REG (CLR16dd (EXTRACT_SUBREG (SWAP MxDRD32:$src),
-  MxSubRegIndex16Lo)), MxSubRegIndex16Lo)>;
+// Left shift 16 bits lowers to: swap dn -> clr.w dn. M68kDAGToDAGISel::Select
+// does this: CLR.W keeps the high word, so the result must be an
+// INSERT_SUBREG into the swapped value, which a pattern cannot express here.

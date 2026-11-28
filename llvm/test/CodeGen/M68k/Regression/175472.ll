@@ -21,12 +21,12 @@ define i32 @minimized() {
 ; CHECK-NEXT:    moveq #16, %d0
 ; CHECK-NEXT:    move.l %d1, %d2
 ; CHECK-NEXT:    lsr.l %d0, %d2
-; CHECK-NEXT:    move.l #65521, %d3
-; CHECK-NEXT:    move.l %d3, %d0
-; CHECK-NEXT:    mulu %d1, %d0
+; CHECK-NEXT:    move.l #65521, %d0
+; CHECK-NEXT:    move.l %d0, %d3
 ; CHECK-NEXT:    mulu %d2, %d3
 ; CHECK-NEXT:    swap %d3
 ; CHECK-NEXT:    clr.w %d3
+; CHECK-NEXT:    mulu %d1, %d0
 ; CHECK-NEXT:    add.l %d3, %d0
 ; CHECK-NEXT:    movem.l (8,%sp), %d2-%d3/%a2 ; 16-byte Folded Reload
 ; CHECK-NEXT:    adda.l #20, %sp
