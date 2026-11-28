@@ -58,7 +58,7 @@ define ptr @get_weak_local_global() {
   ret ptr @weak_local_global
 }
 ; CHECK: leaq _weak_local_global(%rip), %rax
-; DARWIN32: leal _weak_local_global-L{{.}}$pb(%eax), %eax
+; DARWIN32: movl L_weak_local_global$non_lazy_ptr-L{{.*}}$pb(%eax), %eax
 ; DARWIN32_S: movl $_weak_local_global, %eax
 ; DARWIN32_DNP: movl $_weak_local_global, %eax
 
@@ -133,7 +133,7 @@ define ptr @get_weak_local_alias() {
   ret ptr @weak_local_alias
 }
 ; CHECK: leaq _weak_local_alias(%rip), %rax
-; DARWIN32: leal _weak_local_alias-L{{.*}}$pb(%eax), %eax
+; DARWIN32: movl L_weak_local_alias$non_lazy_ptr-L{{.*}}$pb(%eax), %eax
 ; DARWIN32_S: movl $_weak_local_alias, %eax
 ; DARWIN32_DNP: movl $_weak_local_alias, %eax
 
@@ -206,7 +206,7 @@ define ptr @get_weak_local_function() {
   ret ptr @weak_local_function
 }
 ; CHECK: leaq _weak_local_function(%rip), %rax
-; DARWIN32: leal _weak_local_function-L{{.*}}$pb(%eax), %eax
+; DARWIN32: movl L_weak_local_function$non_lazy_ptr-L{{.*}}$pb(%eax), %eax
 ; DARWIN32_S: movl $_weak_local_function, %eax
 ; DARWIN32_DNP: movl $_weak_local_function, %eax
 

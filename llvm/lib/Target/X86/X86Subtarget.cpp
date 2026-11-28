@@ -111,6 +111,16 @@ X86Subtarget::classifyLocalReference(const GlobalValue *GV) const {
     if (GV && (GV->isDeclarationForLinker() || GV->hasCommonLinkage()))
       return X86II::MO_DARWIN_NONLAZY_PIC_BASE;
 
+    // ld64 rejects a - b when a is a global weak symbol ("bad codegen,
+    // pointer diff ... to global weak symbol"). A hidden weak definition
+    // here can merge with a default-visibility copy from another object
+    // (for example an inline variable of libc++ built with
+    // -fvisibility=hidden and a program built without it), and the merged
+    // symbol is then global. Thus use the non-lazy pointer for all weak
+    // definitions.
+    if (GV && GV->isWeakForLinker())
+      return X86II::MO_DARWIN_NONLAZY_PIC_BASE;
+
     return X86II::MO_PIC_BASE_OFFSET;
   }
 
