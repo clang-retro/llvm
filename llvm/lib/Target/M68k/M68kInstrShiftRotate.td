@@ -117,12 +117,7 @@ def SWAP
 def : Pat<(rotl i32:$src, (i32 16)), (SWAP MxDRD32:$src)>;
 def : Pat<(rotr i32:$src, (i32 16)), (SWAP MxDRD32:$src)>;
 
-// bswap i32 (0x00112233 -> 0x33221100)
-// lowers to: rol.w #8,dn -> swap dn -> rol.w #8,dn
-// LLVM's intrinsic expansion of bswap uses a shifting/masking algorithm that
-// strictly operates on the i32. But we can do much better by operating
-// in-place on the 16-bit subregister and casting back to the 32-bit register.
-def : Pat<(bswap i32:$src),
-  (SUBREG_TO_REG (ROL16di (EXTRACT_SUBREG (SWAP (SUBREG_TO_REG (ROL16di
-  (EXTRACT_SUBREG $src, MxSubRegIndex16Lo), 8), MxSubRegIndex16Lo)),
-  MxSubRegIndex16Lo), 8), MxSubRegIndex16Lo)>;
+// bswap i32 (0x00112233 -> 0x33221100) lowers to:
+// rol.w #8,dn -> swap dn -> rol.w #8,dn. M68kDAGToDAGISel::Select does this:
+// ROL.W keeps the high word, so each step must be an INSERT_SUBREG into the
+// 32-bit value, which a pattern cannot express here.

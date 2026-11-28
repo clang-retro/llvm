@@ -289,6 +289,7 @@ private:
   }
 
   void Select(SDNode *N) override;
+  bool tryWordOps(SDNode *N);
 
   // Insert instructions to initialize the global base register in the
   // first MBB of the function.
@@ -759,6 +760,52 @@ bool M68kDAGToDAGISel::matchWrapper(SDValue N, M68kISelAddressMode &AM) {
 // Selectors
 //===----------------------------------------------------------------------===//
 
+/// Selects (shl i32 x, 16) as SWAP and CLR.W, and (bswap i32 x) as ROL.W #8,
+/// SWAP and ROL.W #8. CLR.W and ROL.W change only the low word of the data
+/// register, so each result is the 32-bit value with its low word replaced
+/// (INSERT_SUBREG). SUBREG_TO_REG would say that the high word is zero, and
+/// a copy of only the low word, such as move.w to an address register, would
+/// then lose it. Returns false for other nodes.
+bool M68kDAGToDAGISel::tryWordOps(SDNode *Node) {
+  if (Node->getValueType(0) != MVT::i32)
+    return false;
+  SDLoc DL(Node);
+  SDValue Src = Node->getOperand(0);
+  unsigned Lo = M68k::MxSubRegIndex16Lo;
+  // Gives V with its low word replaced by the result of Opc on that word.
+  auto OnLowWord = [&](unsigned Opc, SDValue V, bool WithImm) {
+    SDValue W = CurDAG->getTargetExtractSubreg(Lo, DL, MVT::i16, V);
+    SDNode *N =
+        WithImm ? CurDAG->getMachineNode(
+                      Opc, DL, MVT::i16, W,
+                      CurDAG->getTargetConstant(8, DL, MVT::i16))
+                : CurDAG->getMachineNode(Opc, DL, MVT::i16, W);
+    SDValue Ins =
+        CurDAG->getTargetInsertSubreg(Lo, DL, MVT::i32, V, SDValue(N, 0));
+    // Keep the value in a data register: a word write to an address register
+    // (movea.w) sign-extends to all 32 bits.
+    SDValue RC = CurDAG->getTargetConstant(M68k::DR32RegClassID, DL, MVT::i32);
+    return SDValue(CurDAG->getMachineNode(TargetOpcode::COPY_TO_REGCLASS, DL,
+                                          MVT::i32, Ins, RC),
+                   0);
+  };
+  auto Swap = [&](SDValue V) {
+    return SDValue(CurDAG->getMachineNode(M68k::SWAP, DL, MVT::i32, V), 0);
+  };
+  SDValue Res;
+  if (Node->getOpcode() == ISD::SHL) {
+    auto *Amt = dyn_cast<ConstantSDNode>(Node->getOperand(1));
+    if (!Amt || Amt->getZExtValue() != 16)
+      return false;
+    Res = OnLowWord(M68k::CLR16dd, Swap(Src), false);
+  } else {
+    Res = OnLowWord(M68k::ROL16di, Swap(OnLowWord(M68k::ROL16di, Src, true)),
+                    true);
+  }
+  ReplaceNode(Node, Res.getNode());
+  return true;
+}
+
 void M68kDAGToDAGISel::Select(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
   SDLoc DL(Node);
@@ -787,6 +834,12 @@ void M68kDAGToDAGISel::Select(SDNode *Node) {
   case M68kISD::GLOBAL_BASE_REG:
     ReplaceNode(Node, getGlobalBaseReg());
     return;
+
+  case ISD::SHL:
+  case ISD::BSWAP:
+    if (tryWordOps(Node))
+      return;
+    break;
   }
 
   SelectCode(Node);
